@@ -19,6 +19,21 @@ export interface Organization {
   following?: number;
 }
 
+export interface Repository {
+  id: number;
+  name: string;
+  full_name: string;
+  description: string | null;
+  url: string;
+  html_url: string;
+  private: boolean;
+  language: string | null;
+  stargazers_count: number;
+  watchers_count: number;
+  forks_count: number;
+  open_issues_count: number;
+}
+
 /**
  * API Response interface for organizations endpoint
  */
@@ -29,6 +44,18 @@ interface OrganizationsApiResponse {
     organization_count: number;
     organizations: Organization[];
     user: string;
+  };
+}
+
+/**
+ * API Response interface for repositories endpoint
+ */
+interface RepositoriesApiResponse {
+  success: boolean;
+  message: string;
+  data: {
+    repositories_count: number;
+    repositories: Repository[];
   };
 }
 
@@ -81,6 +108,33 @@ export const organizationsService = {
       return response.data;
     } catch (error) {
       console.error('[OrganizationsService] Error fetching organization:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Fetch repositories for a specific organization
+   * 
+   * @param orgName - Organization login/name
+   * @returns Array of repositories
+   * @throws Error if fetch fails
+   */
+  async fetchOrganizationRepositories(orgName: string): Promise<Repository[]> {
+    try {
+      console.log('[OrganizationsService] Fetching repositories for organization:', orgName);
+      const response = await apiClient.get<RepositoriesApiResponse>(
+        `/auth/organizations/${orgName}/repositories`
+      );
+
+      console.log('[OrganizationsService] API Response:', response.data);
+      
+      // Extract repositories array from response wrapper
+      const repositories = response.data.data?.repositories || [];
+      
+      console.log('[OrganizationsService] Repositories fetched successfully:', repositories.length, 'repositories');
+      return repositories;
+    } catch (error) {
+      console.error('[OrganizationsService] Error fetching repositories:', error);
       throw error;
     }
   },
