@@ -17,6 +17,7 @@ export const API_ENDPOINTS = {
     OAUTH_LINK: '/auth/oauth/link',
     OAUTH_UNLINK: '/auth/oauth/unlink',
     OAUTH_PROVIDERS: '/auth/oauth/providers',
+    ORGANIZATIONS: '/auth/organizations',
   },
 
   // User endpoints with role-based access

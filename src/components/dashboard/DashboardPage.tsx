@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -9,6 +10,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Plus, GitBranch, Activity, Settings, Moon, Sun, Clock, Eye, Github, ChevronDown } from 'lucide-react';
+import { useOrganizationsViewModel } from '@/viewmodels/OrganizationsViewModel';
+import { Organization } from '@/lib/api/organizations.service';
+import { useOrganizationsStore } from '@/store/organizationsStore';
 
 interface Project {
   id: string;
@@ -137,9 +141,31 @@ function ProjectCard({ project, theme }: { project: Project; theme: 'light' | 'd
 
 export default function CalanceDashboard() {
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+  const router = useRouter();
+  const { fetchOrganizations, isLoading } = useOrganizationsViewModel();
+  const { setOrganizations } = useOrganizationsStore();
 
   const toggleTheme = () => {
     setTheme(prev => prev === 'light' ? 'dark' : 'light');
+  };
+
+  const handleFromGithub = async () => {
+    try {
+      // Fetch organizations from ViewModel
+      const orgs = await fetchOrganizations();
+      
+      // Store organizations in Zustand store
+      if (orgs && Array.isArray(orgs)) {
+        setOrganizations(orgs);
+      }
+      
+      // Navigate to projects page
+      router.push('/projects');
+    } catch (error) {
+      console.error('Failed to fetch organizations:', error);
+      // Still navigate even if fetch fails, projects page will have fallback
+      router.push('/projects');
+    }
   };
 
   return (
@@ -189,7 +215,9 @@ export default function CalanceDashboard() {
               <DropdownMenuContent align="end" className={`${
                 theme === 'dark' ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-gray-200'
               }`}>
-                <DropdownMenuItem className={`gap-2 cursor-pointer ${
+                <DropdownMenuItem 
+                  onClick={handleFromGithub}
+                  className={`gap-2 cursor-pointer ${
                   theme === 'dark' ? 'hover:bg-zinc-800 focus:bg-zinc-800' : 'hover:bg-gray-100 focus:bg-gray-100'
                 }`}>
                   <Github className="h-4 w-4" />
