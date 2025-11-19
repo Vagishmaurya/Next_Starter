@@ -137,4 +137,42 @@ export const oauthService = {
       throw error;
     }
   },
+
+  /**
+   * Initiates GitHub OAuth flow with backend
+   * 
+   * Backend Flow:
+   * 1. Frontend redirects to GET /api/auth/github
+   * 2. Backend creates authorization URL with client_id
+   * 3. Backend redirects to GitHub OAuth endpoint
+   * 4. User authenticates & approves permissions on GitHub
+   * 5. GitHub redirects back with authorization code to backend
+   * 6. Backend exchanges code for GitHub access token
+   * 7. Backend fetches user data from GitHub API
+   * 8. Backend generates JWT token with user claims
+   * 9. Backend redirects to /auth/callback with JWT token
+   * 10. Frontend stores JWT in localStorage
+   * 11. Frontend includes JWT in Authorization header for all requests
+   * 
+   * @throws Error if redirection fails
+   */
+  async initiateGithubOAuth(): Promise<void> {
+    try {
+      console.log('[OAuthService] Initiating GitHub OAuth flow');
+      
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+      
+      // Construct backend GitHub OAuth endpoint
+      // Backend handles entire OAuth protocol with GitHub
+      const githubAuthUrl = `${apiUrl}/auth/github`;
+      
+      console.log(`[OAuthService] Redirecting to backend GitHub endpoint: ${githubAuthUrl}`);
+      
+      // Redirect to backend - backend will handle GitHub OAuth
+      window.location.href = githubAuthUrl;
+    } catch (error) {
+      console.error('[OAuthService] Failed to initiate GitHub OAuth:', error);
+      throw error;
+    }
+  },
 };
