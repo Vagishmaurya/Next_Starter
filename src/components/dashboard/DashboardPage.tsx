@@ -2,7 +2,13 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, GitBranch, Activity, Settings, Moon, Sun, Clock, Eye } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Plus, GitBranch, Activity, Settings, Moon, Sun, Clock, Eye, Github, ChevronDown } from 'lucide-react';
 
 interface Project {
   id: string;
@@ -168,14 +174,29 @@ export default function CalanceDashboard() {
                 <Moon className="h-5 w-5" />
               )}
             </button>
-            <Button className={`gap-2 text-sm ${
-              theme === 'dark'
-                ? 'bg-white text-black hover:bg-gray-100'
-                : 'bg-black text-white hover:bg-gray-900'
-            }`}>
-              <Plus className="h-4 w-4" />
-              Add New
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button className={`gap-2 text-sm flex items-center ${
+                  theme === 'dark'
+                    ? 'bg-white text-black hover:bg-gray-100'
+                    : 'bg-black text-white hover:bg-gray-900'
+                }`}>
+                  <Plus className="h-4 w-4" />
+                  Add New
+                  <ChevronDown className="h-4 w-4 ml-1" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className={`${
+                theme === 'dark' ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-gray-200'
+              }`}>
+                <DropdownMenuItem className={`gap-2 cursor-pointer ${
+                  theme === 'dark' ? 'hover:bg-zinc-800 focus:bg-zinc-800' : 'hover:bg-gray-100 focus:bg-gray-100'
+                }`}>
+                  <Github className="h-4 w-4" />
+                  <span>From GitHub</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
