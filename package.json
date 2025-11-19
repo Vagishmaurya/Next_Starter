@@ -20,6 +20,7 @@
     "@hookform/resolvers": "latest",
     "@logtape/logtape": "latest",
     "@prettier/plugin-xml": "latest",
+    "@radix-ui/react-slot": "^1.2.4",
     "@sentry/nextjs": "latest",
     "@storybook/nextjs-vite": "latest",
     "@t3-oss/env-nextjs": "latest",

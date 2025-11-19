@@ -47,7 +47,7 @@ export default function CallbackPage() {
   const [isProcessing, setIsProcessing] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const setUser = useUserStore((state) => state.setUser);
+  const setUser = useUserStore((state: any) => state.setUser);
 
   useEffect(() => {
     const processCallback = async () => {
@@ -147,7 +147,7 @@ export default function CallbackPage() {
    */
   if (isProcessing) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background to-background/50">
+      <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="text-center">
           <div className="mb-6 flex justify-center">
             <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
@@ -164,7 +164,7 @@ export default function CallbackPage() {
    */
   if (error) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background to-background/50">
+      <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="max-w-md rounded-lg border border-border bg-card p-8 text-center shadow-lg">
           <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
             <svg
