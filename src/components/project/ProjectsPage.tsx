@@ -11,11 +11,12 @@ import {
 } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Github, Star, GitBranch, LogOut, Sun, Moon } from 'lucide-react';
+import { Github, Star, GitBranch } from 'lucide-react';
 import { Organization, Repository, organizationsService } from '@/lib/api/organizations.service';
 import { useOrganizationsViewModel } from '@/viewmodels/OrganizationsViewModel';
 import { useOrganizationsStore } from '@/store/organizationsStore';
 import { useRepositoriesStore } from '@/store/repositoriesStore';
+import { useThemeStore } from '@/store/themeStore';
 
 
 
@@ -25,9 +26,9 @@ export default function ProjectsPage() {
   const { isLoading, fetchOrganizations } = useOrganizationsViewModel();
   const { organizations: storeOrganizations } = useOrganizationsStore();
   const { repositories, isLoading: repositoriesLoading, setRepositories, setLoading: setRepositoriesLoading, setError: setRepositoriesError } = useRepositoriesStore();
+  const { theme } = useThemeStore();
   const [selectedOrg, setSelectedOrg] = useState<string>('');
   const [displayOrganizations, setDisplayOrganizations] = useState<Organization[]>([]);
-  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
 
   // Initialize organizations from store or fetch from API
   useEffect(() => {
@@ -83,10 +84,6 @@ export default function ProjectsPage() {
     }
   };
 
-  const toggleTheme = () => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light');
-  };
-
   const getLanguageColor = (language: string | null): string => {
     const colors: Record<string, string> = {
       TypeScript: theme === 'dark' 
@@ -127,34 +124,7 @@ export default function ProjectsPage() {
             </h1>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={toggleTheme}
-              className={`p-2 rounded-lg transition-colors ${
-                theme === 'dark' 
-                  ? 'hover:bg-zinc-800 text-zinc-400' 
-                  : 'hover:bg-gray-100 text-gray-600'
-              }`}
-            >
-              {theme === 'dark' ? (
-                <Sun className="h-5 w-5" />
-              ) : (
-                <Moon className="h-5 w-5" />
-              )}
-            </button>
-            <Button
-              variant="outline"
-              size="sm"
-              className={`transition-colors ${
-                theme === 'dark'
-                  ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800'
-                  : 'border-gray-300 text-gray-700 hover:bg-gray-100'
-              }`}
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              Sign Out
-            </Button>
-          </div>
+          <div className="flex items-center gap-2" />
         </div>
       </div>
 

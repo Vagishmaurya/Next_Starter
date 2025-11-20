@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
@@ -9,10 +9,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Plus, GitBranch, Activity, Settings, Moon, Sun, Clock, Eye, Github, ChevronDown } from 'lucide-react';
+import { Plus, GitBranch, Activity, Settings, Clock, Eye, Github, ChevronDown } from 'lucide-react';
 import { useOrganizationsViewModel } from '@/viewmodels/OrganizationsViewModel';
 import { Organization } from '@/lib/api/organizations.service';
 import { useOrganizationsStore } from '@/store/organizationsStore';
+import { useThemeStore } from '@/store/themeStore';
 
 interface Project {
   id: string;
@@ -140,14 +141,10 @@ function ProjectCard({ project, theme }: { project: Project; theme: 'light' | 'd
 }
 
 export default function CalanceDashboard() {
-  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   const router = useRouter();
   const { fetchOrganizations, isLoading } = useOrganizationsViewModel();
   const { setOrganizations } = useOrganizationsStore();
-
-  const toggleTheme = () => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light');
-  };
+  const { theme } = useThemeStore();
 
   const handleFromGithub = async () => {
     try {
@@ -186,20 +183,6 @@ export default function CalanceDashboard() {
             </p>
           </div>
           <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-            <button
-              onClick={toggleTheme}
-              className={`p-2 rounded-lg transition-colors ${
-                theme === 'dark' 
-                  ? 'hover:bg-zinc-800 text-zinc-400' 
-                  : 'hover:bg-gray-100 text-gray-600'
-              }`}
-            >
-              {theme === 'dark' ? (
-                <Sun className="h-5 w-5" />
-              ) : (
-                <Moon className="h-5 w-5" />
-              )}
-            </button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button className={`gap-2 text-sm flex items-center ${
