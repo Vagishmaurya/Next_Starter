@@ -52,6 +52,7 @@ export default antfu(
       'node/prefer-global/process': 'off',
       'test/padding-around-all': 'error',
       'test/prefer-lowercase-title': 'off',
+      'style/multiline-ternary': 'off',
     },
   },
 );
