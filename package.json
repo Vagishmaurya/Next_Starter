@@ -80,6 +80,7 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-hook-form": "latest",
+    "recharts": "^3.4.1",
     "storybook": "latest",
     "styled-components": "latest",
     "svelte-eslint-parser": "latest",

@@ -3,6 +3,9 @@
 import { Activity, ChevronDown, Clock, Eye, GitBranch, Github, Plus, Settings } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React from 'react';
+import { DashboardStatsGrid } from '@/components/DashboardCards';
+import DashboardDataTable from '@/components/DashboardDataTable';
+import { ProjectedVisitorsGraph } from '@/components/DashboardGraph';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -24,7 +27,7 @@ type Project = {
   icon: React.ReactNode;
 };
 
-const demoProjects: Project[] = [
+const _demoProjects: Project[] = [
   {
     id: '1',
     name: 'My App',
@@ -54,7 +57,7 @@ const demoProjects: Project[] = [
   },
 ];
 
-function ProjectCard({ project, theme }: { project: Project; theme: 'light' | 'dark' }) {
+function _ProjectCard({ project, theme }: { project: Project; theme: 'light' | 'dark' }) {
   const statusConfig = {
     active: {
       bg: theme === 'dark' ? 'bg-emerald-500/10' : 'bg-emerald-50',
@@ -244,11 +247,19 @@ export default function CalanceDashboard() {
           </div>
         </div>
 
-        {/* Projects Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          {demoProjects.map((project) => (
-            <ProjectCard key={project.id} project={project} theme={theme} />
-          ))}
+        {/* Stats Grid */}
+        <div className="">
+          <DashboardStatsGrid />
+        </div>
+
+        {/* Visitors Graph */}
+        <div className="mb-12">
+          <ProjectedVisitorsGraph />
+        </div>
+
+        {/* Data Table */}
+        <div className="mb-12">
+          <DashboardDataTable />
         </div>
 
         {/* Empty State Message */}
