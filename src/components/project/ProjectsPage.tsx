@@ -3,6 +3,7 @@
 import type { Organization } from '@/lib/api/organizations.service';
 import { GitBranch, Github, Star } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import {
@@ -19,6 +20,7 @@ import { useThemeStore } from '@/store/themeStore';
 import { useOrganizationsViewModel } from '@/viewmodels/OrganizationsViewModel';
 
 export default function ProjectsPage() {
+  const router = useRouter();
   const { isLoading, fetchOrganizations } = useOrganizationsViewModel();
   const { organizations: storeOrganizations } = useOrganizationsStore();
   const {
@@ -90,6 +92,12 @@ export default function ProjectsPage() {
     }
   };
 
+  const handleRepositoryClick = (repoName: string) => {
+    if (selectedOrg) {
+      router.push(`/branches?owner=${selectedOrg}&repo=${repoName}`);
+    }
+  };
+
   const getLanguageColor = (language: string | null): string => {
     const colors: Record<string, string> = {
       TypeScript: theme === 'dark' ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-100 text-blue-800',
@@ -111,25 +119,6 @@ export default function ProjectsPage() {
       }`}
     >
       {/* Header */}
-      <div
-        className={`border-b transition-colors duration-200 ${
-          theme === 'dark' ? 'border-zinc-800 bg-zinc-900/50' : 'border-gray-200 bg-white/50'
-        } backdrop-blur-md`}
-      >
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Github className={`h-8 w-8 ${theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'}`} />
-            <h1
-              className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}
-            >
-              Projects
-            </h1>
-          </div>
-
-          <div className="flex items-center gap-2" />
-        </div>
-      </div>
-
       {/* Main Content */}
       <div className="max-w-6xl mx-auto px-4 py-8 sm:py-12">
         {/* Organization Selector */}
@@ -258,6 +247,7 @@ export default function ProjectsPage() {
             {repositories.map((repo) => (
               <Card
                 key={repo.id}
+                onClick={() => handleRepositoryClick(repo.name)}
                 className={`transition-all duration-200 cursor-pointer overflow-hidden ${
                   theme === 'dark'
                     ? 'bg-zinc-900/50 border-zinc-800/50 hover:border-zinc-700 hover:bg-zinc-900/80'

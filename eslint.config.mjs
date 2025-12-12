@@ -1,5 +1,3 @@
-import { dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import antfu from '@antfu/eslint-config';
 import jsxA11y from 'eslint-plugin-jsx-a11y';
 import playwright from 'eslint-plugin-playwright';
