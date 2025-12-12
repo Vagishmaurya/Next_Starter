@@ -5,11 +5,13 @@ A modern, production-ready Next.js starter boilerplate with authentication, OAut
 ## 🎯 Features
 
 ### Core Framework
+
 - **Next.js 16** with App Router and TypeScript
 - **React 19** with modern hooks and server components
 - **Vite** integration for development
 
 ### 🔐 Authentication & Security
+
 - Email/password authentication
 - OAuth/SSO (Google, GitHub, Microsoft)
 - JWT token management with automatic refresh
@@ -20,6 +22,7 @@ A modern, production-ready Next.js starter boilerplate with authentication, OAut
   - ProtectedRoute component for conditional rendering
 
 ### 🏗️ Architecture & State Management
+
 - **MVVM Architecture Pattern** - Clean separation of concerns
 - **Zustand** for global state management with DevTools integration
 - Multiple dedicated stores (Auth, User, App)
@@ -27,6 +30,7 @@ A modern, production-ready Next.js starter boilerplate with authentication, OAut
 - Custom hooks for business logic
 
 ### 🎨 UI Components (50+)
+
 - Form Components: Input, Textarea, Checkbox, Radio, Select, Label, Toggle, Slider, etc.
 - Layout Components: Card, Sidebar, Drawer, Accordion, Collapsible, Resizable, etc.
 - Navigation: Breadcrumb, Menu, Pagination, Dropdown, Context Menu, etc.
@@ -35,6 +39,7 @@ A modern, production-ready Next.js starter boilerplate with authentication, OAut
 - Advanced: Calendar, Command, Chart, Carousel, Tabs, etc.
 
 ### 💅 Styling & Theming
+
 - Styled-components for scoped CSS-in-JS
 - Tailwind CSS with PostCSS
 - Dark/Light mode with system preference detection
@@ -43,6 +48,7 @@ A modern, production-ready Next.js starter boilerplate with authentication, OAut
 - Responsive design
 
 ### 📡 API Integration
+
 - Axios client with request/response interceptors
 - Automatic token attachment to requests
 - Automatic 401 error handling with redirect
@@ -50,18 +56,21 @@ A modern, production-ready Next.js starter boilerplate with authentication, OAut
 - Request queueing during token refresh
 
 ### 🌍 Internationalization (i18n)
+
 - next-intl integration
 - Multi-language support (English, French)
 - Dynamic locale switching
 - Route-based locale handling
 
 ### 📝 Form Management & Validation
+
 - React Hook Form for efficient forms
 - Zod schema validation
 - Valibot as alternative validation
 - Complete error handling
 
 ### 🧪 Testing Infrastructure
+
 - **Vitest** for unit testing (Node.js environment)
 - **Vitest** for UI testing (Browser with Playwright)
 - **Playwright** for E2E testing
@@ -69,6 +78,7 @@ A modern, production-ready Next.js starter boilerplate with authentication, OAut
 - Visual testing with Chromatic
 
 ### 🛠️ Developer Experience
+
 - ESLint with accessibility, React, Next.js, and Tailwind rules
 - Prettier code formatting
 - Husky pre-commit hooks
@@ -77,6 +87,7 @@ A modern, production-ready Next.js starter boilerplate with authentication, OAut
 - TypeScript strict mode
 
 ### 🎛️ Additional Features
+
 - Logging with LogTape
 - Error tracking with Sentry
 - Analytics with PostHog
@@ -242,15 +253,18 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 ## 📄 Pages & Routes
 
 ### Public Pages
+
 - **`/`** - Home page with welcome message and CTA buttons
 - **`/en`** - English version home
 - **`/fr`** - French version home
 
 ### Authentication Pages
+
 - **`/[locale]/sign-in`** - User sign-in with email/password or OAuth
 - **`/[locale]/sign-up`** - User registration with email/password or OAuth
 
 ### Protected Pages
+
 - **`/[locale]/dashboard`** - Admin dashboard (requires authentication)
   - Admin-only features for users with ADMIN role
   - Moderator tools for MODERATOR role users
@@ -265,12 +279,14 @@ This boilerplate follows the **Model-View-ViewModel** architecture pattern for c
 ### Architecture Components
 
 **Views** (React Components)
+
 - Located in `src/components/`
 - Focused on UI rendering and user interaction
 - Connected to ViewModels via custom hooks
 - Dummy components provided as reference
 
 **ViewModels** (Zustand Stores)
+
 - Located in `src/lib/stores/` and `src/viewmodels/`
 - Contains business logic and state management
 - `useAuthStore.ts` - Authentication ViewModel
@@ -278,6 +294,7 @@ This boilerplate follows the **Model-View-ViewModel** architecture pattern for c
 - `useAppStore.ts` - Global app ViewModel
 
 **Models** (API Services & Data Layer)
+
 - Located in `src/lib/api/`
 - `auth.service.ts` - Authentication logic
 - `oauth.service.ts` - OAuth/SSO logic
@@ -303,11 +320,13 @@ Response → ViewModel Update → View Re-render
 ### Example: Counter Component (MVVM)
 
 **ViewModel** (`src/viewmodels/CounterViewModel.ts`)
+
 ```typescript
 // Business logic separated from UI
 ```
 
 **View** (`src/components/counter/`)
+
 ```typescript
 // Pure UI component connected to ViewModel
 ```
@@ -323,13 +342,13 @@ import { authService } from '@/lib/api/auth.service';
 import { useAuth } from '@/hooks/useAuth';
 
 export const LoginExample = () => {
-  const { login, user } = useAuth();
-  
-  const handleLogin = async () => {
-    await login('user@example.com', 'password');
-  };
+const { login, user } = useAuth();
 
-  return <button onClick={handleLogin}>Login</button>;
+const handleLogin = async () => {
+await login('user@example.com', 'password');
+};
+
+return <button onClick={handleLogin}>Login</button>;
 };
 \`\`\`
 
@@ -339,13 +358,13 @@ export const LoginExample = () => {
 import { useOAuth } from '@/hooks/useOAuth';
 
 export const OAuthExample = () => {
-  const { initiateOAuthFlow } = useOAuth();
-  
-  const handleGoogleLogin = async () => {
-    await initiateOAuthFlow('google');
-  };
+const { initiateOAuthFlow } = useOAuth();
 
-  return <button onClick={handleGoogleLogin}>Login with Google</button>;
+const handleGoogleLogin = async () => {
+await initiateOAuthFlow('google');
+};
+
+return <button onClick={handleGoogleLogin}>Login with Google</button>;
 };
 \`\`\`
 
@@ -358,13 +377,13 @@ import { useRoleBasedAccess } from '@/hooks/useRoleBasedAccess';
 import { UserRole } from '@/lib/api/types';
 
 export const RBACExample = () => {
-  const { currentUserRole, hasRole } = useRoleBasedAccess();
-  
-  if (hasRole(UserRole.ADMIN)) {
-    return <AdminPanel />;
-  }
-  
-  return <UserPanel />;
+const { currentUserRole, hasRole } = useRoleBasedAccess();
+
+if (hasRole(UserRole.ADMIN)) {
+return <AdminPanel />;
+}
+
+return <UserPanel />;
 };
 \`\`\`
 
@@ -375,14 +394,13 @@ import { ProtectedRoute } from '@/components/guards/ProtectedRoute';
 import { UserRole } from '@/lib/api/types';
 
 export const AdminOnly = () => {
-  return (
-    <ProtectedRoute
-      requiredRoles={[UserRole.ADMIN]}
-      fallback={<div>Access Denied</div>}
-    >
-      <AdminPanel />
-    </ProtectedRoute>
-  );
+return (
+<ProtectedRoute
+requiredRoles={[UserRole.ADMIN]}
+fallback={<div>Access Denied</div>} >
+<AdminPanel />
+</ProtectedRoute>
+);
 };
 \`\`\`
 
@@ -402,10 +420,8 @@ All components use styled-components for scoped, theme-aware styling:
 \`\`\`tsx
 import styled from 'styled-components';
 
-const StyledContainer = styled.div`
-  background-color: ${({ theme }) => theme.background};
-  color: ${({ theme }) => theme.foreground};
-`;
+const StyledContainer = styled.div`  background-color: ${({ theme }) => theme.background};
+  color: ${({ theme }) => theme.foreground};`;
 \`\`\`
 
 ## 🎨 Styling & Components
@@ -493,34 +509,38 @@ npm run prepare         # Setup Husky hooks
 ## 🧪 Testing
 
 ### Unit Testing with Vitest
+
 ```bash
 npm run test
 ```
 
 ### UI Testing with Playwright
+
 ```bash
 npm run test          # Includes browser testing
 ```
 
 ### E2E Testing with Playwright
+
 ```bash
 npm run test:e2e
 ```
 
 ### Test Coverage
+
 ```bash
 npm run test -- --coverage
 ```
 
 ## 📚 Environment Variables
 
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `NEXT_PUBLIC_API_URL` | Backend API endpoint | Yes |
-| `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | Google OAuth client ID | No |
-| `NEXT_PUBLIC_GITHUB_CLIENT_ID` | GitHub OAuth client ID | No |
-| `NEXT_PUBLIC_MICROSOFT_CLIENT_ID` | Microsoft OAuth client ID | No |
-| `NODE_ENV` | Environment (development, production, test) | No |
+| Variable                          | Description                                 | Required |
+| --------------------------------- | ------------------------------------------- | -------- |
+| `NEXT_PUBLIC_API_URL`             | Backend API endpoint                        | Yes      |
+| `NEXT_PUBLIC_GOOGLE_CLIENT_ID`    | Google OAuth client ID                      | No       |
+| `NEXT_PUBLIC_GITHUB_CLIENT_ID`    | GitHub OAuth client ID                      | No       |
+| `NEXT_PUBLIC_MICROSOFT_CLIENT_ID` | Microsoft OAuth client ID                   | No       |
+| `NODE_ENV`                        | Environment (development, production, test) | No       |
 
 ## 🔌 API Integration Example
 
@@ -558,7 +578,7 @@ import { useTranslations } from 'next-intl';
 
 export const Component = () => {
   const t = useTranslations('ComponentName');
-  
+
   return <h1>{t('title')}</h1>;
 };
 ```
@@ -578,6 +598,7 @@ This project is licensed under the MIT License.
 ## 📞 Support
 
 For issues, questions, or suggestions, please refer to:
+
 - `PROJECT_SUMMARY.md` - Comprehensive feature overview
 - `AUTH_IMPLEMENTATION.md` - Authentication details
 - `DARK_MODE_GUIDE.md` - Theming system

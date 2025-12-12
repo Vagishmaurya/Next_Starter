@@ -10,10 +10,10 @@ import { devtools, persist } from 'zustand/middleware';
 /**
  * App store state interface
  */
-interface AppState {
+type AppState = {
   isLoading: boolean;
   setLoading: (loading: boolean) => void;
-}
+};
 
 /**
  * Zustand store for app state management
@@ -35,7 +35,7 @@ export const useAppStore = create<AppState>()(
       }),
       {
         name: 'app-store',
-      },
-    ),
-  ),
+      }
+    )
+  )
 );

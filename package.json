@@ -1,5 +1,8 @@
 {
   "name": "next-js-boilerplate",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "build": "next build",
     "check:types": "tsc --noEmit --pretty",
@@ -138,8 +141,5 @@
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^4.0.4",
     "vitest-browser-react": "^2.0.2"
-  },
-  "engines": {
-    "node": ">=20"
   }
 }

@@ -5,19 +5,14 @@
  */
 
 import { getTranslations } from 'next-intl/server';
-import { useAuth } from '@/hooks/useAuth';
 
 export const Hello = async () => {
   const t = await getTranslations('Dashboard');
 
   return (
     <>
-      <p>
-        {t('hello_message')}
-      </p>
-      <p>
-        {t('welcome_to_app')}
-      </p>
+      <p>{t('hello_message')}</p>
+      <p>{t('welcome_to_app')}</p>
     </>
   );
 };

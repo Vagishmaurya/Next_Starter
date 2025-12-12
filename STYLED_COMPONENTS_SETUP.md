@@ -5,44 +5,51 @@ This project uses **styled-components** for styling alongside **next-themes** fo
 ## Architecture Overview
 
 ### Theme System
+
 - **Light Theme**: Defined in `src/styles/theme.ts` - Light mode colors and tokens
 - **Dark Theme**: Defined in `src/styles/theme.ts` - Dark mode colors and tokens
 - **Global Styles**: Defined in `src/styles/global-styles.ts` - Applied globally via GlobalStyle component
 
 ### Theme Provider Setup
+
 \`\`\`typescript
 // src/lib/styled-components-provider.ts
+
 - ThemeWrapper component wraps application with styled-components ThemeProvider
 - Synchronizes theme with next-themes for persistence
-\`\`\`
+  \`\`\`
 
 ### Root Layout
+
 \`\`\`typescript
 // src/app/layout.tsx
+
 - Wraps application with both NextThemesProvider and styled-components ThemeWrapper
 - Ensures proper theme initialization on load
-\`\`\`
+  \`\`\`
 
 ## Using Styled Components
 
 ### Creating a Styled Component
+
 \`\`\`typescript
 import styled from 'styled-components';
 
 const StyledButton = styled.button`
-  background-color: ${({ theme }) => theme.primary};
-  color: ${({ theme }) => theme.primaryForeground};
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  
-  &:hover {
-    opacity: 0.9;
-  }
+background-color: ${({ theme }) => theme.primary};
+color: ${({ theme }) => theme.primaryForeground};
+padding: 0.5rem 1rem;
+border-radius: 0.5rem;
+cursor: pointer;
+
+&:hover {
+opacity: 0.9;
+}
 `;
 \`\`\`
 
 ### Accessing Theme
+
 All styled components have access to the theme object via the `theme` prop:
 \`\`\`typescript
 ${({ theme }) => theme.primary}
@@ -51,6 +58,7 @@ ${({ theme }) => theme.borderRadius}
 \`\`\`
 
 ### Components with Styled Components
+
 - `Button` - Primary interactive element with variants
 - `Input`, `Label`, `ErrorMessage` - Form components
 - `Card`, `CardTitle`, `CardContent` - Content containers
@@ -60,6 +68,7 @@ ${({ theme }) => theme.borderRadius}
 ## Theme Switching
 
 Dark/light mode switching is handled by next-themes:
+
 - `ThemeToggle` component provides UI for theme switching
 - Theme persists to localStorage
 - System preference is respected on first visit
@@ -77,11 +86,11 @@ To add new theme colors:
 Use styled-components media queries:
 \`\`\`typescript
 const ResponsiveContainer = styled.div`
-  padding: 2rem;
-  
-  @media (max-width: 640px) {
-    padding: 1rem;
-  }
+padding: 2rem;
+
+@media (max-width: 640px) {
+padding: 1rem;
+}
 `;
 \`\`\`
 
@@ -106,6 +115,7 @@ This creates animated placeholder skeletons with smooth shimmer effect.
 ## Migration from Tailwind
 
 All Tailwind classes have been replaced with styled-components. Benefits:
+
 - Fully scoped CSS prevents conflicts
 - Dynamic theming built-in
 - Better TypeScript support

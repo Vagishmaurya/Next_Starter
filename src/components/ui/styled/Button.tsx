@@ -9,7 +9,7 @@ import styled from 'styled-components';
 /**
  * Props for Button component
  */
-interface ButtonProps {
+type ButtonProps = {
   /** Button variant style */
   variant?: 'primary' | 'secondary' | 'destructive' | 'outline' | 'ghost';
   /** Button size */
@@ -22,7 +22,7 @@ interface ButtonProps {
   type?: 'button' | 'submit' | 'reset';
   /** Click handler */
   onClick?: () => void;
-}
+};
 
 /**
  * Styled button base element
@@ -39,7 +39,7 @@ const StyledButton = styled.button<ButtonProps>`
   transition: all 0.2s ease;
   font-family: inherit;
   white-space: nowrap;
-  
+
   /* Size variants */
   ${({ size = 'md' }) => {
     const sizes = {
@@ -133,12 +133,7 @@ export const Button = ({
   ...props
 }: ButtonProps & React.ButtonHTMLAttributes<HTMLButtonElement>): JSX.Element => {
   return (
-    <StyledButton
-      variant={variant}
-      size={size}
-      disabled={disabled || isLoading}
-      {...props}
-    >
+    <StyledButton variant={variant} size={size} disabled={disabled || isLoading} {...props}>
       {isLoading && <span>Loading...</span>}
       {!isLoading && children}
     </StyledButton>

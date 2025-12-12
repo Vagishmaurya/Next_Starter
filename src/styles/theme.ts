@@ -11,33 +11,33 @@ export const lightTheme = {
   foreground: '#000000',
   card: '#ffffff',
   cardForeground: '#000000',
-  
+
   // Primary colors
   primary: '#3b82f6',
   primaryForeground: '#ffffff',
-  
+
   // Secondary colors
   secondary: '#f3f4f6',
   secondaryForeground: '#1f2937',
-  
+
   // Neutral colors
   muted: '#f3f4f6',
   mutedForeground: '#6b7280',
   accent: '#f3f4f6',
   accentForeground: '#1f2937',
-  
+
   // Status colors
   destructive: '#ef4444',
   destructiveForeground: '#ffffff',
   success: '#10b981',
   warning: '#f59e0b',
   info: '#3b82f6',
-  
+
   // Border and input
   border: '#e5e7eb',
   input: '#e5e7eb',
   ring: '#3b82f6',
-  
+
   // Sidebar
   sidebar: '#f9fafb',
   sidebarForeground: '#111827',
@@ -55,33 +55,33 @@ export const darkTheme = {
   foreground: '#f8fafc',
   card: '#1e293b',
   cardForeground: '#f8fafc',
-  
+
   // Primary colors
   primary: '#60a5fa',
   primaryForeground: '#0f172a',
-  
+
   // Secondary colors
   secondary: '#334155',
   secondaryForeground: '#f8fafc',
-  
+
   // Neutral colors
   muted: '#334155',
   mutedForeground: '#94a3b8',
   accent: '#334155',
   accentForeground: '#f8fafc',
-  
+
   // Status colors
   destructive: '#f87171',
   destructiveForeground: '#1e293b',
   success: '#34d399',
   warning: '#fbbf24',
   info: '#60a5fa',
-  
+
   // Border and input
   border: '#334155',
   input: '#334155',
   ring: '#60a5fa',
-  
+
   // Sidebar
   sidebar: '#1e293b',
   sidebarForeground: '#f8fafc',

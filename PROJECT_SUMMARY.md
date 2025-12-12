@@ -9,6 +9,7 @@ A modern, production-ready **Next.js 16** starter boilerplate has been created f
 ## 🎯 Core Architecture
 
 ### Technology Stack
+
 - **Framework**: Next.js 16 with App Router (latest stable)
 - **UI Library**: React 19 with modern hooks and server components
 - **Language**: TypeScript (strict mode)
@@ -16,6 +17,7 @@ A modern, production-ready **Next.js 16** starter boilerplate has been created f
 - **State Management**: Zustand with DevTools middleware
 
 ### Design Patterns
+
 - **MVVM Architecture**: ViewModels for business logic separation
 - **Component-Based**: Modular, reusable component structure
 - **Store-Based State**: Centralized state management with Zustand stores
@@ -27,8 +29,9 @@ A modern, production-ready **Next.js 16** starter boilerplate has been created f
 ## 🔐 Authentication & Authorization
 
 ### Authentication Features
+
 - **Email/Password Authentication**: Traditional form-based login
-- **OAuth/SSO Integration**: 
+- **OAuth/SSO Integration**:
   - Google OAuth
   - GitHub OAuth
   - Microsoft OAuth
@@ -40,6 +43,7 @@ A modern, production-ready **Next.js 16** starter boilerplate has been created f
 - **Session Persistence**: User state persisted across browser sessions
 
 ### Role-Based Access Control (RBAC)
+
 ```
 4 User Roles:
 ├── ADMIN: Full access to all features
@@ -49,6 +53,7 @@ A modern, production-ready **Next.js 16** starter boilerplate has been created f
 ```
 
 ### Permission System
+
 - **ADMIN Permissions**:
   - view_analytics
   - manage_users
@@ -70,6 +75,7 @@ A modern, production-ready **Next.js 16** starter boilerplate has been created f
   - view_public_content
 
 ### Protection Mechanisms
+
 - Protected route components (`ProtectedRoute`)
 - Permission-based route access
 - Conditional rendering based on roles
@@ -82,6 +88,7 @@ A modern, production-ready **Next.js 16** starter boilerplate has been created f
 ### Three Core Stores
 
 #### 1. `useAuthStore` - Authentication Operations
+
 ```typescript
 - login(email, password)
 - register(email, password, name)
@@ -93,6 +100,7 @@ A modern, production-ready **Next.js 16** starter boilerplate has been created f
 ```
 
 #### 2. `useUserStore` - User Profile & Role Management
+
 ```typescript
 - user: User profile data
 - isAuthenticated: boolean
@@ -104,6 +112,7 @@ A modern, production-ready **Next.js 16** starter boilerplate has been created f
 ```
 
 #### 3. `useAppStore` - Global Application State
+
 ```typescript
 - isLoading: Global loading state
 - setLoading(loading)
@@ -111,6 +120,7 @@ A modern, production-ready **Next.js 16** starter boilerplate has been created f
 ```
 
 ### Store Features
+
 - **Devtools Integration**: Redux DevTools middleware for debugging
 - **Persistence**: Auto-persist important state to localStorage
 - **Type-Safe**: Full TypeScript support with interfaces
@@ -120,6 +130,7 @@ A modern, production-ready **Next.js 16** starter boilerplate has been created f
 ## 🎨 UI Components Library (50+ Components)
 
 ### Form Components
+
 - Input, Textarea
 - Checkbox, Radio Group
 - Select, Label, Field
@@ -130,6 +141,7 @@ A modern, production-ready **Next.js 16** starter boilerplate has been created f
 - Input Group
 
 ### Layout Components
+
 - Card (with Title, Content, Description, Footer)
 - Sidebar (with expand/collapse)
 - Drawer
@@ -139,6 +151,7 @@ A modern, production-ready **Next.js 16** starter boilerplate has been created f
 - Resizable
 
 ### Navigation Components
+
 - Breadcrumb
 - Navigation Menu
 - Menubar
@@ -147,6 +160,7 @@ A modern, production-ready **Next.js 16** starter boilerplate has been created f
 - Context Menu
 
 ### Interactive Components
+
 - Button & Button Group
 - Dialog, Alert Dialog
 - Popover, Hover Card
@@ -156,6 +170,7 @@ A modern, production-ready **Next.js 16** starter boilerplate has been created f
 - Scroll Area
 
 ### Data Display
+
 - Table (with sorting/filtering support)
 - Avatar
 - Badge
@@ -165,12 +180,14 @@ A modern, production-ready **Next.js 16** starter boilerplate has been created f
 - Separator
 
 ### Notification & Feedback
+
 - Toast (custom)
 - Sonner (toast library)
 - Alert
 - Spinner
 
 ### Advanced Components
+
 - Calendar (with date picking)
 - Command Palette
 - Chart (for data visualization)
@@ -182,11 +199,13 @@ A modern, production-ready **Next.js 16** starter boilerplate has been created f
 ## 🎨 Styling & Theming System
 
 ### Styling Approach
+
 - **Primary**: Styled-Components (CSS-in-JS)
 - **Secondary**: Tailwind CSS
 - **Architecture**: Component-scoped styling with theme integration
 
 ### Theme Management
+
 - **Provider**: NextThemes + styled-components ThemeProvider
 - **Dark/Light Mode**:
   - System preference detection (respects OS dark mode)
@@ -196,11 +215,13 @@ A modern, production-ready **Next.js 16** starter boilerplate has been created f
   - CSS Variables for all theme colors
 
 ### Color System
+
 - **Light Mode**: Bright backgrounds, dark text
 - **Dark Mode**: Dark backgrounds, bright text
 - **Full Coverage**: All 50+ components theme-aware
 
 ### CSS Variables
+
 ```css
 --background    /* Page background */
 --foreground    /* Primary text color */
@@ -216,6 +237,7 @@ A modern, production-ready **Next.js 16** starter boilerplate has been created f
 ```
 
 ### Responsive Design
+
 - Mobile-first approach
 - Media queries for breakpoints
 - Mobile hook (`useMobile`) for responsive behavior
@@ -226,6 +248,7 @@ A modern, production-ready **Next.js 16** starter boilerplate has been created f
 ## 📡 API Integration
 
 ### Axios Configuration
+
 ```
 Client Setup:
 ├── Base URL from environment variables
@@ -235,6 +258,7 @@ Client Setup:
 ```
 
 ### Interceptor Features
+
 - **Request Interceptor**:
   - Attaches access token to every request
   - Checks token expiration
@@ -248,16 +272,18 @@ Client Setup:
   - Redirect to login on final failure
 
 ### Token Manager
+
 ```typescript
-- getAccessToken()
-- getRefreshToken()
-- setStoredTokens(accessToken, refreshToken)
-- clearTokens()
-- decodeToken(token)
-- isTokenExpired(token)
+-getAccessToken() -
+  getRefreshToken() -
+  setStoredTokens(accessToken, refreshToken) -
+  clearTokens() -
+  decodeToken(token) -
+  isTokenExpired(token);
 ```
 
 ### API Services
+
 - `authService`: Login, register, getCurrentUser, logout, refreshToken
 - `oauthService`: OAuth provider handling
 - Centralized endpoints configuration
@@ -267,16 +293,19 @@ Client Setup:
 ## 🧪 Testing Infrastructure
 
 ### Unit Testing
+
 - **Framework**: Vitest
 - **Environment**: Node.js
 - **Configuration**: Included test setup in vitest.config.mts
 
 ### UI Component Testing
+
 - **Browser Testing**: Vitest with Playwright provider
 - **Headless Browser**: Chromium for automated testing
 - **Screenshots**: Test results with screenshots directory
 
 ### End-to-End Testing
+
 - **Framework**: Playwright
 - **Test Patterns**: `.spec.ts` and `.e2e.ts` files
 - **CI Integration**: GitHub Actions ready
@@ -285,6 +314,7 @@ Client Setup:
 - **Dev Server**: Auto-launches server during tests
 
 ### Test Configuration
+
 ```
 Projects:
 ├── Unit Tests (Node.js environment)
@@ -296,6 +326,7 @@ Coverage Support:
 ```
 
 ### Testing Tools
+
 - `@playwright/test` - E2E testing
 - `@vitest/browser` - Browser testing
 - `@vitest/coverage-v8` - Coverage reporting
@@ -306,15 +337,18 @@ Coverage Support:
 ## 🌍 Internationalization (i18n)
 
 ### Framework
+
 - **Library**: next-intl
 - **Format**: JSON translation files
 
 ### Supported Languages
+
 - English (en)
 - French (fr)
-- *Easily extensible*
+- _Easily extensible_
 
 ### Features
+
 - Dynamic locale switching
 - Route-based locale handling (`[locale]` in path)
 - Translation keys organization
@@ -326,17 +360,20 @@ Coverage Support:
 ## 📝 Form Handling & Validation
 
 ### Form Management
+
 - **Library**: React Hook Form
 - **Performance**: Minimal re-renders
 - **API**: Simple, intuitive hooks
 
 ### Validation
+
 - **Primary**: Zod - Schema validation
 - **Alternative**: Valibot - Lightweight validation
 - **Custom Validators**: Support for custom validation rules
 - **Type-Safe**: TypeScript inference from schemas
 
 ### Form Components
+
 - Controlled inputs with hook-form integration
 - Error message display
 - Field validation states
@@ -349,6 +386,7 @@ Coverage Support:
 ### Code Quality Tools
 
 #### ESLint Configuration
+
 ```
 Rules:
 ├── React best practices (@eslint-react)
@@ -361,23 +399,27 @@ Rules:
 ```
 
 #### Code Formatting
+
 - **Prettier**: Automated formatting
 - **Husky**: Pre-commit hooks
 - **Lint-Staged**: Staged file linting
 - **Conventional Commits**: Commitlint validation
 
 ### Environment Management
+
 - **Validation**: @t3-oss/env-nextjs for env var safety
 - **CLI Support**: dotenv-cli
 - **Type-Safe**: Compile-time environment checking
 
 ### Build & Analysis
+
 - **Bundle Analysis**: @next/bundle-analyzer
 - **Unused Dependencies**: Knip detection
 - **i18n Validation**: Lingual checking
 - **React Compiler**: Babel plugin for optimization
 
 ### Debugging
+
 - **DevTools**: Zustand DevTools integration
 - **Logging**: LogTape logging library
 - **Browser DevTools**: Full TypeScript source maps
@@ -488,6 +530,7 @@ Next_Starter/
 ## 🚀 Key Features Summary
 
 ### ✅ Completed Features
+
 - [x] Next.js 16 + React 19 + TypeScript
 - [x] Authentication (Email/Password + OAuth)
 - [x] RBAC (4 roles with permission mapping)
@@ -513,13 +556,17 @@ Next_Starter/
 ## 📋 NOTE: Shimmer Component Status
 
 ### ⚠️ Documented but Not Implemented
+
 The `STYLED_COMPONENTS_SETUP.md` mentions Shimmer/Skeleton components for loading states, however:
+
 - **Current Status**: Not yet built as custom component
 - **Alternative Available**: Skeleton component from shadcn/ui exists
 - **Recommendation**: Build custom Shimmer component with animated gradient effect for polish
 
 ### 💡 Custom Shimmer Planned
+
 A custom Shimmer component with the following features should be implemented:
+
 - Animated gradient loading effect
 - Multiple skeleton variants
 - Customizable lines and elements
@@ -531,7 +578,9 @@ A custom Shimmer component with the following features should be implemented:
 ## 📊 Deliverables & Next Steps
 
 ### Current Deliverables
+
 ✅ Production-ready boilerplate with:
+
 - Full-featured authentication system
 - Complete role-based access control
 - Advanced state management
@@ -540,6 +589,7 @@ A custom Shimmer component with the following features should be implemented:
 - Enterprise-grade tooling
 
 ### Research Deliverables Expected
+
 - Feature requirements document
 - Implementation difficulty assessment
 - Integration complexity analysis
@@ -552,6 +602,7 @@ A custom Shimmer component with the following features should be implemented:
 ## 🎯 Quick Start
 
 ### Installation
+
 ```bash
 npm install
 # or
@@ -559,11 +610,13 @@ pnpm install
 ```
 
 ### Development
+
 ```bash
 npm run dev
 ```
 
 ### Testing
+
 ```bash
 npm run test              # Unit tests
 npm run test:watch       # Watch mode
@@ -571,12 +624,14 @@ npm run test:e2e         # E2E tests
 ```
 
 ### Build
+
 ```bash
 npm run build
 npm start
 ```
 
 ### Code Quality
+
 ```bash
 npm run lint
 npm run lint:fix
@@ -589,6 +644,7 @@ npm run check:types
 ## 📞 Questions & Support
 
 For clarifications on any feature or architecture decision, please refer to:
+
 - `README.md` - General overview
 - `AUTH_IMPLEMENTATION.md` - Authentication details
 - `DARK_MODE_GUIDE.md` - Theming system

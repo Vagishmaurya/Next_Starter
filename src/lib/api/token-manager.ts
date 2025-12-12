@@ -12,8 +12,10 @@ const REFRESH_TOKEN_KEY = 'refreshToken';
  * @returns Parsed tokens or null if not found
  */
 export const getStoredTokens = () => {
-  if (typeof window === 'undefined') return null;
-  
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
   try {
     const tokens = localStorage.getItem(TOKEN_STORAGE_KEY);
     return tokens ? JSON.parse(tokens) : null;
@@ -29,8 +31,10 @@ export const getStoredTokens = () => {
  * @param refreshToken - JWT refresh token
  */
 export const setStoredTokens = (accessToken: string, refreshToken: string) => {
-  if (typeof window === 'undefined') return;
-  
+  if (typeof window === 'undefined') {
+    return;
+  }
+
   try {
     localStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify({ accessToken }));
     localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
@@ -44,8 +48,10 @@ export const setStoredTokens = (accessToken: string, refreshToken: string) => {
  * @returns Access token or null if not found
  */
 export const getAccessToken = (): string | null => {
-  if (typeof window === 'undefined') return null;
-  
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
   try {
     const tokens = localStorage.getItem(TOKEN_STORAGE_KEY);
     return tokens ? JSON.parse(tokens).accessToken : null;
@@ -60,8 +66,10 @@ export const getAccessToken = (): string | null => {
  * @returns Refresh token or null if not found
  */
 export const getRefreshToken = (): string | null => {
-  if (typeof window === 'undefined') return null;
-  
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
   try {
     return localStorage.getItem(REFRESH_TOKEN_KEY);
   } catch (error) {
@@ -74,8 +82,10 @@ export const getRefreshToken = (): string | null => {
  * Clears all stored tokens
  */
 export const clearTokens = () => {
-  if (typeof window === 'undefined') return;
-  
+  if (typeof window === 'undefined') {
+    return;
+  }
+
   try {
     localStorage.removeItem(TOKEN_STORAGE_KEY);
     localStorage.removeItem(REFRESH_TOKEN_KEY);
@@ -92,7 +102,9 @@ export const clearTokens = () => {
 export const decodeToken = (token: string) => {
   try {
     const parts = token.split('.');
-    if (parts.length !== 3) return null;
+    if (parts.length !== 3) {
+      return null;
+    }
 
     const decoded = JSON.parse(atob(parts[1]));
     return decoded;
@@ -109,7 +121,9 @@ export const decodeToken = (token: string) => {
  */
 export const isTokenExpired = (token: string): boolean => {
   const decoded = decodeToken(token);
-  if (!decoded || !decoded.exp) return true;
+  if (!decoded || !decoded.exp) {
+    return true;
+  }
 
   // Check if token expires in less than 1 minute
   const expiryTime = decoded.exp * 1000;

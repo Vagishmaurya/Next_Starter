@@ -21,26 +21,26 @@ export type OAuthProvider = 'google' | 'github' | 'microsoft';
 /**
  * OAuth provider configuration
  */
-export interface OAuthProviderConfig {
+export type OAuthProviderConfig = {
   id: OAuthProvider;
   name: string;
   icon: string;
   enabled: boolean;
-}
+};
 
 /**
  * Authentication token payload structure
  */
-export interface TokenPayload {
+export type TokenPayload = {
   accessToken: string;
   refreshToken: string;
   expiresIn: number;
-}
+};
 
 /**
  * User data structure with role information
  */
-export interface User {
+export type User = {
   id: string;
   email: string;
   name: string;
@@ -49,28 +49,28 @@ export interface User {
   updatedAt: string;
   oauthProviders?: OAuthProvider[];
   avatar?: string;
-}
+};
 
 /**
  * Authentication response from API
  */
-export interface AuthResponse {
+export type AuthResponse = {
   tokens: TokenPayload;
   user: User;
-}
+};
 
 /**
  * API error response structure
  */
-export interface ApiError {
+export type ApiError = {
   message: string;
   code: string;
   statusCode: number;
-}
+};
 
 /**
  * Refresh token request payload
  */
-export interface RefreshTokenPayload {
+export type RefreshTokenPayload = {
   refreshToken: string;
-}
+};

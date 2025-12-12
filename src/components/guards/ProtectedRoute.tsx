@@ -6,11 +6,11 @@
 
 'use client';
 
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
+import type { UserRole } from '@/lib/api/types';
 import { useRoleBasedAccess } from '@/hooks/useRoleBasedAccess';
-import { UserRole } from '@/lib/api/types';
 
-interface ProtectedRouteProps {
+type ProtectedRouteProps = {
   /** Component to render if user is authorized */
   children: ReactNode;
   /** Required roles for access */
@@ -21,12 +21,12 @@ interface ProtectedRouteProps {
   fallback?: ReactNode;
   /** If true, requires all permissions; if false, requires any one */
   requireAll?: boolean;
-}
+};
 
 /**
  * ProtectedRoute Component
  * Conditionally renders content based on user role and permissions
- * 
+ *
  * @example
  * <ProtectedRoute requiredRoles={[UserRole.ADMIN]}>
  *   <AdminPanel />

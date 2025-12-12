@@ -1,11 +1,11 @@
+import type { Organization } from '@/lib/api/organizations.service';
 import { create } from 'zustand';
-import { Organization } from '@/lib/api/organizations.service';
 
-interface OrganizationsStore {
+type OrganizationsStore = {
   organizations: Organization[] | null;
   setOrganizations: (orgs: Organization[]) => void;
   clearOrganizations: () => void;
-}
+};
 
 export const useOrganizationsStore = create<OrganizationsStore>((set) => ({
   organizations: null,

@@ -9,12 +9,12 @@ import styled from 'styled-components';
 /**
  * Props for Card component
  */
-interface CardProps {
+type CardProps = {
   /** Padding inside card */
   padding?: string;
   /** Border style */
   border?: boolean;
-}
+};
 
 /**
  * Styled card container
@@ -24,8 +24,7 @@ export const Card = styled.div<CardProps>`
   color: ${({ theme }) => theme.cardForeground};
   border-radius: 0.5rem;
   padding: ${({ padding = '1.5rem' }) => padding};
-  ${({ border = true, theme }) =>
-    border ? `border: 1px solid ${theme.border};` : ''}
+  ${({ border = true, theme }) => (border ? `border: 1px solid ${theme.border};` : '')}
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
 

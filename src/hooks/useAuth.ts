@@ -9,17 +9,16 @@
 import { useCallback } from 'react';
 import { useAuthStore } from '@/lib/stores/useAuthStore';
 import { useUserStore } from '@/lib/stores/useUserStore';
-import { UserRole } from '@/lib/api/types';
 
 /**
  * useAuth Hook
  * Provides authentication state and methods for login, logout, register, and permission checking
- * 
+ *
  * @returns Object containing authentication state and methods
- * 
+ *
  * @example
  * const { user, isAuthenticated, login, logout, hasPermission } = useAuth();
- * 
+ *
  * if (hasPermission([UserRole.ADMIN])) {
  *   // Render admin-only content
  * }

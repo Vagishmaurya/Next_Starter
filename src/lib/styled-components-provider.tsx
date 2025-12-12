@@ -4,24 +4,24 @@
  * @module lib/styled-components-provider
  */
 
-import { ReactNode } from 'react';
-import { ThemeProvider } from 'styled-components';
+import type { ReactNode } from 'react';
 import { useTheme } from 'next-themes';
+import { ThemeProvider } from 'styled-components';
 import { GlobalStyle } from '@/styles/global-styles';
-import { lightTheme, darkTheme } from '@/styles/theme';
+import { darkTheme, lightTheme } from '@/styles/theme';
 
 /**
  * Props for ThemeWrapper component
  */
-interface ThemeWrapperProps {
+type ThemeWrapperProps = {
   children: ReactNode;
-}
+};
 
 /**
  * ThemeWrapper Component
  * Wraps application with styled-components ThemeProvider
  * Synchronizes theme with next-themes
- * 
+ *
  * @param {ThemeWrapperProps} props - Component props
  * @returns {JSX.Element} ThemeProvider wrapper
  */

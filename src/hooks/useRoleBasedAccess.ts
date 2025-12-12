@@ -7,8 +7,8 @@
 'use client';
 
 import { useCallback, useMemo } from 'react';
-import { useUserStore } from '@/lib/stores/useUserStore';
 import { UserRole } from '@/lib/api/types';
+import { useUserStore } from '@/lib/stores/useUserStore';
 
 /**
  * Role permission mapping
@@ -22,30 +22,20 @@ const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     'delete_content',
     'access_admin_panel',
   ],
-  [UserRole.MODERATOR]: [
-    'moderate_content',
-    'view_reports',
-    'manage_users',
-  ],
-  [UserRole.USER]: [
-    'view_profile',
-    'edit_profile',
-    'upload_content',
-  ],
-  [UserRole.GUEST]: [
-    'view_public_content',
-  ],
+  [UserRole.MODERATOR]: ['moderate_content', 'view_reports', 'manage_users'],
+  [UserRole.USER]: ['view_profile', 'edit_profile', 'upload_content'],
+  [UserRole.GUEST]: ['view_public_content'],
 };
 
 /**
  * useRoleBasedAccess Hook
  * Provides methods for checking user roles and permissions
- * 
+ *
  * @returns Object containing permission checking methods
- * 
+ *
  * @example
  * const { canAccess, canAccessPage, hasAllPermissions } = useRoleBasedAccess();
- * 
+ *
  * if (canAccess('manage_users')) {
  *   // Render user management component
  * }
@@ -60,7 +50,9 @@ export const useRoleBasedAccess = () => {
    */
   const canAccess = useCallback(
     (permission: string): boolean => {
-      if (!user) return false;
+      if (!user) {
+        return false;
+      }
       const userPermissions = ROLE_PERMISSIONS[user.role] || [];
       return userPermissions.includes(permission);
     },
@@ -112,7 +104,9 @@ export const useRoleBasedAccess = () => {
    * @returns Array of user's permissions
    */
   const getUserPermissions = useCallback(() => {
-    if (!user) return [];
+    if (!user) {
+      return [];
+    }
     return ROLE_PERMISSIONS[user.role] || [];
   }, [user]);
 

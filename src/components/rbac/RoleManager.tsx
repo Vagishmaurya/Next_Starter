@@ -6,11 +6,11 @@
 
 'use client';
 
-import { useRoleBasedAccess } from '@/hooks/useRoleBasedAccess';
+import { Shield } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Shield } from 'lucide-react';
+import { useRoleBasedAccess } from '@/hooks/useRoleBasedAccess';
 import { UserRole } from '@/lib/api/types';
 
 /**
@@ -36,24 +36,17 @@ const ROLE_COLORS: Record<UserRole, 'destructive' | 'secondary' | 'default' | 'o
 /**
  * RoleManager Component
  * Displays role information and available permissions
- * 
+ *
  * @example
  * <RoleManager />
  */
 export const RoleManager = () => {
-  const {
-    currentUserRole,
-    getUserPermissions,
-    isAdmin,
-    isModerator,
-  } = useRoleBasedAccess();
+  const { currentUserRole, getUserPermissions, isAdmin, isModerator } = useRoleBasedAccess();
 
   if (!currentUserRole) {
     return (
       <Card className="p-6">
-        <p className="text-sm text-muted-foreground">
-          No role information available
-        </p>
+        <p className="text-sm text-muted-foreground">No role information available</p>
       </Card>
     );
   }
@@ -75,9 +68,7 @@ export const RoleManager = () => {
           {isAdmin && <Badge variant="destructive">Administrator</Badge>}
           {isModerator && <Badge variant="secondary">Moderator</Badge>}
         </div>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {ROLE_DESCRIPTIONS[currentUserRole]}
-        </p>
+        <p className="mt-2 text-sm text-muted-foreground">{ROLE_DESCRIPTIONS[currentUserRole]}</p>
       </div>
 
       <Separator />
@@ -97,9 +88,7 @@ export const RoleManager = () => {
             ))}
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground">
-            No permissions available for this role
-          </p>
+          <p className="text-sm text-muted-foreground">No permissions available for this role</p>
         )}
       </div>
     </Card>

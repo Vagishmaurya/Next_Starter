@@ -4,8 +4,8 @@
  * Includes stores, API, and utilities
  */
 
-// Stores
-export * from './stores';
-
 // API
 export * from './api';
+
+// Stores
+export * from './stores';

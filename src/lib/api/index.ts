@@ -4,10 +4,22 @@
  * Includes client, interceptors, services, and types
  */
 
-export { apiClient, default } from './client';
 export { authService } from './auth.service';
+export { apiClient, default } from './client';
 export { API_ENDPOINTS } from './endpoints';
-export type { User, AuthResponse, TokenPayload, ApiError, RefreshTokenPayload } from './types';
+export {
+  setupInterceptors,
+  setupRequestInterceptor,
+  setupResponseInterceptor,
+} from './interceptor-setup';
+export {
+  clearTokens,
+  decodeToken,
+  getAccessToken,
+  getRefreshToken,
+  getStoredTokens,
+  isTokenExpired,
+  setStoredTokens,
+} from './token-manager';
+export type { ApiError, AuthResponse, RefreshTokenPayload, TokenPayload, User } from './types';
 export { UserRole } from './types';
-export { setupInterceptors, setupRequestInterceptor, setupResponseInterceptor } from './interceptor-setup';
-export { getAccessToken, getRefreshToken, getStoredTokens, setStoredTokens, clearTokens, decodeToken, isTokenExpired } from './token-manager';

@@ -9,12 +9,12 @@ import styled from 'styled-components';
 /**
  * Props for Input component
  */
-interface InputProps {
+type InputProps = {
   /** Whether input is disabled */
   disabled?: boolean;
   /** Whether input has error */
   error?: boolean;
-}
+};
 
 /**
  * Styled input element

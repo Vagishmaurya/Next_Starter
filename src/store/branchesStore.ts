@@ -1,7 +1,7 @@
+import type { Branch, Commit } from '@/lib/api/branches.service';
 import { create } from 'zustand';
-import { Branch, Commit } from '@/lib/api/branches.service';
 
-interface BranchesStore {
+type BranchesStore = {
   branches: Branch[];
   commits: Commit[];
   selectedBranch: string | null;
@@ -9,7 +9,7 @@ interface BranchesStore {
   error: string | null;
   owner: string;
   repository: string;
-  
+
   setBranches: (branches: Branch[]) => void;
   setCommits: (commits: Commit[]) => void;
   setSelectedBranch: (branch: string | null) => void;
@@ -17,7 +17,7 @@ interface BranchesStore {
   setError: (error: string | null) => void;
   setRepository: (owner: string, repo: string) => void;
   reset: () => void;
-}
+};
 
 export const useBranchesStore = create<BranchesStore>((set) => ({
   branches: [],
@@ -27,20 +27,21 @@ export const useBranchesStore = create<BranchesStore>((set) => ({
   error: null,
   owner: '',
   repository: '',
-  
+
   setBranches: (branches) => set({ branches }),
   setCommits: (commits) => set({ commits }),
   setSelectedBranch: (branch) => set({ selectedBranch: branch }),
   setLoading: (loading) => set({ isLoading: loading }),
   setError: (error) => set({ error }),
   setRepository: (owner, repo) => set({ owner, repository: repo }),
-  reset: () => set({
-    branches: [],
-    commits: [],
-    selectedBranch: null,
-    isLoading: false,
-    error: null,
-    owner: '',
-    repository: '',
-  }),
+  reset: () =>
+    set({
+      branches: [],
+      commits: [],
+      selectedBranch: null,
+      isLoading: false,
+      error: null,
+      owner: '',
+      repository: '',
+    }),
 }));

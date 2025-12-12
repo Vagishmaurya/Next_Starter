@@ -1,7 +1,7 @@
+import type { Repository } from '@/lib/api/organizations.service';
 import { create } from 'zustand';
-import { Repository } from '@/lib/api/organizations.service';
 
-interface RepositoriesStore {
+type RepositoriesStore = {
   repositories: Repository[] | null;
   isLoading: boolean;
   error: string | null;
@@ -9,7 +9,7 @@ interface RepositoriesStore {
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   clearRepositories: () => void;
-}
+};
 
 export const useRepositoriesStore = create<RepositoriesStore>((set) => ({
   repositories: null,

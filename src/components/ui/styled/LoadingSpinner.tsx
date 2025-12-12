@@ -21,12 +21,12 @@ const spin = keyframes`
 /**
  * Props for LoadingSpinner component
  */
-interface LoadingSpinnerProps {
+type LoadingSpinnerProps = {
   /** Size of spinner in pixels */
   size?: number;
   /** Color of spinner */
   color?: string;
-}
+};
 
 /**
  * Styled spinner container
@@ -56,10 +56,7 @@ const SpinnerCircle = styled.div<LoadingSpinnerProps>`
  * @param {LoadingSpinnerProps} props - Component props
  * @returns {JSX.Element} Rendered spinner
  */
-export const LoadingSpinner = ({
-  size = 24,
-  color,
-}: LoadingSpinnerProps): JSX.Element => {
+export const LoadingSpinner = ({ size = 24, color }: LoadingSpinnerProps): JSX.Element => {
   return (
     <SpinnerContainer size={size}>
       <SpinnerCircle size={size} color={color} />

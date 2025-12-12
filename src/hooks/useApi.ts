@@ -1,20 +1,17 @@
 import { useCallback, useState } from 'react';
 import { useAppStore } from '@/lib/stores/useAppStore';
 
-interface UseApiOptions {
+type UseApiOptions = {
   onSuccess?: (data: any) => void;
   onError?: (error: Error) => void;
-}
+};
 
 export const useApi = () => {
   const [error, setError] = useState<Error | null>(null);
   const setLoading = useAppStore((state) => state.setLoading);
 
   const request = useCallback(
-    async (
-      apiCall: () => Promise<any>,
-      options?: UseApiOptions,
-    ) => {
+    async (apiCall: () => Promise<any>, options?: UseApiOptions) => {
       try {
         setLoading(true);
         setError(null);
@@ -30,7 +27,7 @@ export const useApi = () => {
         setLoading(false);
       }
     },
-    [setLoading],
+    [setLoading]
   );
 
   return { request, error };
