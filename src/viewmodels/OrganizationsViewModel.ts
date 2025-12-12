@@ -1,13 +1,13 @@
 /**
  * Organizations ViewModel
  * Follows MVVM (Model-View-ViewModel) Pattern
- * 
+ *
  * Responsibilities:
  * - Manages organizations state and data fetching
  * - Handles loading, error, and success states
  * - Delegates API calls to service layer
  * - Provides reusable state across components
- * 
+ *
  * Flow:
  * 1. Component calls fetchOrganizations()
  * 2. ViewModel sets loading state
@@ -18,14 +18,15 @@
 
 'use client';
 
+import type { Organization } from '@/lib/api/organizations.service';
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import { organizationsService, Organization } from '@/lib/api/organizations.service';
+import { organizationsService } from '@/lib/api/organizations.service';
 
 /**
  * ViewModel State Interface
  */
-interface OrganizationsViewModelState {
+type OrganizationsViewModelState = {
   // State properties
   organizations: Organization[];
   isLoading: boolean;
@@ -36,21 +37,21 @@ interface OrganizationsViewModelState {
   fetchOrganizations: () => Promise<Organization[]>;
   clearError: () => void;
   resetState: () => void;
-}
+};
 
 /**
  * Organizations ViewModel
  * Zustand store for managing organizations state
- * 
+ *
  * @example
  * const { fetchOrganizations, organizations, isLoading, error } = useOrganizationsViewModel();
- * 
+ *
  * useEffect(() => {
  *   fetchOrganizations();
  * }, []);
  */
 export const useOrganizationsViewModel = create<OrganizationsViewModelState>()(
-  devtools((set) => ({
+  devtools(set => ({
     // Initial state
     organizations: [],
     isLoading: false,
@@ -59,7 +60,7 @@ export const useOrganizationsViewModel = create<OrganizationsViewModelState>()(
 
     /**
      * Fetches user organizations from API
-     * 
+     *
      * State Management:
      * 1. Sets isLoading = true, error = null
      * 2. Calls service layer method
@@ -67,7 +68,7 @@ export const useOrganizationsViewModel = create<OrganizationsViewModelState>()(
      * 4. Sets isInitialized = true
      * 5. If error occurs, updates error state
      * 6. Sets isLoading = false
-     * 
+     *
      * @returns Array of organizations
      * @throws Throws error which is caught and stored in state
      */
@@ -117,5 +118,5 @@ export const useOrganizationsViewModel = create<OrganizationsViewModelState>()(
         isInitialized: false,
       });
     },
-  }))
+  })),
 );

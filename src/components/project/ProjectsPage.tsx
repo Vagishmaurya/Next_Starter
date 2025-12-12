@@ -2,8 +2,8 @@
 
 import type { Organization } from '@/lib/api/organizations.service';
 import { GitBranch, Github, Star } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import React, { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import {
@@ -40,13 +40,13 @@ export default function ProjectsPage() {
       try {
         // Priority 1: Use organizations from Zustand store
         if (
-          storeOrganizations &&
-          Array.isArray(storeOrganizations) &&
-          storeOrganizations.length > 0
+          storeOrganizations
+          && Array.isArray(storeOrganizations)
+          && storeOrganizations.length > 0
         ) {
           console.warn('Using organizations from store:', storeOrganizations);
           const validOrgs = storeOrganizations.filter(
-            (org) => org && typeof org === 'object' && org.id && org.login
+            org => org && typeof org === 'object' && org.id && org.login,
           );
 
           if (validOrgs.length > 0) {
@@ -107,8 +107,8 @@ export default function ProjectsPage() {
       Go: theme === 'dark' ? 'bg-cyan-500/10 text-cyan-400' : 'bg-cyan-100 text-cyan-800',
     };
     return (
-      colors[language || ''] ||
-      (theme === 'dark' ? 'bg-gray-500/10 text-gray-400' : 'bg-gray-100 text-gray-800')
+      colors[language || '']
+      || (theme === 'dark' ? 'bg-gray-500/10 text-gray-400' : 'bg-gray-100 text-gray-800')
     );
   };
 
@@ -128,12 +128,15 @@ export default function ProjectsPage() {
               theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'
             }`}
           >
-            Select Organization{' '}
+            Select Organization
+            {' '}
             {displayOrganizations.length > 0 && (
               <span
                 className={`text-xs font-normal ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}
               >
-                ({displayOrganizations.length})
+                (
+                {displayOrganizations.length}
+                )
               </span>
             )}
           </label>
@@ -158,7 +161,7 @@ export default function ProjectsPage() {
                 }
               >
                 {displayOrganizations.length > 0 ? (
-                  displayOrganizations.map((org) => (
+                  displayOrganizations.map(org => (
                     <SelectItem key={org.id} value={org.login}>
                       <div
                         className={`flex items-center gap-2 ${
@@ -244,7 +247,7 @@ export default function ProjectsPage() {
           </div>
         ) : repositories && repositories.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            {repositories.map((repo) => (
+            {repositories.map(repo => (
               <Card
                 key={repo.id}
                 onClick={() => handleRepositoryClick(repo.name)}

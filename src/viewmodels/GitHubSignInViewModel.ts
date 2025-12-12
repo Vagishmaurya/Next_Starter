@@ -1,13 +1,13 @@
 /**
  * GitHub Sign-In ViewModel
  * Follows MVVM (Model-View-ViewModel) Pattern
- * 
+ *
  * Responsibilities:
  * - Manages GitHub OAuth sign-in state
  * - Handles loading, error, and success states
  * - Delegates OAuth flow to service layer
  * - Provides reusable state across components
- * 
+ *
  * Flow:
  * 1. Component calls initiateGithubSignIn()
  * 2. ViewModel sets loading state
@@ -27,7 +27,7 @@ import { oauthService } from '@/lib/api/oauth.service';
 /**
  * ViewModel State Interface
  */
-interface GitHubSignInViewModelState {
+type GitHubSignInViewModelState = {
   // State properties
   isLoading: boolean;
   error: string | null;
@@ -37,22 +37,22 @@ interface GitHubSignInViewModelState {
   initiateGithubSignIn: () => Promise<void>;
   clearError: () => void;
   resetState: () => void;
-}
+};
 
 /**
  * GitHub Sign-In ViewModel
  * Zustand store for managing GitHub OAuth state
- * 
+ *
  * @example
  * const { initiateGithubSignIn, isLoading, error, clearError } = useGitHubSignInViewModel();
- * 
+ *
  * const handleClick = async () => {
  *   clearError();
  *   await initiateGithubSignIn();
  * };
  */
 export const useGitHubSignInViewModel = create<GitHubSignInViewModelState>()(
-  devtools((set) => ({
+  devtools(set => ({
     // Initial state
     isLoading: false,
     error: null,
@@ -60,16 +60,16 @@ export const useGitHubSignInViewModel = create<GitHubSignInViewModelState>()(
 
     /**
      * Initiates GitHub OAuth sign-in flow
-     * 
+     *
      * State Management:
      * 1. Sets isLoading = true, error = null, isInitiating = true
      * 2. Calls service layer method
      * 3. If error occurs, updates error state
      * 4. Sets isLoading = false
-     * 
+     *
      * Note: User will be redirected by backend, so try/catch will handle
      * any errors that occur before redirection
-     * 
+     *
      * @throws Throws error which is caught and stored in state
      */
     initiateGithubSignIn: async () => {
@@ -85,8 +85,8 @@ export const useGitHubSignInViewModel = create<GitHubSignInViewModelState>()(
         // But we keep it for consistency in error scenarios
         console.log('[GitHubSignInViewModel] GitHub OAuth initiated successfully');
       } catch (err) {
-        const errorMessage =
-          err instanceof Error ? err.message : 'Failed to initiate GitHub sign-in';
+        const errorMessage
+          = err instanceof Error ? err.message : 'Failed to initiate GitHub sign-in';
 
         console.error('[GitHubSignInViewModel] Error:', errorMessage);
         set({ error: errorMessage, isLoading: false, isInitiating: false });
@@ -112,5 +112,5 @@ export const useGitHubSignInViewModel = create<GitHubSignInViewModelState>()(
         isInitiating: false,
       });
     },
-  }))
+  })),
 );

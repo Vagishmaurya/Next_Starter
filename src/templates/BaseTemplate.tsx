@@ -1,7 +1,7 @@
 import { useTranslations } from 'next-intl';
-import { AppConfig } from '@/utils/AppConfig';
-import { ThemeToggle } from '@/components/theme-toggle';
 import styled from 'styled-components';
+import { ThemeToggle } from '@/components/theme-toggle';
+import { AppConfig } from '@/utils/AppConfig';
 
 const TemplateWrapper = styled.div`
   width: 100%;

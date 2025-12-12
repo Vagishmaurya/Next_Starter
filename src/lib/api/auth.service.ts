@@ -4,21 +4,21 @@
  * Manages user login, registration, logout, and token refresh
  */
 
+import type { AuthResponse, User } from './types';
 import { apiClient } from './client';
 import { API_ENDPOINTS } from './endpoints';
-import { AuthResponse, User } from './types';
-import { setStoredTokens, clearTokens } from './token-manager';
+import { clearTokens, setStoredTokens } from './token-manager';
 
-interface LoginPayload {
+type LoginPayload = {
   email: string;
   password: string;
-}
+};
 
-interface RegisterPayload {
+type RegisterPayload = {
   email: string;
   password: string;
   name: string;
-}
+};
 
 /**
  * Authentication Service Object
@@ -28,7 +28,7 @@ export const authService = {
   /**
    * Login user with email and password
    * Stores tokens in localStorage upon successful login
-   * 
+   *
    * @param payload - Login credentials (email and password)
    * @returns User data and tokens
    * @throws Error if login fails
@@ -38,7 +38,7 @@ export const authService = {
       console.log('[AuthService] Logging in user:', payload.email);
       const response = await apiClient.post<AuthResponse>(
         API_ENDPOINTS.AUTH.LOGIN,
-        payload
+        payload,
       );
 
       if (response.data.tokens) {
@@ -57,7 +57,7 @@ export const authService = {
   /**
    * Register new user with email, password, and name
    * Stores tokens in localStorage upon successful registration
-   * 
+   *
    * @param payload - Registration data (email, password, name)
    * @returns User data and tokens
    * @throws Error if registration fails
@@ -67,7 +67,7 @@ export const authService = {
       console.log('[AuthService] Registering new user:', payload.email);
       const response = await apiClient.post<AuthResponse>(
         API_ENDPOINTS.AUTH.REGISTER,
-        payload
+        payload,
       );
 
       if (response.data.tokens) {
@@ -86,7 +86,7 @@ export const authService = {
   /**
    * Fetch current authenticated user profile
    * Requires valid access token in request
-   * 
+   *
    * @returns Current user data
    * @throws Error if request fails or user is not authenticated
    */
@@ -105,7 +105,7 @@ export const authService = {
   /**
    * Logout current user
    * Clears tokens from localStorage and notifies backend
-   * 
+   *
    * @returns void
    * @throws Error if logout request fails
    */
@@ -126,7 +126,7 @@ export const authService = {
   /**
    * Refresh authentication token using refresh token
    * Called automatically by interceptor when access token expires
-   * 
+   *
    * @returns New tokens and user data
    * @throws Error if refresh fails
    */
@@ -134,7 +134,7 @@ export const authService = {
     try {
       console.log('[AuthService] Refreshing authentication token');
       const response = await apiClient.post<AuthResponse>(
-        API_ENDPOINTS.AUTH.REFRESH
+        API_ENDPOINTS.AUTH.REFRESH,
       );
 
       if (response.data.tokens) {

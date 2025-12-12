@@ -22,7 +22,7 @@ const shimmerAnimation = keyframes`
 /**
  * Props for Shimmer component
  */
-interface ShimmerProps {
+type ShimmerProps = {
   /** Width of shimmer element */
   width?: string | number;
   /** Height of shimmer element */
@@ -31,7 +31,7 @@ interface ShimmerProps {
   borderRadius?: string;
   /** Margin around shimmer */
   margin?: string;
-}
+};
 
 /**
  * Styled shimmer skeleton element
@@ -58,12 +58,12 @@ export const Shimmer = styled.div<ShimmerProps>`
  * Skeleton Loading Component
  * Displays multiple shimmer elements as loading placeholder
  */
-interface SkeletonProps {
+type SkeletonProps = {
   /** Number of lines to display */
   lines?: number;
   /** Show avatar skeleton */
   showAvatar?: boolean;
-}
+};
 
 /**
  * Styled container for skeleton lines

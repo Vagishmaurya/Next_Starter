@@ -4,16 +4,16 @@
  * Handles login, registration, and logout operations
  */
 
+import type { AuthResponse } from '@/lib/api/types';
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { authService } from '@/lib/api/auth.service';
-import { AuthResponse } from '@/lib/api/types';
 import { useUserStore } from './useUserStore';
 
 /**
  * Authentication store state interface
  */
-interface AuthState {
+type AuthState = {
   isLoading: boolean;
   error: string | null;
 
@@ -24,14 +24,14 @@ interface AuthState {
   getCurrentUser: () => Promise<void>;
   clearError: () => void;
   oauthLogin: (email: string) => Promise<void>;
-}
+};
 
 /**
  * Zustand store for authentication operations
  * Coordinates with user store for state management
  */
 export const useAuthStore = create<AuthState>()(
-  devtools((set) => ({
+  devtools(set => ({
     isLoading: false,
     error: null,
 
@@ -46,10 +46,10 @@ export const useAuthStore = create<AuthState>()(
       try {
         console.log('[AuthStore] Starting login process');
         const response: AuthResponse = await authService.login({ email, password });
-        
+
         // Update user store with login response
         useUserStore.getState().setUser(response.user);
-        
+
         console.log('[AuthStore] Login successful');
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Login failed';
@@ -73,10 +73,10 @@ export const useAuthStore = create<AuthState>()(
       try {
         console.log('[AuthStore] Starting registration process');
         const response: AuthResponse = await authService.register({ email, password, name });
-        
+
         // Update user store with registration response
         useUserStore.getState().setUser(response.user);
-        
+
         console.log('[AuthStore] Registration successful');
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Registration failed';
@@ -96,10 +96,10 @@ export const useAuthStore = create<AuthState>()(
       try {
         console.log('[AuthStore] Starting logout process');
         await authService.logout();
-        
+
         // Clear user from store
         useUserStore.getState().clearUser();
-        
+
         console.log('[AuthStore] Logout successful');
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Logout failed';
@@ -119,10 +119,10 @@ export const useAuthStore = create<AuthState>()(
       try {
         console.log('[AuthStore] Fetching current user');
         const user = await authService.getCurrentUser();
-        
+
         // Update user store
         useUserStore.getState().setUser(user);
-        
+
         console.log('[AuthStore] Current user fetched');
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Failed to fetch user';
@@ -149,10 +149,10 @@ export const useAuthStore = create<AuthState>()(
       try {
         console.log('[AuthStore] Authenticating via OAuth:', email);
         const user = await authService.getCurrentUser();
-        
+
         // Update user store with OAuth response
         useUserStore.getState().setUser(user);
-        
+
         console.log('[AuthStore] OAuth authentication successful');
       } catch (error) {
         const message = error instanceof Error ? error.message : 'OAuth authentication failed';
@@ -163,5 +163,5 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: false });
       }
     },
-  }))
+  })),
 );

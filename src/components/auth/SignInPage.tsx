@@ -1,16 +1,16 @@
-"use client"
+'use client';
 
+import { GitBranch, Github, Rocket, Zap } from 'lucide-react';
 import Image from 'next/image';
-import { Github, Zap, GitBranch, Rocket } from 'lucide-react';
 import { useGitHubSignInViewModel } from '@/viewmodels/GitHubSignInViewModel';
 
 /**
  * SignInPage Component
- * 
+ *
  * View Layer in MVVM Pattern
  * Displays GitHub sign-in UI
  * Delegates state management to ViewModel
- * 
+ *
  * Flow:
  * 1. User clicks "Continue with GitHub" button
  * 2. Component calls ViewModel.initiateGithubSignIn()

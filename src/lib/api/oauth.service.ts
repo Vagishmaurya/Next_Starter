@@ -4,22 +4,22 @@
  * Supports Google, GitHub, and custom OAuth providers
  */
 
+import type { AuthResponse, OAuthProvider } from './types';
 import { apiClient } from './client';
 import { API_ENDPOINTS } from './endpoints';
-import { AuthResponse, OAuthProvider } from './types';
 import { setStoredTokens } from './token-manager';
 
-interface OAuthCallbackPayload {
+type OAuthCallbackPayload = {
   code: string;
   provider: OAuthProvider;
   redirectUri: string;
-}
+};
 
-interface OAuthRedirectResponse {
+type OAuthRedirectResponse = {
   redirectUrl: string;
   state: string;
   codeChallenge: string;
-}
+};
 
 /**
  * OAuth/SSO Service
@@ -36,7 +36,7 @@ export const oauthService = {
     try {
       console.log(`[OAuthService] Getting redirect URL for ${provider}`);
       const response = await apiClient.get<OAuthRedirectResponse>(
-        `${API_ENDPOINTS.AUTH.OAUTH_REDIRECT}?provider=${provider}`
+        `${API_ENDPOINTS.AUTH.OAUTH_REDIRECT}?provider=${provider}`,
       );
       console.log(`[OAuthService] Redirect URL obtained for ${provider}`);
       return response.data;
@@ -58,7 +58,7 @@ export const oauthService = {
       console.log(`[OAuthService] Handling OAuth callback for ${payload.provider}`);
       const response = await apiClient.post<AuthResponse>(
         API_ENDPOINTS.AUTH.OAUTH_CALLBACK,
-        payload
+        payload,
       );
 
       if (response.data.tokens) {
@@ -87,7 +87,7 @@ export const oauthService = {
       console.log(`[OAuthService] Linking OAuth provider ${provider}`);
       const response = await apiClient.post<AuthResponse>(
         `${API_ENDPOINTS.AUTH.OAUTH_LINK}`,
-        { provider, code }
+        { provider, code },
       );
       console.log(`[OAuthService] OAuth provider linked successfully`);
       return response.data;
@@ -109,7 +109,7 @@ export const oauthService = {
       console.log(`[OAuthService] Unlinking OAuth provider ${provider}`);
       const response = await apiClient.post<AuthResponse>(
         `${API_ENDPOINTS.AUTH.OAUTH_UNLINK}`,
-        { provider }
+        { provider },
       );
       console.log(`[OAuthService] OAuth provider unlinked successfully`);
       return response.data;
@@ -128,7 +128,7 @@ export const oauthService = {
     try {
       console.log(`[OAuthService] Fetching connected OAuth providers`);
       const response = await apiClient.get<{ providers: OAuthProvider[] }>(
-        API_ENDPOINTS.AUTH.OAUTH_PROVIDERS
+        API_ENDPOINTS.AUTH.OAUTH_PROVIDERS,
       );
       console.log(`[OAuthService] Connected providers fetched:`, response.data.providers);
       return response.data.providers;
@@ -140,7 +140,7 @@ export const oauthService = {
 
   /**
    * Initiates GitHub OAuth flow with backend
-   * 
+   *
    * Backend Flow:
    * 1. Frontend redirects to GET /api/auth/github
    * 2. Backend creates authorization URL with client_id
@@ -153,21 +153,21 @@ export const oauthService = {
    * 9. Backend redirects to /auth/callback with JWT token
    * 10. Frontend stores JWT in localStorage
    * 11. Frontend includes JWT in Authorization header for all requests
-   * 
+   *
    * @throws Error if redirection fails
    */
   async initiateGithubOAuth(): Promise<void> {
     try {
       console.log('[OAuthService] Initiating GitHub OAuth flow');
-      
+
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
-      
+
       // Construct backend GitHub OAuth endpoint
       // Backend handles entire OAuth protocol with GitHub
       const githubAuthUrl = `${apiUrl}/auth/github`;
-      
+
       console.log(`[OAuthService] Redirecting to backend GitHub endpoint: ${githubAuthUrl}`);
-      
+
       // Redirect to backend - backend will handle GitHub OAuth
       window.location.href = githubAuthUrl;
     } catch (error) {

@@ -4,13 +4,13 @@
  * Implements automatic retry on 401 with token refresh
  */
 
-import { AxiosInstance, AxiosError } from 'axios';
+import type { AxiosError, AxiosInstance } from 'axios';
 import {
+  clearTokens,
   getAccessToken,
   getRefreshToken,
-  setStoredTokens,
-  clearTokens,
   isTokenExpired,
+  setStoredTokens,
 } from './token-manager';
 
 /** Flag to prevent multiple concurrent token refresh requests */
@@ -32,7 +32,7 @@ const subscribeTokenRefresh = (callback: (token: string) => void) => {
  * @param token - New access token
  */
 const onRefreshed = (token: string) => {
-  refreshSubscribers.forEach((callback) => callback(token));
+  refreshSubscribers.forEach(callback => callback(token));
   refreshSubscribers = [];
 };
 
@@ -43,7 +43,7 @@ const onRefreshed = (token: string) => {
  */
 const refreshAccessToken = async (apiClient: AxiosInstance): Promise<string | null> => {
   const refreshToken = getRefreshToken();
-  
+
   if (!refreshToken) {
     console.warn('[Interceptor] No refresh token available');
     return null;
@@ -51,16 +51,16 @@ const refreshAccessToken = async (apiClient: AxiosInstance): Promise<string | nu
 
   try {
     console.log('[Interceptor] Attempting to refresh token');
-    
+
     const response = await apiClient.post(
       '/auth/refresh',
       { refreshToken },
-      { skipInterceptor: true } as any
+      { skipInterceptor: true } as any,
     );
 
     const { accessToken: newAccessToken, refreshToken: newRefreshToken } = response.data.tokens;
     setStoredTokens(newAccessToken, newRefreshToken);
-    
+
     console.log('[Interceptor] Token refreshed successfully');
     return newAccessToken;
   } catch (error) {
@@ -86,13 +86,13 @@ export const setupRequestInterceptor = (apiClient: AxiosInstance) => {
       }
 
       const accessToken = getAccessToken();
-      
+
       if (accessToken) {
         // Check if token is about to expire
         if (isTokenExpired(accessToken)) {
           console.log('[Interceptor] Access token expired, will attempt refresh');
         }
-        
+
         config.headers.Authorization = `Bearer ${accessToken}`;
       }
 
@@ -101,7 +101,7 @@ export const setupRequestInterceptor = (apiClient: AxiosInstance) => {
     (error) => {
       console.error('[Interceptor] Request error:', error);
       return Promise.reject(error);
-    }
+    },
   );
 };
 
@@ -127,7 +127,7 @@ export const setupResponseInterceptor = (apiClient: AxiosInstance) => {
 
           try {
             const newAccessToken = await refreshAccessToken(apiClient);
-            
+
             if (newAccessToken) {
               isRefreshing = false;
               onRefreshed(newAccessToken);
@@ -167,7 +167,7 @@ export const setupResponseInterceptor = (apiClient: AxiosInstance) => {
       }
 
       return Promise.reject(error);
-    }
+    },
   );
 };
 

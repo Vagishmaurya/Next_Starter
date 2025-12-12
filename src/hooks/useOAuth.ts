@@ -6,21 +6,21 @@
 
 'use client';
 
-import { useCallback, useState } from 'react';
+import type { OAuthProvider } from '@/lib/api/types';
 import { useRouter } from 'next/navigation';
+import { useCallback, useState } from 'react';
 import { oauthService } from '@/lib/api/oauth.service';
 import { useAuthStore } from '@/lib/stores/useAuthStore';
-import { OAuthProvider } from '@/lib/api/types';
 
 /**
  * useOAuth Hook
  * Manages OAuth/SSO authentication and provider linking
- * 
+ *
  * @returns Object containing OAuth methods and state
- * 
+ *
  * @example
  * const { initiateOAuth, linkProvider, unlinkProvider } = useOAuth();
- * 
+ *
  * const handleGoogleLogin = async () => {
  *   await initiateOAuth('google');
  * };
@@ -45,10 +45,10 @@ export const useOAuth = () => {
       try {
         console.log(`[useOAuth] Initiating OAuth for ${provider}`);
         const { redirectUrl } = await oauthService.getOAuthRedirectUrl(provider);
-        
+
         // Store state for verification after callback
         sessionStorage.setItem(`oauth_provider_${provider}`, provider);
-        
+
         // Redirect to OAuth provider
         window.location.href = redirectUrl;
       } catch (err) {
@@ -58,7 +58,7 @@ export const useOAuth = () => {
         setIsLoading(false);
       }
     },
-    []
+    [],
   );
 
   /**
@@ -76,12 +76,12 @@ export const useOAuth = () => {
         const response = await oauthService.handleOAuthCallback({
           code,
           provider,
-          redirectUri: window.location.origin + '/auth/callback',
+          redirectUri: `${window.location.origin}/auth/callback`,
         });
 
         // Update auth state
         await login(response.user.email, ''); // Password not needed for OAuth
-        
+
         console.log(`[useOAuth] OAuth authentication successful`);
         router.push('/dashboard');
       } catch (err) {
@@ -91,7 +91,7 @@ export const useOAuth = () => {
         setIsLoading(false);
       }
     },
-    [login, router]
+    [login, router],
   );
 
   /**
@@ -107,7 +107,7 @@ export const useOAuth = () => {
       try {
         console.log(`[useOAuth] Linking provider ${provider}`);
         const response = await oauthService.linkOAuthProvider(provider, code);
-        
+
         setConnectedProviders(response.user.oauthProviders || []);
         console.log(`[useOAuth] Provider linked successfully`);
       } catch (err) {
@@ -118,7 +118,7 @@ export const useOAuth = () => {
         setIsLoading(false);
       }
     },
-    []
+    [],
   );
 
   /**
@@ -133,7 +133,7 @@ export const useOAuth = () => {
       try {
         console.log(`[useOAuth] Unlinking provider ${provider}`);
         const response = await oauthService.unlinkOAuthProvider(provider);
-        
+
         setConnectedProviders(response.user.oauthProviders || []);
         console.log(`[useOAuth] Provider unlinked successfully`);
       } catch (err) {
@@ -144,7 +144,7 @@ export const useOAuth = () => {
         setIsLoading(false);
       }
     },
-    []
+    [],
   );
 
   /**
@@ -171,7 +171,7 @@ export const useOAuth = () => {
     (provider: OAuthProvider): boolean => {
       return connectedProviders.includes(provider);
     },
-    [connectedProviders]
+    [connectedProviders],
   );
 
   return {

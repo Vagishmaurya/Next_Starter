@@ -7,7 +7,7 @@
 import { apiClient } from './client';
 import { API_ENDPOINTS } from './endpoints';
 
-export interface Organization {
+export type Organization = {
   id: number;
   login: string;
   avatar_url: string;
@@ -17,9 +17,9 @@ export interface Organization {
   public_repos?: number;
   followers?: number;
   following?: number;
-}
+};
 
-export interface Repository {
+export type Repository = {
   id: number;
   name: string;
   full_name: string;
@@ -32,12 +32,12 @@ export interface Repository {
   watchers_count: number;
   forks_count: number;
   open_issues_count: number;
-}
+};
 
 /**
  * API Response interface for organizations endpoint
  */
-interface OrganizationsApiResponse {
+type OrganizationsApiResponse = {
   success: boolean;
   message: string;
   data: {
@@ -45,19 +45,19 @@ interface OrganizationsApiResponse {
     organizations: Organization[];
     user: string;
   };
-}
+};
 
 /**
  * API Response interface for repositories endpoint
  */
-interface RepositoriesApiResponse {
+type RepositoriesApiResponse = {
   success: boolean;
   message: string;
   data: {
     repositories_count: number;
     repositories: Repository[];
   };
-}
+};
 
 /**
  * Organizations Service Object
@@ -66,7 +66,7 @@ interface RepositoriesApiResponse {
 export const organizationsService = {
   /**
    * Fetch all organizations for the authenticated user
-   * 
+   *
    * @returns Array of organizations
    * @throws Error if fetch fails
    */
@@ -74,14 +74,14 @@ export const organizationsService = {
     try {
       console.log('[OrganizationsService] Fetching user organizations');
       const response = await apiClient.get<OrganizationsApiResponse>(
-        API_ENDPOINTS.AUTH.ORGANIZATIONS
+        API_ENDPOINTS.AUTH.ORGANIZATIONS,
       );
 
       console.log('[OrganizationsService] API Response:', response.data);
-      
+
       // Extract organizations array from response wrapper
       const organizations = response.data.data?.organizations || [];
-      
+
       console.log('[OrganizationsService] Organizations fetched successfully:', organizations.length, 'organizations');
       return organizations;
     } catch (error) {
@@ -92,7 +92,7 @@ export const organizationsService = {
 
   /**
    * Fetch organization details by name
-   * 
+   *
    * @param orgName - Organization login/name
    * @returns Organization data
    * @throws Error if fetch fails
@@ -101,7 +101,7 @@ export const organizationsService = {
     try {
       console.log('[OrganizationsService] Fetching organization:', orgName);
       const response = await apiClient.get<Organization>(
-        `/api/auth/organizations/${orgName}`
+        `/api/auth/organizations/${orgName}`,
       );
 
       console.log('[OrganizationsService] Organization fetched successfully');
@@ -114,7 +114,7 @@ export const organizationsService = {
 
   /**
    * Fetch repositories for a specific organization
-   * 
+   *
    * @param orgName - Organization login/name
    * @returns Array of repositories
    * @throws Error if fetch fails
@@ -123,14 +123,14 @@ export const organizationsService = {
     try {
       console.log('[OrganizationsService] Fetching repositories for organization:', orgName);
       const response = await apiClient.get<RepositoriesApiResponse>(
-        `/auth/organizations/${orgName}/repositories`
+        `/auth/organizations/${orgName}/repositories`,
       );
 
       console.log('[OrganizationsService] API Response:', response.data);
-      
+
       // Extract repositories array from response wrapper
       const repositories = response.data.data?.repositories || [];
-      
+
       console.log('[OrganizationsService] Repositories fetched successfully:', repositories.length, 'repositories');
       return repositories;
     } catch (error) {

@@ -5,8 +5,8 @@ type ThemeType = 'light' | 'dark';
 
 export const useTheme = () => {
   const [theme, setThemeState] = useState<ThemeType>('light');
-  const isDarkMode = useAppStore((state) => state.isDarkMode);
-  const toggleTheme = useAppStore((state) => state.toggleTheme);
+  const isDarkMode = useAppStore(state => state.isDarkMode);
+  const toggleTheme = useAppStore(state => state.toggleTheme);
 
   useEffect(() => {
     const newTheme = isDarkMode ? 'dark' : 'light';

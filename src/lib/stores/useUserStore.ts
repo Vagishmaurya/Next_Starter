@@ -11,17 +11,17 @@ import { UserRole } from '@/lib/api/types';
 /**
  * User interface matching backend structure
  */
-interface User {
+type User = {
   id: string;
   email: string;
   name: string;
   role: UserRole;
-}
+};
 
 /**
  * User store state interface
  */
-interface UserState {
+type UserState = {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
@@ -32,7 +32,7 @@ interface UserState {
   setLoading: (loading: boolean) => void;
   hasRole: (role: UserRole | UserRole[]) => boolean;
   hasPermission: (requiredRoles: UserRole[]) => boolean;
-}
+};
 
 /**
  * Zustand store for user state management
@@ -84,7 +84,9 @@ export const useUserStore = create<UserState>()(
          */
         hasRole: (role) => {
           const { user } = get();
-          if (!user) return false;
+          if (!user) {
+            return false;
+          }
 
           if (Array.isArray(role)) {
             return role.includes(user.role);
@@ -100,17 +102,21 @@ export const useUserStore = create<UserState>()(
          */
         hasPermission: (requiredRoles) => {
           const { user } = get();
-          if (!user) return false;
+          if (!user) {
+            return false;
+          }
 
           // Admin can access everything
-          if (user.role === UserRole.ADMIN) return true;
+          if (user.role === UserRole.ADMIN) {
+            return true;
+          }
 
           return requiredRoles.includes(user.role);
         },
       }),
       {
         name: 'user-store',
-      }
-    )
-  )
+      },
+    ),
+  ),
 );

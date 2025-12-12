@@ -1,16 +1,16 @@
 /**
  * OAuth Callback Page
  * Route: /auth/callback
- * 
+ *
  * Handles the OAuth redirect from Go backend after successful GitHub authentication
- * 
+ *
  * Backend Flow:
  * 1. User completes GitHub authentication on backend
  * 2. Backend exchanges authorization code for GitHub access token
  * 3. Backend fetches user data from GitHub API
  * 4. Backend generates JWT token (no DB save)
  * 5. Backend redirects to frontend /auth/callback with JWT in query param
- * 
+ *
  * Frontend Flow:
  * 1. This page receives the JWT token
  * 2. Extracts and stores JWT in localStorage
@@ -21,21 +21,21 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { setStoredTokens } from '@/lib/api/token-manager';
 import { useUserStore } from '@/lib/stores/useUserStore';
 
 /**
  * CallbackPage Component
- * 
+ *
  * Responsibilities:
  * 1. Extract JWT token from URL query parameters
  * 2. Extract user data from URL query parameters
  * 3. Store JWT tokens in localStorage
  * 4. Update Zustand user store with user data
  * 5. Redirect to dashboard
- * 
+ *
  * Error Handling:
  * - Missing token: Show error and link back to sign-in
  * - Invalid token: Show error message
@@ -63,7 +63,7 @@ export default function CallbackPage() {
          * - user: JSON encoded user data (optional)
          * - error: Error code if auth failed
          * - error_description: Error message if auth failed
-         * 
+         *
          * Example URL:
          * /auth/callback?token=eyJhbGciOiJIUzI1NiIs...&user={"id":"123","email":"user@example.com"}
          */
@@ -92,7 +92,7 @@ export default function CallbackPage() {
           return;
         }
 
-        console.log('[CallbackPage] JWT token received (length: ' + jwtToken.length + ')');
+        console.log(`[CallbackPage] JWT token received (length: ${jwtToken.length})`);
 
         /**
          * Store JWT Tokens
@@ -126,7 +126,7 @@ export default function CallbackPage() {
 
         // Success - redirect to dashboard
         console.log('[CallbackPage] Authentication successful, redirecting to dashboard');
-        
+
         // Small delay to ensure state updates are processed
         setTimeout(() => {
           router.push('/dashboard');
