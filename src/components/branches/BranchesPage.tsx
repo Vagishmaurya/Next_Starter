@@ -1,8 +1,18 @@
 'use client';
 
-import { ArrowLeft, Clock, ExternalLink, GitBranch, GitCommit, Shield, User } from 'lucide-react';
+import {
+  ArrowLeft,
+  Clock,
+  ExternalLink,
+  GitBranch,
+  GitCommit,
+  Shield,
+  Tag,
+  User,
+} from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useCallback, useEffect, useState } from 'react';
+import { CreateTagModal } from '@/components/branches/CreateTagModal';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -39,36 +49,44 @@ export default function BranchesPage() {
 
   const [page, setPage] = useState(1);
   const perPage = 30;
+  const [isTagModalOpen, setIsTagModalOpen] = useState(false);
+  const [selectedCommitSha, setSelectedCommitSha] = useState<string>('');
 
-  const fetchBranches = useCallback(async (owner: string, repo: string) => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await branchesService.fetchBranches(owner, repo);
-      const branches = response.data.branches || [];
-      setBranches(branches);
-      // Don't auto-select branch - let user choose
-      setSelectedBranch(null);
-      setCommits([]);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch branches');
-    } finally {
-      setLoading(false);
-    }
-  }, [setBranches, setSelectedBranch, setCommits, setLoading, setError]);
+  const fetchBranches = useCallback(
+    async (owner: string, repo: string) => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await branchesService.fetchBranches(owner, repo);
+        const branches = response.data.branches || [];
+        setBranches(branches);
+        // Don't auto-select branch - let user choose
+        setSelectedBranch(null);
+        setCommits([]);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch branches');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [setBranches, setSelectedBranch, setCommits, setLoading, setError]
+  );
 
-  const fetchCommits = useCallback(async (owner: string, repo: string, branch: string, page: number) => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await branchesService.fetchCommits(owner, repo, branch, page, perPage);
-      setCommits(response.data.commits);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch commits');
-    } finally {
-      setLoading(false);
-    }
-  }, [perPage, setLoading, setError, setCommits]);
+  const fetchCommits = useCallback(
+    async (owner: string, repo: string, branch: string, page: number) => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await branchesService.fetchCommits(owner, repo, branch, page, perPage);
+        setCommits(response.data.commits);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch commits');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [perPage, setLoading, setError, setCommits]
+  );
 
   useEffect(() => {
     const ownerParam = searchParams.get('owner');
@@ -85,7 +103,16 @@ export default function BranchesPage() {
       setRepository(ownerParam, repoParam);
       fetchBranches(ownerParam, repoParam);
     }
-  }, [searchParams, owner, repository, setSelectedBranch, setCommits, setBranches, setRepository, fetchBranches]);
+  }, [
+    searchParams,
+    owner,
+    repository,
+    setSelectedBranch,
+    setCommits,
+    setBranches,
+    setRepository,
+    fetchBranches,
+  ]);
 
   useEffect(() => {
     // Only fetch commits if a branch is explicitly selected (not empty or null)
@@ -94,12 +121,12 @@ export default function BranchesPage() {
     const repoParam = searchParams.get('repo');
 
     if (
-      selectedBranch
-      && selectedBranch.trim() !== ''
-      && owner
-      && repository
-      && owner === ownerParam
-      && repository === repoParam
+      selectedBranch &&
+      selectedBranch.trim() !== '' &&
+      owner &&
+      repository &&
+      owner === ownerParam &&
+      repository === repoParam
     ) {
       fetchCommits(owner, repository, selectedBranch, page);
     }
@@ -108,6 +135,23 @@ export default function BranchesPage() {
   const handleBranchChange = (branchName: string) => {
     setSelectedBranch(branchName);
     setPage(1);
+  };
+
+  const handleCreateTag = (commitSha: string) => {
+    setSelectedCommitSha(commitSha);
+    setIsTagModalOpen(true);
+  };
+
+  const handleTagSubmit = async (tagData: {
+    tag_name: string;
+    tag_message: string;
+    tag_type: string;
+  }) => {
+    if (!owner || !repository || !selectedCommitSha) {
+      return;
+    }
+
+    await branchesService.createTag(owner, repository, selectedCommitSha, tagData);
   };
 
   const formatDate = (dateString: string) => {
@@ -180,10 +224,10 @@ export default function BranchesPage() {
               Back
             </Button>
             <div className="flex-1">
-              <h1 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                {owner}
-                /
-                {repository}
+              <h1
+                className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}
+              >
+                {owner}/{repository}
               </h1>
               <p className={`text-sm ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'}`}>
                 Branches and Commits
@@ -205,15 +249,18 @@ export default function BranchesPage() {
             >
               <GitBranch className="inline h-4 w-4 mr-2" />
               Select Branch
-              <span className={`text-xs font-normal ml-2 ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}>
-                (
-                {branches.length}
-                {' '}
-                branches)
+              <span
+                className={`text-xs font-normal ml-2 ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}
+              >
+                ({branches.length} branches)
               </span>
             </label>
             <div className="max-w-xs">
-              <Select value={selectedBranch || ''} onValueChange={handleBranchChange} disabled={isLoading}>
+              <Select
+                value={selectedBranch || ''}
+                onValueChange={handleBranchChange}
+                disabled={isLoading}
+              >
                 <SelectTrigger
                   className={`transition-colors ${
                     theme === 'dark'
@@ -223,14 +270,20 @@ export default function BranchesPage() {
                 >
                   <SelectValue placeholder="Select a branch" />
                 </SelectTrigger>
-                <SelectContent className={theme === 'dark' ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-gray-300'}>
-                  {branches.map(branch => (
+                <SelectContent
+                  className={
+                    theme === 'dark' ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-gray-300'
+                  }
+                >
+                  {branches.map((branch) => (
                     <SelectItem key={branch.name} value={branch.name}>
                       <div className="flex items-center gap-2">
                         <GitBranch className="h-4 w-4" />
                         <span>{branch.name}</span>
                         {branch.protected && (
-                          <Shield className={`h-3 w-3 ${theme === 'dark' ? 'text-yellow-400' : 'text-yellow-600'}`} />
+                          <Shield
+                            className={`h-3 w-3 ${theme === 'dark' ? 'text-yellow-400' : 'text-yellow-600'}`}
+                          />
                         )}
                       </div>
                     </SelectItem>
@@ -314,7 +367,7 @@ export default function BranchesPage() {
                 <tbody
                   className={`divide-y ${theme === 'dark' ? 'divide-zinc-800' : 'divide-gray-200'}`}
                 >
-                  {commits.map(commit => (
+                  {commits.map((commit) => (
                     <tr
                       key={commit.sha}
                       className={`transition-colors ${
@@ -340,12 +393,12 @@ export default function BranchesPage() {
                               <Badge
                                 variant="secondary"
                                 className={`mt-1 text-xs ${
-                                  theme === 'dark' ? 'bg-zinc-800 text-zinc-300' : 'bg-gray-100 text-gray-700'
+                                  theme === 'dark'
+                                    ? 'bg-zinc-800 text-zinc-300'
+                                    : 'bg-gray-100 text-gray-700'
                                 }`}
                               >
-                                {commit.commit?.comment_count}
-                                {' '}
-                                comment
+                                {commit.commit?.comment_count} comment
                                 {commit.commit?.comment_count !== 1 ? 's' : ''}
                               </Badge>
                             )}
@@ -404,17 +457,32 @@ export default function BranchesPage() {
                         </code>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <a
-                          href={commit.html_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={`inline-flex items-center gap-1 text-sm hover:underline ${
-                            theme === 'dark' ? 'text-blue-400' : 'text-blue-600'
-                          }`}
-                        >
-                          View
-                          <ExternalLink className="h-3 w-3" />
-                        </a>
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleCreateTag(commit.sha)}
+                            className={`text-xs ${
+                              theme === 'dark'
+                                ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800'
+                                : 'border-gray-300 text-gray-700 hover:bg-gray-100'
+                            }`}
+                          >
+                            <Tag className="h-3 w-3 mr-1" />
+                            Create Tag
+                          </Button>
+                          <a
+                            href={commit.html_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`inline-flex items-center gap-1 text-sm hover:underline ${
+                              theme === 'dark' ? 'text-blue-400' : 'text-blue-600'
+                            }`}
+                          >
+                            View
+                            <ExternalLink className="h-3 w-3" />
+                          </a>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -429,17 +497,13 @@ export default function BranchesPage() {
               }`}
             >
               <p className={`text-sm ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'}`}>
-                Showing
-                {' '}
-                {commits.length}
-                {' '}
-                commits
+                Showing {commits.length} commits
               </p>
               <div className="flex gap-2">
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1 || isLoading}
                   className={
                     theme === 'dark'
@@ -452,7 +516,7 @@ export default function BranchesPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setPage(p => p + 1)}
+                  onClick={() => setPage((p) => p + 1)}
                   disabled={commits.length < perPage || isLoading}
                   className={
                     theme === 'dark'
@@ -473,7 +537,9 @@ export default function BranchesPage() {
             <GitBranch
               className={`h-12 w-12 mx-auto mb-4 ${theme === 'dark' ? 'text-zinc-600' : 'text-gray-400'}`}
             />
-            <p className={`text-lg font-medium mb-2 ${theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'}`}>
+            <p
+              className={`text-lg font-medium mb-2 ${theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'}`}
+            >
               No branches found
             </p>
             <p className={`text-sm ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'}`}>
@@ -488,7 +554,9 @@ export default function BranchesPage() {
             <GitBranch
               className={`h-12 w-12 mx-auto mb-4 ${theme === 'dark' ? 'text-zinc-600' : 'text-gray-400'}`}
             />
-            <p className={`text-lg font-medium mb-2 ${theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'}`}>
+            <p
+              className={`text-lg font-medium mb-2 ${theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'}`}
+            >
               Select a branch to view commits
             </p>
             <p className={`text-sm ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'}`}>
@@ -509,6 +577,14 @@ export default function BranchesPage() {
           </div>
         )}
       </div>
+
+      {/* Create Tag Modal */}
+      <CreateTagModal
+        isOpen={isTagModalOpen}
+        onClose={() => setIsTagModalOpen(false)}
+        onSubmit={handleTagSubmit}
+        commitSha={selectedCommitSha}
+      />
     </div>
   );
 }

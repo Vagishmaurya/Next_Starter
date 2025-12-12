@@ -22,7 +22,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { setStoredTokens } from '@/lib/api/token-manager';
 import { useUserStore } from '@/lib/stores/useUserStore';
 
@@ -41,7 +41,7 @@ import { useUserStore } from '@/lib/stores/useUserStore';
  * - Invalid token: Show error message
  * - API errors: Display specific error details
  */
-export default function CallbackPage() {
+function CallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isProcessing, setIsProcessing] = useState(true);
@@ -78,7 +78,10 @@ export default function CallbackPage() {
         // Handle authorization errors from backend
         if (error) {
           const message = errorDescription || 'Authentication failed on backend';
-          console.error('[CallbackPage] Backend error:', { error, error_description: errorDescription });
+          console.error('[CallbackPage] Backend error:', {
+            error,
+            error_description: errorDescription,
+          });
           setError(message);
           setIsProcessing(false);
           return;
@@ -206,4 +209,23 @@ export default function CallbackPage() {
   }
 
   return null;
+}
+
+export default function CallbackPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-background">
+          <div className="text-center">
+            <div className="mb-6 flex justify-center">
+              <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            </div>
+            <h1 className="text-2xl font-bold">Loading...</h1>
+          </div>
+        </div>
+      }
+    >
+      <CallbackContent />
+    </Suspense>
+  );
 }

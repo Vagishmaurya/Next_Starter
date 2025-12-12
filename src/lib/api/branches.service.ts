@@ -101,7 +101,7 @@ export const branchesService = {
   async fetchBranches(owner: string, repo: string): Promise<BranchesApiResponse> {
     try {
       const response = await apiClient.get<BranchesApiResponse>(
-        `/auth/repositories/${owner}/${repo}/branches`,
+        `/auth/repositories/${owner}/${repo}/branches`
       );
 
       return response.data;
@@ -127,7 +127,7 @@ export const branchesService = {
     repo: string,
     branch: string,
     page: number = 1,
-    perPage: number = 30,
+    perPage: number = 30
   ): Promise<CommitsApiResponse> {
     try {
       const response = await apiClient.get<CommitsApiResponse>(
@@ -137,12 +137,48 @@ export const branchesService = {
             page,
             per_page: perPage,
           },
-        },
+        }
       );
 
       return response.data;
     } catch (error) {
       console.error('[BranchesService] Error fetching commits:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Create a tag for a specific commit
+   *
+   * @param owner - Repository owner
+   * @param repo - Repository name
+   * @param commitSha - Commit SHA to tag
+   * @param tagData - Tag creation data
+   * @returns Tag creation response
+   * @throws Error if tag creation fails
+   */
+  async createTag(
+    owner: string,
+    repo: string,
+    commitSha: string,
+    tagData: {
+      tag_name: string;
+      tag_message: string;
+      tag_type: string;
+    }
+  ): Promise<any> {
+    try {
+      const response = await apiClient.post(`/repositories/tags`, {
+        owner,
+        repo,
+        commit_sha: commitSha,
+        tag_name: tagData.tag_name,
+        tag_message: tagData.tag_message,
+      });
+
+      return response.data;
+    } catch (error) {
+      console.error('[BranchesService] Error creating tag:', error);
       throw error;
     }
   },
