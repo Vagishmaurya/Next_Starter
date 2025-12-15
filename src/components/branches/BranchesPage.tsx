@@ -3,6 +3,7 @@
 import {
   ArrowLeft,
   Clock,
+  Download,
   ExternalLink,
   GitBranch,
   GitCommit,
@@ -24,6 +25,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { branchesService } from '@/lib/api/branches.service';
+import { tagsService } from '@/lib/api/tags.service';
 import { useBranchesStore } from '@/store/branchesStore';
 import { useThemeStore } from '@/store/themeStore';
 
@@ -34,17 +36,21 @@ export default function BranchesPage() {
   const {
     branches,
     commits,
+    tags,
     selectedBranch,
     isLoading,
     error,
     owner,
     repository,
+    currentView,
     setBranches,
     setCommits,
+    setTags,
     setSelectedBranch,
     setLoading,
     setError,
     setRepository,
+    setCurrentView,
   } = useBranchesStore();
 
   const [page, setPage] = useState(1);
@@ -88,6 +94,22 @@ export default function BranchesPage() {
     [perPage, setLoading, setError, setCommits]
   );
 
+  const fetchTags = useCallback(
+    async (owner: string, repo: string) => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await tagsService.fetchTags(owner, repo);
+        setTags(response.data.tags || []);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch tags');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [setLoading, setError, setTags]
+  );
+
   useEffect(() => {
     const ownerParam = searchParams.get('owner');
     const repoParam = searchParams.get('repo');
@@ -98,10 +120,14 @@ export default function BranchesPage() {
         // Reset state when navigating to a new repository
         setSelectedBranch(null);
         setCommits([]);
+        setTags([]);
         setBranches([]);
+        setCurrentView('commits');
       }
       setRepository(ownerParam, repoParam);
       fetchBranches(ownerParam, repoParam);
+      // Fetch tags by default when page loads
+      fetchTags(ownerParam, repoParam);
     }
   }, [
     searchParams,
@@ -109,9 +135,12 @@ export default function BranchesPage() {
     repository,
     setSelectedBranch,
     setCommits,
+    setTags,
     setBranches,
     setRepository,
+    setCurrentView,
     fetchBranches,
+    fetchTags,
   ]);
 
   useEffect(() => {
@@ -126,20 +155,33 @@ export default function BranchesPage() {
       owner &&
       repository &&
       owner === ownerParam &&
-      repository === repoParam
+      repository === repoParam &&
+      currentView === 'commits'
     ) {
       fetchCommits(owner, repository, selectedBranch, page);
     }
-  }, [selectedBranch, page, owner, repository, searchParams, fetchCommits]);
+  }, [selectedBranch, page, owner, repository, searchParams, currentView, fetchCommits]);
 
   const handleBranchChange = (branchName: string) => {
     setSelectedBranch(branchName);
     setPage(1);
+    if (currentView === 'commits') {
+      fetchCommits(owner, repository, branchName, 1);
+    }
   };
 
   const handleCreateTag = (commitSha: string) => {
     setSelectedCommitSha(commitSha);
     setIsTagModalOpen(true);
+  };
+
+  const handleViewToggle = (view: 'commits' | 'tags') => {
+    setCurrentView(view);
+    if (view === 'tags') {
+      fetchTags(owner, repository);
+    } else if (view === 'commits' && selectedBranch) {
+      fetchCommits(owner, repository, selectedBranch, page);
+    }
   };
 
   const handleTagSubmit = async (tagData: {
@@ -152,6 +194,11 @@ export default function BranchesPage() {
     }
 
     await branchesService.createTag(owner, repository, selectedCommitSha, tagData);
+
+    // Refresh tags if currently viewing tags
+    if (currentView === 'tags') {
+      fetchTags(owner, repository);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -230,7 +277,7 @@ export default function BranchesPage() {
                 {owner}/{repository}
               </h1>
               <p className={`text-sm ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'}`}>
-                Branches and Commits
+                Branches, Commits, and Tags
               </p>
             </div>
           </div>
@@ -239,8 +286,48 @@ export default function BranchesPage() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Branch Selector */}
-        {branches.length > 0 && (
+        {/* View Toggle Buttons */}
+        <div className="mb-6 flex items-center justify-end">
+          <div className="flex bg-gray-100 dark:bg-zinc-800 rounded-lg p-1">
+            <Button
+              variant={currentView === 'commits' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => handleViewToggle('commits')}
+              className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
+                currentView === 'commits'
+                  ? theme === 'dark'
+                    ? 'bg-zinc-700 text-white shadow-sm'
+                    : 'bg-white text-gray-900 shadow-sm'
+                  : theme === 'dark'
+                    ? 'text-zinc-400 hover:text-zinc-300'
+                    : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <GitCommit className="h-4 w-4 mr-2" />
+              Commits {commits.length > 0 && `(${commits.length})`}
+            </Button>
+            <Button
+              variant={currentView === 'tags' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => handleViewToggle('tags')}
+              className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
+                currentView === 'tags'
+                  ? theme === 'dark'
+                    ? 'bg-zinc-700 text-white shadow-sm'
+                    : 'bg-white text-gray-900 shadow-sm'
+                  : theme === 'dark'
+                    ? 'text-zinc-400 hover:text-zinc-300'
+                    : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <Tag className="h-4 w-4 mr-2" />
+              Tags {tags.length > 0 && `(${tags.length})`}
+            </Button>
+          </div>
+        </div>
+
+        {/* Branch Selector - Only show for commits view */}
+        {currentView === 'commits' && branches.length > 0 && (
           <div className="mb-6">
             <label
               className={`block text-sm font-medium mb-3 ${
@@ -313,7 +400,7 @@ export default function BranchesPage() {
         )}
 
         {/* Commits Table */}
-        {!isLoading && commits.length > 0 && (
+        {currentView === 'commits' && !isLoading && commits.length > 0 && (
           <Card
             className={`overflow-hidden ${
               theme === 'dark' ? 'bg-zinc-900/50 border-zinc-800' : 'bg-white border-gray-200'
@@ -377,7 +464,7 @@ export default function BranchesPage() {
                       <td className="px-6 py-4">
                         <div className="flex items-start gap-2">
                           <GitCommit
-                            className={`h-4 w-4 mt-1 flex-shrink-0 ${
+                            className={`h-4 w-4 mt-1 shrink-0 ${
                               theme === 'dark' ? 'text-zinc-400' : 'text-gray-400'
                             }`}
                           />
@@ -531,6 +618,115 @@ export default function BranchesPage() {
           </Card>
         )}
 
+        {/* Tags Table */}
+        {currentView === 'tags' && !isLoading && tags.length > 0 && (
+          <Card
+            className={`overflow-hidden ${
+              theme === 'dark' ? 'bg-zinc-900/50 border-zinc-800' : 'bg-white border-gray-200'
+            }`}
+          >
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead
+                  className={`border-b ${
+                    theme === 'dark' ? 'border-zinc-800 bg-zinc-900' : 'border-gray-200 bg-gray-50'
+                  }`}
+                >
+                  <tr>
+                    <th
+                      className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                        theme === 'dark' ? 'text-zinc-400' : 'text-gray-500'
+                      }`}
+                    >
+                      Tag Name
+                    </th>
+                    <th
+                      className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                        theme === 'dark' ? 'text-zinc-400' : 'text-gray-500'
+                      }`}
+                    >
+                      Commit SHA
+                    </th>
+                    <th
+                      className={`px-6 py-3 text-right text-xs font-medium uppercase tracking-wider ${
+                        theme === 'dark' ? 'text-zinc-400' : 'text-gray-500'
+                      }`}
+                    >
+                      Downloads
+                    </th>
+                  </tr>
+                </thead>
+                <tbody
+                  className={`divide-y ${theme === 'dark' ? 'divide-zinc-800' : 'divide-gray-200'}`}
+                >
+                  {tags.map((tag) => (
+                    <tr
+                      key={tag.node_id}
+                      className={`transition-colors ${
+                        theme === 'dark' ? 'hover:bg-zinc-800/50' : 'hover:bg-gray-50'
+                      }`}
+                    >
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <Tag
+                            className={`h-4 w-4 ${
+                              theme === 'dark' ? 'text-zinc-400' : 'text-gray-400'
+                            }`}
+                          />
+                          <span
+                            className={`text-sm font-medium ${
+                              theme === 'dark' ? 'text-white' : 'text-gray-900'
+                            }`}
+                          >
+                            {tag.name}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <code
+                          className={`text-xs font-mono px-2 py-1 rounded ${
+                            theme === 'dark'
+                              ? 'bg-zinc-800 text-zinc-300'
+                              : 'bg-gray-100 text-gray-700'
+                          }`}
+                        >
+                          {tag.commit.sha.substring(0, 7)}
+                        </code>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <a
+                            href={tag.zipball_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`inline-flex items-center gap-1 text-sm hover:underline ${
+                              theme === 'dark' ? 'text-blue-400' : 'text-blue-600'
+                            }`}
+                          >
+                            <Download className="h-3 w-3" />
+                            ZIP
+                          </a>
+                          <a
+                            href={tag.tarball_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`inline-flex items-center gap-1 text-sm hover:underline ${
+                              theme === 'dark' ? 'text-blue-400' : 'text-blue-600'
+                            }`}
+                          >
+                            <Download className="h-3 w-3" />
+                            TAR
+                          </a>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        )}
+
         {/* No Branches State */}
         {!isLoading && branches.length === 0 && (
           <div className="text-center py-12">
@@ -548,8 +744,8 @@ export default function BranchesPage() {
           </div>
         )}
 
-        {/* No Branch Selected State */}
-        {!isLoading && !selectedBranch && branches.length > 0 && (
+        {/* Empty States */}
+        {!isLoading && currentView === 'commits' && !selectedBranch && branches.length > 0 && (
           <div className="text-center py-12">
             <GitBranch
               className={`h-12 w-12 mx-auto mb-4 ${theme === 'dark' ? 'text-zinc-600' : 'text-gray-400'}`}
@@ -565,14 +761,29 @@ export default function BranchesPage() {
           </div>
         )}
 
-        {/* Empty State - No Commits */}
-        {!isLoading && commits.length === 0 && selectedBranch && (
+        {!isLoading && currentView === 'commits' && commits.length === 0 && selectedBranch && (
           <div className="text-center py-12">
             <GitCommit
               className={`h-12 w-12 mx-auto mb-4 ${theme === 'dark' ? 'text-zinc-600' : 'text-gray-400'}`}
             />
             <p className={`text-sm ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'}`}>
               No commits found for this branch
+            </p>
+          </div>
+        )}
+
+        {!isLoading && currentView === 'tags' && tags.length === 0 && (
+          <div className="text-center py-12">
+            <Tag
+              className={`h-12 w-12 mx-auto mb-4 ${theme === 'dark' ? 'text-zinc-600' : 'text-gray-400'}`}
+            />
+            <p
+              className={`text-lg font-medium mb-2 ${theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'}`}
+            >
+              No tags found
+            </p>
+            <p className={`text-sm ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'}`}>
+              This repository doesn't have any tags yet
             </p>
           </div>
         )}
