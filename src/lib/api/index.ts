@@ -4,6 +4,7 @@
  * Includes client, interceptors, services, and types
  */
 
+export { actionsService } from './actions.service';
 export { authService } from './auth.service';
 export { apiClient, default } from './client';
 export { API_ENDPOINTS } from './endpoints';

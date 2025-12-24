@@ -39,4 +39,12 @@ export const API_ENDPOINTS = {
     UPDATE_USER_ROLE: (id: string) => `/admin/users/${id}/role`,
     GET_ANALYTICS: '/admin/analytics',
   },
+
+  // GitHub Actions endpoints
+  ACTIONS: {
+    GET_WORKFLOW_RUNS: (owner: string, repo: string) =>
+      `/repositories/${owner}/${repo}/actions/runs`,
+    GET_WORKFLOW_RUN_DETAIL: (owner: string, repo: string, runId: number) =>
+      `/repositories/${owner}/${repo}/actions/runs/${runId}`,
+  },
 } as const;

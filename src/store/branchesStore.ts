@@ -1,13 +1,15 @@
+import type { WorkflowRun } from '@/lib/api/actions.service';
 import type { Branch, Commit } from '@/lib/api/branches.service';
 import type { Tag } from '@/lib/api/tags.service';
 import { create } from 'zustand';
 
-type ViewType = 'commits' | 'tags';
+type ViewType = 'commits' | 'tags' | 'actions';
 
 type BranchesStore = {
   branches: Branch[];
   commits: Commit[];
   tags: Tag[];
+  workflowRuns: WorkflowRun[];
   selectedBranch: string | null;
   isLoading: boolean;
   error: string | null;
@@ -18,6 +20,7 @@ type BranchesStore = {
   setBranches: (branches: Branch[]) => void;
   setCommits: (commits: Commit[]) => void;
   setTags: (tags: Tag[]) => void;
+  setWorkflowRuns: (runs: WorkflowRun[]) => void;
   setSelectedBranch: (branch: string | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
@@ -30,6 +33,7 @@ export const useBranchesStore = create<BranchesStore>((set) => ({
   branches: [],
   commits: [],
   tags: [],
+  workflowRuns: [],
   selectedBranch: null,
   isLoading: false,
   error: null,
@@ -40,6 +44,7 @@ export const useBranchesStore = create<BranchesStore>((set) => ({
   setBranches: (branches) => set({ branches }),
   setCommits: (commits) => set({ commits }),
   setTags: (tags) => set({ tags }),
+  setWorkflowRuns: (runs) => set({ workflowRuns: runs }),
   setSelectedBranch: (branch) => set({ selectedBranch: branch }),
   setLoading: (loading) => set({ isLoading: loading }),
   setError: (error) => set({ error }),
@@ -50,6 +55,7 @@ export const useBranchesStore = create<BranchesStore>((set) => ({
       branches: [],
       commits: [],
       tags: [],
+      workflowRuns: [],
       selectedBranch: null,
       isLoading: false,
       error: null,
