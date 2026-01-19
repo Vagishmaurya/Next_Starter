@@ -4,6 +4,7 @@ import { useAppStore } from '@/lib/stores/useAppStore';
 type UseApiOptions = {
   onSuccess?: (data: any) => void;
   onError?: (error: Error) => void;
+  // added
 };
 
 export const useApi = () => {
