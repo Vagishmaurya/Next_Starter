@@ -3,7 +3,7 @@ import type { Branch, Commit } from '@/lib/api/branches.service';
 import type { Tag } from '@/lib/api/tags.service';
 import { create } from 'zustand';
 
-type ViewType = 'commits' | 'tags' | 'actions';
+type ViewType = 'commits' | 'tags' | 'actions' | 'workflows';
 
 type BranchesStore = {
   branches: Branch[];

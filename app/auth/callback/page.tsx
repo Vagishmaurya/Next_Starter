@@ -25,6 +25,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 import { setStoredTokens } from '@/lib/api/token-manager';
 import { useUserStore } from '@/lib/stores/useUserStore';
+import { useThemeStore } from '@/store/themeStore';
 
 /**
  * CallbackPage Component
@@ -46,6 +47,7 @@ function CallbackContent() {
   const searchParams = useSearchParams();
   const [isProcessing, setIsProcessing] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { theme } = useThemeStore();
 
   const setUser = useUserStore((state: any) => state.setUser);
 
@@ -131,9 +133,12 @@ function CallbackContent() {
         console.log('[CallbackPage] Authentication successful, redirecting to dashboard');
 
         // Small delay to ensure state updates are processed
-        setTimeout(() => {
+        const timeoutId = setTimeout(() => {
           router.push('/dashboard');
         }, 300);
+
+        // Cleanup function will be called when component unmounts
+        return () => clearTimeout(timeoutId);
       } catch (err) {
         const message = err instanceof Error ? err.message : 'An unexpected error occurred';
         console.error('[CallbackPage] Processing error:', message);
@@ -150,13 +155,27 @@ function CallbackContent() {
    */
   if (isProcessing) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
+      <div
+        className={`flex min-h-screen items-center justify-center transition-colors duration-200 ${
+          theme === 'dark' ? 'bg-zinc-950' : 'bg-gray-50'
+        }`}
+      >
         <div className="text-center">
           <div className="mb-6 flex justify-center">
-            <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            <div
+              className={`h-12 w-12 animate-spin rounded-full border-4 ${
+                theme === 'dark'
+                  ? 'border-blue-500 border-t-transparent'
+                  : 'border-blue-600 border-t-transparent'
+              }`}
+            />
           </div>
-          <h1 className="text-2xl font-bold">Completing authentication</h1>
-          <p className="mt-2 text-sm text-foreground/60">Setting up your account...</p>
+          <h1 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+            Completing authentication
+          </h1>
+          <p className={`mt-2 text-sm ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'}`}>
+            Setting up your account...
+          </p>
         </div>
       </div>
     );
@@ -167,11 +186,23 @@ function CallbackContent() {
    */
   if (error) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="max-w-md rounded-lg border border-border bg-card p-8 text-center shadow-lg">
-          <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
+      <div
+        className={`flex min-h-screen items-center justify-center transition-colors duration-200 ${
+          theme === 'dark' ? 'bg-zinc-950' : 'bg-gray-50'
+        }`}
+      >
+        <div
+          className={`max-w-md rounded-lg border p-8 text-center shadow-lg ${
+            theme === 'dark' ? 'border-zinc-800 bg-zinc-900' : 'border-gray-200 bg-white'
+          }`}
+        >
+          <div
+            className={`mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full ${
+              theme === 'dark' ? 'bg-red-500/10' : 'bg-red-50'
+            }`}
+          >
             <svg
-              className="h-6 w-6 text-destructive"
+              className={`h-6 w-6 ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -185,12 +216,21 @@ function CallbackContent() {
               />
             </svg>
           </div>
-          <h1 className="text-xl font-bold text-destructive">Authentication Failed</h1>
-          <p className="mt-3 text-sm text-foreground/70">{error}</p>
+          <h1 className={`text-xl font-bold ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>
+            Authentication Failed
+          </h1>
+          <p className={`mt-3 text-sm ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'}`}>
+            {error}
+          </p>
           <div className="mt-6 flex flex-col gap-3">
             <button
+              type="button"
               onClick={() => router.push('/sign-in')}
-              className="inline-block rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+              className={`inline-block rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                theme === 'dark'
+                  ? 'bg-blue-600 text-white hover:bg-blue-700'
+                  : 'bg-blue-600 text-white hover:bg-blue-700'
+              }`}
             >
               Back to Sign In
             </button>
@@ -198,7 +238,9 @@ function CallbackContent() {
               href="https://github.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm text-primary hover:underline"
+              className={`text-sm hover:underline ${
+                theme === 'dark' ? 'text-blue-400' : 'text-blue-600'
+              }`}
             >
               Visit GitHub
             </a>
@@ -213,19 +255,35 @@ function CallbackContent() {
 
 export default function CallbackPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex min-h-screen items-center justify-center bg-background">
-          <div className="text-center">
-            <div className="mb-6 flex justify-center">
-              <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-            </div>
-            <h1 className="text-2xl font-bold">Loading...</h1>
-          </div>
-        </div>
-      }
-    >
+    <Suspense fallback={<CallbackLoadingFallback />}>
       <CallbackContent />
     </Suspense>
+  );
+}
+
+function CallbackLoadingFallback() {
+  const { theme } = useThemeStore();
+
+  return (
+    <div
+      className={`flex min-h-screen items-center justify-center transition-colors duration-200 ${
+        theme === 'dark' ? 'bg-zinc-950' : 'bg-gray-50'
+      }`}
+    >
+      <div className="text-center">
+        <div className="mb-6 flex justify-center">
+          <div
+            className={`h-12 w-12 animate-spin rounded-full border-4 ${
+              theme === 'dark'
+                ? 'border-blue-500 border-t-transparent'
+                : 'border-blue-600 border-t-transparent'
+            }`}
+          />
+        </div>
+        <h1 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+          Loading...
+        </h1>
+      </div>
+    </div>
   );
 }

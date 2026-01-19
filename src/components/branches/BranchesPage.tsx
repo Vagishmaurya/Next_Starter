@@ -3,8 +3,6 @@
 import {
   Activity,
   ArrowLeft,
-  CheckCircle2,
-  Circle,
   Clock,
   Download,
   ExternalLink,
@@ -14,11 +12,12 @@ import {
   Shield,
   Tag,
   User,
-  XCircle,
 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useCallback, useEffect, useState } from 'react';
+import { ActionsTable } from '@/components/branches/ActionsTable';
 import { CreateTagModal } from '@/components/branches/CreateTagModal';
+import { WorkflowsTable } from '@/components/branches/WorkflowsTable';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -29,7 +28,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { actionsService } from '@/lib/api/actions.service';
 import { branchesService } from '@/lib/api/branches.service';
 import { tagsService } from '@/lib/api/tags.service';
 import { useBranchesStore } from '@/store/branchesStore';
@@ -43,7 +41,7 @@ export default function BranchesPage() {
     branches,
     commits,
     tags,
-    workflowRuns,
+    // workflowRuns, - not used in this component anymore
     selectedBranch,
     isLoading,
     error,
@@ -53,7 +51,7 @@ export default function BranchesPage() {
     setBranches,
     setCommits,
     setTags,
-    setWorkflowRuns,
+    // setWorkflowRuns, - not used in this component anymore
     setSelectedBranch,
     setLoading,
     setError,
@@ -63,8 +61,18 @@ export default function BranchesPage() {
 
   const [page, setPage] = useState(1);
   const perPage = 30;
+  const [tagsPage, setTagsPage] = useState(1);
+  const tagsPerPage = 10;
   const [isTagModalOpen, setIsTagModalOpen] = useState(false);
   const [selectedCommitSha, setSelectedCommitSha] = useState<string>('');
+
+  // Calculate pagination for tags
+  const tagsStartIndex = (tagsPage - 1) * tagsPerPage;
+  const tagsEndIndex = tagsStartIndex + tagsPerPage;
+  const paginatedTags = tags.slice(tagsStartIndex, tagsEndIndex);
+  const tagsTotalPages = Math.ceil(tags.length / tagsPerPage);
+  const tagsHasNextPage = tagsPage < tagsTotalPages;
+  const tagsHasPrevPage = tagsPage > 1;
 
   const fetchBranches = useCallback(
     async (owner: string, repo: string) => {
@@ -109,6 +117,7 @@ export default function BranchesPage() {
         setError(null);
         const response = await tagsService.fetchTags(owner, repo);
         setTags(response.data.tags || []);
+        setTagsPage(1); // Reset to first page when data changes
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch tags');
       } finally {
@@ -116,22 +125,6 @@ export default function BranchesPage() {
       }
     },
     [setLoading, setError, setTags]
-  );
-
-  const fetchWorkflowRuns = useCallback(
-    async (owner: string, repo: string) => {
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await actionsService.fetchWorkflowRuns(owner, repo, 30);
-        setWorkflowRuns(response.data.runs || []);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch workflow runs');
-      } finally {
-        setLoading(false);
-      }
-    },
-    [setLoading, setError, setWorkflowRuns]
   );
 
   useEffect(() => {
@@ -145,7 +138,6 @@ export default function BranchesPage() {
         setSelectedBranch(null);
         setCommits([]);
         setTags([]);
-        setWorkflowRuns([]);
         setBranches([]);
         setCurrentView('commits');
       }
@@ -161,7 +153,6 @@ export default function BranchesPage() {
     setSelectedBranch,
     setCommits,
     setTags,
-    setWorkflowRuns,
     setBranches,
     setRepository,
     setCurrentView,
@@ -199,17 +190,6 @@ export default function BranchesPage() {
   const handleCreateTag = (commitSha: string) => {
     setSelectedCommitSha(commitSha);
     setIsTagModalOpen(true);
-  };
-
-  const handleViewToggle = (view: 'commits' | 'tags' | 'actions') => {
-    setCurrentView(view);
-    if (view === 'tags') {
-      fetchTags(owner, repository);
-    } else if (view === 'commits' && selectedBranch) {
-      fetchCommits(owner, repository, selectedBranch, page);
-    } else if (view === 'actions') {
-      fetchWorkflowRuns(owner, repository);
-    }
   };
 
   const handleTagSubmit = async (tagData: {
@@ -275,127 +255,123 @@ export default function BranchesPage() {
     return formatDate(dateString);
   };
 
-  const getStatusIcon = (status: string, conclusion: string | null) => {
-    const color = actionsService.getWorkflowStatusColor(status, conclusion);
-
-    if (status === 'queued' || status === 'in_progress' || status === 'waiting') {
-      return <Circle className="h-4 w-4 animate-pulse" style={{ color }} />;
-    }
-
-    if (status === 'completed') {
-      if (conclusion === 'success' || conclusion === 'skipped') {
-        return <CheckCircle2 className="h-4 w-4" style={{ color }} />;
-      }
-      return <XCircle className="h-4 w-4" style={{ color }} />;
-    }
-
-    return <Circle className="h-4 w-4" style={{ color }} />;
-  };
-
-  const getStatusText = (status: string, conclusion: string | null) => {
-    if (status === 'queued') {
-      return 'Queued';
-    }
-    if (status === 'in_progress') {
-      return 'In Progress';
-    }
-    if (status === 'waiting') {
-      return 'Waiting';
-    }
-    if (status === 'completed') {
-      if (conclusion === 'success') {
-        return 'Success';
-      }
-      if (conclusion === 'failure') {
-        return 'Failed';
-      }
-      if (conclusion === 'cancelled') {
-        return 'Cancelled';
-      }
-      if (conclusion === 'skipped') {
-        return 'Skipped';
-      }
-      if (conclusion === 'timed_out') {
-        return 'Timed Out';
-      }
-      if (conclusion === 'action_required') {
-        return 'Action Required';
-      }
-    }
-    return 'Unknown';
-  };
-
-  const handleViewWorkflowDetail = (runId: number) => {
-    router.push(`/workflow-run-detail?owner=${owner}&repo=${repository}&runId=${runId}`);
-  };
-
   return (
     <div
       className={`min-h-screen transition-colors duration-200 ${
         theme === 'dark' ? 'bg-zinc-950' : 'bg-gray-50'
       }`}
     >
-      {/* Header */}
-      <div
-        className={`border-b transition-colors duration-200 ${
-          theme === 'dark' ? 'border-zinc-800 bg-zinc-900/50' : 'border-gray-200 bg-white/50'
-        } backdrop-blur-md`}
-      >
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => router.back()}
-              className={`${theme === 'dark' ? 'text-zinc-300 hover:text-white hover:bg-zinc-800' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'} transition-all`}
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
-            </Button>
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-1">
-                <div
-                  className={`p-2 rounded-lg ${theme === 'dark' ? 'bg-zinc-800' : 'bg-gray-100'}`}
-                >
-                  <GitBranch
-                    className={`h-5 w-5 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}
-                  />
-                </div>
-                <h1
-                  className={`text-2xl font-bold bg-gradient-to-r ${
-                    theme === 'dark' ? 'from-blue-400 to-purple-400' : 'from-blue-600 to-purple-600'
-                  } bg-clip-text text-transparent`}
-                >
-                  {owner}/{repository}
-                </h1>
-              </div>
-              <p
-                className={`text-sm flex items-center gap-2 ml-14 ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'}`}
-              >
-                <span className="flex items-center gap-1">
-                  <GitCommit className="h-3.5 w-3.5" />
-                  Commits
-                </span>
-                <span>•</span>
-                <span className="flex items-center gap-1">
-                  <Tag className="h-3.5 w-3.5" />
-                  Tags
-                </span>
-                <span>•</span>
-                <span className="flex items-center gap-1">
-                  <Activity className="h-3.5 w-3.5" />
-                  Actions
-                </span>
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Back Button */}
+        <div className="mb-6">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => router.back()}
+            className={`${theme === 'dark' ? 'text-zinc-300 hover:text-white hover:bg-zinc-800' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'} transition-all`}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
+        </div>
+
+        {/* Repository Header with Navigation */}
+        <div className="mb-8 text-center">
+          <h1
+            className={`text-3xl font-bold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}
+          >
+            {owner}/{repository}
+          </h1>
+          <p className={`text-lg mb-4 ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'}`}>
+            Repository Branches & History
+          </p>
+          {/* Navigation Buttons */}
+          <div className="flex items-center justify-center gap-3 mb-6">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentView('workflows')}
+              className={`flex items-center gap-2 ${
+                currentView === 'workflows'
+                  ? theme === 'dark'
+                    ? 'border-green-500 bg-green-500/10 text-green-400'
+                    : 'border-green-500 bg-green-50 text-green-600'
+                  : theme === 'dark'
+                    ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800'
+                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <PlayCircle className="h-4 w-4" />
+              Workflows
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setCurrentView('commits');
+                if (selectedBranch) {
+                  fetchCommits(owner, repository, selectedBranch, page);
+                }
+              }}
+              className={`flex items-center gap-2 ${
+                currentView === 'commits'
+                  ? theme === 'dark'
+                    ? 'border-blue-500 bg-blue-500/10 text-blue-400'
+                    : 'border-blue-500 bg-blue-50 text-blue-600'
+                  : theme === 'dark'
+                    ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800'
+                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <GitCommit className="h-4 w-4" />
+              Commits
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setCurrentView('tags');
+                fetchTags(owner, repository);
+              }}
+              className={`flex items-center gap-2 ${
+                currentView === 'tags'
+                  ? theme === 'dark'
+                    ? 'border-purple-500 bg-purple-500/10 text-purple-400'
+                    : 'border-purple-500 bg-purple-50 text-purple-600'
+                  : theme === 'dark'
+                    ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800'
+                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <Tag className="h-4 w-4" />
+              Tags
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentView('actions')}
+              className={`flex items-center gap-2 ${
+                currentView === 'actions'
+                  ? theme === 'dark'
+                    ? 'border-orange-500 bg-orange-500/10 text-orange-400'
+                    : 'border-orange-500 bg-orange-50 text-orange-600'
+                  : theme === 'dark'
+                    ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800'
+                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <Activity className="h-4 w-4" />
+              Actions
+            </Button>
+          </div>
+        </div>
+
         {/* View Toggle Buttons */}
-        <div className="mb-8 flex items-center justify-center">
+        {/* <div className="mb-8 flex items-center justify-center">
           <div
             className={`inline-flex items-center gap-1 p-1.5 rounded-xl ${
               theme === 'dark'
@@ -498,7 +474,7 @@ export default function BranchesPage() {
               )}
             </Button>
           </div>
-        </div>
+        </div> */}
 
         {/* Branch Selector - Only show for commits view */}
         {currentView === 'commits' && branches.length > 0 && (
@@ -835,7 +811,7 @@ export default function BranchesPage() {
                 <tbody
                   className={`divide-y ${theme === 'dark' ? 'divide-zinc-800' : 'divide-gray-200'}`}
                 >
-                  {tags.map((tag) => (
+                  {paginatedTags.map((tag) => (
                     <tr
                       key={tag.node_id}
                       className={`transition-colors ${
@@ -900,202 +876,63 @@ export default function BranchesPage() {
                 </tbody>
               </table>
             </div>
+
+            {/* Tags Pagination */}
+            {tags.length > 0 && (
+              <div
+                className={`px-6 py-4 border-t flex items-center justify-between ${
+                  theme === 'dark' ? 'border-zinc-800 bg-zinc-900' : 'border-gray-200 bg-gray-50'
+                }`}
+              >
+                <p className={`text-sm ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'}`}>
+                  Showing {tagsStartIndex + 1}-{Math.min(tagsEndIndex, tags.length)} of{' '}
+                  {tags.length} tags
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setTagsPage((p) => Math.max(1, p - 1))}
+                    disabled={!tagsHasPrevPage || isLoading}
+                    className={
+                      theme === 'dark'
+                        ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800 disabled:opacity-50'
+                        : 'border-gray-300 text-gray-700 hover:bg-gray-100 disabled:opacity-50'
+                    }
+                  >
+                    Previous
+                  </Button>
+                  <span
+                    className={`px-3 py-1.5 text-sm ${
+                      theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'
+                    }`}
+                  >
+                    {tagsPage} of {tagsTotalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setTagsPage((p) => p + 1)}
+                    disabled={!tagsHasNextPage || isLoading}
+                    className={
+                      theme === 'dark'
+                        ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800 disabled:opacity-50'
+                        : 'border-gray-300 text-gray-700 hover:bg-gray-100 disabled:opacity-50'
+                    }
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            )}
           </Card>
         )}
 
-        {/* Actions Table */}
-        {currentView === 'actions' && !isLoading && workflowRuns.length > 0 && (
-          <Card
-            className={`overflow-hidden ${
-              theme === 'dark' ? 'bg-zinc-900/50 border-zinc-800' : 'bg-white border-gray-200'
-            }`}
-          >
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead
-                  className={`border-b ${
-                    theme === 'dark' ? 'border-zinc-800 bg-zinc-900' : 'border-gray-200 bg-gray-50'
-                  }`}
-                >
-                  <tr>
-                    <th
-                      className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                        theme === 'dark' ? 'text-zinc-400' : 'text-gray-500'
-                      }`}
-                    >
-                      Status
-                    </th>
-                    <th
-                      className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                        theme === 'dark' ? 'text-zinc-400' : 'text-gray-500'
-                      }`}
-                    >
-                      Workflow
-                    </th>
-                    <th
-                      className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                        theme === 'dark' ? 'text-zinc-400' : 'text-gray-500'
-                      }`}
-                    >
-                      Branch
-                    </th>
-                    <th
-                      className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                        theme === 'dark' ? 'text-zinc-400' : 'text-gray-500'
-                      }`}
-                    >
-                      Event
-                    </th>
-                    <th
-                      className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                        theme === 'dark' ? 'text-zinc-400' : 'text-gray-500'
-                      }`}
-                    >
-                      Triggered By
-                    </th>
-                    <th
-                      className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                        theme === 'dark' ? 'text-zinc-400' : 'text-gray-500'
-                      }`}
-                    >
-                      Time
-                    </th>
-                    <th
-                      className={`px-6 py-3 text-right text-xs font-medium uppercase tracking-wider ${
-                        theme === 'dark' ? 'text-zinc-400' : 'text-gray-500'
-                      }`}
-                    >
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody
-                  className={`divide-y ${theme === 'dark' ? 'divide-zinc-800' : 'divide-gray-200'}`}
-                >
-                  {workflowRuns.map((run) => (
-                    <tr
-                      key={run.id}
-                      className={`transition-colors ${
-                        theme === 'dark' ? 'hover:bg-zinc-800/50' : 'hover:bg-gray-50'
-                      }`}
-                    >
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          {getStatusIcon(run.status, run.conclusion)}
-                          <span
-                            className={`text-sm font-medium ${
-                              theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'
-                            }`}
-                          >
-                            {getStatusText(run.status, run.conclusion)}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div>
-                          <p
-                            className={`text-sm font-medium ${
-                              theme === 'dark' ? 'text-white' : 'text-gray-900'
-                            }`}
-                          >
-                            {run.display_title}
-                          </p>
-                          <p
-                            className={`text-xs ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}
-                          >
-                            #{run.run_number}
-                          </p>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <GitBranch
-                            className={`h-4 w-4 ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-400'}`}
-                          />
-                          <span
-                            className={`text-sm ${theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'}`}
-                          >
-                            {run.head_branch}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <Badge
-                          variant="secondary"
-                          className={`text-xs ${
-                            theme === 'dark'
-                              ? 'bg-zinc-800 text-zinc-300'
-                              : 'bg-gray-100 text-gray-700'
-                          }`}
-                        >
-                          {run.event}
-                        </Badge>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <User
-                            className={`h-4 w-4 ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-400'}`}
-                          />
-                          <span
-                            className={`text-sm ${theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'}`}
-                          >
-                            {run.actor.login}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <Clock
-                            className={`h-4 w-4 ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-400'}`}
-                          />
-                          <div>
-                            <p
-                              className={`text-sm ${theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'}`}
-                            >
-                              {getRelativeTime(run.created_at)}
-                            </p>
-                            <p
-                              className={`text-xs ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}
-                            >
-                              {formatDate(run.created_at)}
-                            </p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleViewWorkflowDetail(run.id)}
-                            className={`text-xs ${
-                              theme === 'dark'
-                                ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800'
-                                : 'border-gray-300 text-gray-700 hover:bg-gray-100'
-                            }`}
-                          >
-                            <PlayCircle className="h-3 w-3 mr-1" />
-                            View Details
-                          </Button>
-                          <a
-                            href={run.html_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={`inline-flex items-center gap-1 text-sm hover:underline ${
-                              theme === 'dark' ? 'text-blue-400' : 'text-blue-600'
-                            }`}
-                          >
-                            <ExternalLink className="h-3 w-3" />
-                          </a>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </Card>
-        )}
+        {/* Actions View */}
+        {currentView === 'actions' && <ActionsTable owner={owner} repository={repository} />}
+
+        {/* Workflows View */}
+        {currentView === 'workflows' && <WorkflowsTable owner={owner} repository={repository} />}
 
         {/* No Branches State */}
         {!isLoading && branches.length === 0 && (
@@ -1154,22 +991,6 @@ export default function BranchesPage() {
             </p>
             <p className={`text-sm ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'}`}>
               This repository doesn't have any tags yet
-            </p>
-          </div>
-        )}
-
-        {!isLoading && currentView === 'actions' && workflowRuns.length === 0 && (
-          <div className="text-center py-12">
-            <Activity
-              className={`h-12 w-12 mx-auto mb-4 ${theme === 'dark' ? 'text-zinc-600' : 'text-gray-400'}`}
-            />
-            <p
-              className={`text-lg font-medium mb-2 ${theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'}`}
-            >
-              No workflow runs found
-            </p>
-            <p className={`text-sm ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'}`}>
-              This repository doesn't have any workflow runs yet
             </p>
           </div>
         )}

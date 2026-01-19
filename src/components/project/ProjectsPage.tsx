@@ -1,11 +1,12 @@
 'use client';
 
 import type { Organization } from '@/lib/api/organizations.service';
-import { GitBranch, Github, Star } from 'lucide-react';
+import { ArrowLeft, GitBranch, Github, Star } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
   Select,
@@ -75,20 +76,6 @@ export default function ProjectsPage() {
     initializeOrganizations();
   }, [storeOrganizations, fetchOrganizations]);
 
-  // Auto-load repositories if organization is already selected
-  useEffect(() => {
-    if (selectedOrganization && displayOrganizations.length > 0) {
-      // Check if selected org still exists in available organizations
-      const orgExists = displayOrganizations.some((org) => org.login === selectedOrganization);
-      if (orgExists) {
-        handleOrgChange(selectedOrganization);
-      } else {
-        // Clear invalid selection
-        setSelectedOrganization(null);
-      }
-    }
-  }, [selectedOrganization, displayOrganizations, handleOrgChange, setSelectedOrganization]);
-
   // Fetch repositories when organization is selected
   const handleOrgChange = useCallback(
     async (orgLogin: string) => {
@@ -114,6 +101,20 @@ export default function ProjectsPage() {
     },
     [setSelectedOrganization, setRepositoriesLoading, setRepositoriesError, setRepositories]
   );
+
+  // Auto-load repositories if organization is already selected
+  useEffect(() => {
+    if (selectedOrganization && displayOrganizations.length > 0) {
+      // Check if selected org still exists in available organizations
+      const orgExists = displayOrganizations.some((org) => org.login === selectedOrganization);
+      if (orgExists) {
+        handleOrgChange(selectedOrganization);
+      } else {
+        // Clear invalid selection
+        setSelectedOrganization(null);
+      }
+    }
+  }, [selectedOrganization, displayOrganizations, handleOrgChange, setSelectedOrganization]);
 
   const handleRepositoryClick = (repoName: string) => {
     if (selectedOrganization) {
@@ -141,39 +142,63 @@ export default function ProjectsPage() {
         theme === 'dark' ? 'bg-zinc-950' : 'bg-gray-50'
       }`}
     >
-      {/* Header */}
       {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-4 py-8 sm:py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        {/* Back Button */}
+        <div className="mb-6">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => router.push('/dashboard')}
+            className={`${theme === 'dark' ? 'text-zinc-300 hover:text-white hover:bg-zinc-800' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'} transition-all`}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Dashboard
+          </Button>
+        </div>
+
         {/* Organization Selector */}
         <div className="mb-8">
-          <label
-            className={`block text-sm font-medium mb-3 ${
-              theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'
-            }`}
+          <div
+            className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg mb-4 ${
+              theme === 'dark' ? 'bg-zinc-800/50' : 'bg-white/80'
+            } backdrop-blur-sm border ${theme === 'dark' ? 'border-zinc-700' : 'border-gray-200'}`}
           >
-            Select Organization{' '}
+            <Github className={`h-4 w-4 ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-500'}`} />
+            <label
+              htmlFor="organization-select"
+              className={`text-sm font-medium ${
+                theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'
+              }`}
+            >
+              Select Organization
+            </label>
             {displayOrganizations.length > 0 && (
               <span
-                className={`text-xs font-normal ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}
+                className={`text-xs px-2 py-0.5 rounded-full ${
+                  theme === 'dark' ? 'bg-zinc-700 text-zinc-400' : 'bg-gray-200 text-gray-600'
+                }`}
               >
-                ({displayOrganizations.length})
+                {displayOrganizations.length}
               </span>
             )}
-          </label>
-          <div className="max-w-xs">
+          </div>
+          <div className="max-w-md">
             <Select
               value={selectedOrganization || ''}
+              onValueChange={setSelectedOrganization}
+              id="organization-select"
               onValueChange={handleOrgChange}
               disabled={isLoading || repositoriesLoading}
             >
               <SelectTrigger
-                className={`transition-colors ${
+                className={`transition-all duration-200 h-12 ${
                   theme === 'dark'
-                    ? 'bg-zinc-900 border-zinc-800 text-white'
-                    : 'bg-white border-gray-300 text-gray-900'
-                }`}
+                    ? 'bg-zinc-900 border-zinc-800 text-white hover:border-zinc-700'
+                    : 'bg-white border-gray-300 text-gray-900 hover:border-gray-400'
+                } shadow-sm`}
               >
-                <SelectValue placeholder="Select an organization" />
+                <SelectValue placeholder="Choose an organization to get started" />
               </SelectTrigger>
               <SelectContent
                 className={
@@ -184,7 +209,7 @@ export default function ProjectsPage() {
                   displayOrganizations.map((org) => (
                     <SelectItem key={org.id} value={org.login}>
                       <div
-                        className={`flex items-center gap-2 ${
+                        className={`flex items-center gap-3 ${
                           theme === 'dark' ? 'text-white' : 'text-gray-900'
                         }`}
                       >
@@ -192,8 +217,8 @@ export default function ProjectsPage() {
                           <Image
                             src={org.avatar_url}
                             alt={org.login}
-                            width={16}
-                            height={16}
+                            width={20}
+                            height={20}
                             className="rounded-full"
                           />
                         ) : (
@@ -209,8 +234,8 @@ export default function ProjectsPage() {
                           </span>
                           {org.name && (
                             <span
-                              className={`text-xs opacity-75 ${
-                                theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+                              className={`text-xs ${
+                                theme === 'dark' ? 'text-zinc-400' : 'text-gray-500'
                               }`}
                             >
                               {org.name}
@@ -237,43 +262,82 @@ export default function ProjectsPage() {
         {/* Repositories Grid */}
         {displayOrganizations.length === 0 ? (
           <div
-            className={`text-center py-12 px-4 rounded-lg border-2 border-dashed ${
-              theme === 'dark' ? 'border-zinc-800 bg-zinc-900/30' : 'border-gray-300 bg-gray-50'
+            className={`text-center py-16 px-4 rounded-2xl border-2 border-dashed transition-all duration-200 ${
+              theme === 'dark' ? 'border-zinc-800 bg-zinc-900/30' : 'border-gray-300 bg-white/50'
             }`}
           >
-            <Github
-              className={`h-12 w-12 mx-auto mb-4 ${
-                theme === 'dark' ? 'text-zinc-600' : 'text-gray-400'
+            <div
+              className={`inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 ${
+                theme === 'dark' ? 'bg-zinc-800' : 'bg-gray-100'
               }`}
-            />
+            >
+              <Github
+                className={`h-8 w-8 ${theme === 'dark' ? 'text-zinc-600' : 'text-gray-400'}`}
+              />
+            </div>
             <p
-              className={`text-sm font-medium mb-2 ${
+              className={`text-lg font-semibold mb-2 ${
                 theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'
               }`}
             >
               No organizations found
             </p>
-            <p className={`text-xs ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'}`}>
+            <p className={`text-sm mb-4 ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'}`}>
               Go back to dashboard and import from GitHub to get started.
             </p>
+            <Button
+              onClick={() => router.push('/dashboard')}
+              className={`${
+                theme === 'dark'
+                  ? 'bg-purple-600 hover:bg-purple-700 text-white'
+                  : 'bg-purple-600 hover:bg-purple-700 text-white'
+              }`}
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Dashboard
+            </Button>
           </div>
         ) : !selectedOrganization ? (
           <div
-            className={`text-center py-12 px-4 rounded-lg ${
-              theme === 'dark' ? 'bg-zinc-900/50' : 'bg-gray-50'
+            className={`text-center py-16 px-4 rounded-2xl transition-all duration-200 ${
+              theme === 'dark'
+                ? 'bg-zinc-900/50 border border-zinc-800'
+                : 'bg-white/80 border border-gray-200'
             }`}
           >
-            <p className={`text-sm ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'}`}>
+            <div
+              className={`inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 ${
+                theme === 'dark' ? 'bg-zinc-800' : 'bg-gray-100'
+              }`}
+            >
+              <GitBranch
+                className={`h-8 w-8 ${theme === 'dark' ? 'text-zinc-600' : 'text-gray-400'}`}
+              />
+            </div>
+            <p
+              className={`text-base font-medium ${theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'}`}
+            >
               Select an organization above to view its repositories
             </p>
           </div>
         ) : repositoriesLoading ? (
           <div
-            className={`text-center py-12 px-4 rounded-lg ${
-              theme === 'dark' ? 'bg-zinc-900/50' : 'bg-gray-50'
+            className={`text-center py-16 px-4 rounded-2xl ${
+              theme === 'dark' ? 'bg-zinc-900/50' : 'bg-white/50'
             }`}
           >
-            <p className={`text-sm ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'}`}>
+            <div className="flex justify-center mb-4">
+              <div
+                className={`h-12 w-12 animate-spin rounded-full border-4 ${
+                  theme === 'dark'
+                    ? 'border-purple-500 border-t-transparent'
+                    : 'border-purple-600 border-t-transparent'
+                }`}
+              />
+            </div>
+            <p
+              className={`text-sm font-medium ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'}`}
+            >
               Loading repositories...
             </p>
           </div>
@@ -283,11 +347,11 @@ export default function ProjectsPage() {
               <Card
                 key={repo.id}
                 onClick={() => handleRepositoryClick(repo.name)}
-                className={`transition-all duration-200 cursor-pointer overflow-hidden ${
+                className={`transition-all duration-300 cursor-pointer overflow-hidden group ${
                   theme === 'dark'
-                    ? 'bg-zinc-900/50 border-zinc-800/50 hover:border-zinc-700 hover:bg-zinc-900/80'
-                    : 'bg-white border-gray-200 hover:border-gray-300 hover:shadow-lg'
-                } group`}
+                    ? 'bg-zinc-900/50 border-zinc-800/50 hover:border-zinc-700 hover:bg-zinc-900/80 hover:shadow-xl hover:shadow-purple-500/10'
+                    : 'bg-white border-gray-200 hover:border-purple-300 hover:shadow-2xl hover:shadow-purple-500/20'
+                } hover:-translate-y-1`}
               >
                 <div className="p-6 h-full">
                   <div className="space-y-4">
@@ -295,14 +359,16 @@ export default function ProjectsPage() {
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
                         <h3
-                          className={`text-lg font-semibold truncate group-hover:text-blue-400 transition-colors ${
-                            theme === 'dark' ? 'text-white' : 'text-gray-900'
+                          className={`text-lg font-bold truncate transition-colors duration-200 ${
+                            theme === 'dark'
+                              ? 'text-white group-hover:text-purple-400'
+                              : 'text-gray-900 group-hover:text-purple-600'
                           }`}
                         >
                           {repo.name}
                         </h3>
                         <p
-                          className={`text-sm truncate ${
+                          className={`text-xs truncate mt-0.5 ${
                             theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'
                           }`}
                         >
@@ -326,7 +392,7 @@ export default function ProjectsPage() {
                     {/* Description */}
                     {repo.description && (
                       <p
-                        className={`text-sm line-clamp-2 ${
+                        className={`text-sm line-clamp-2 min-h-[2.5rem] ${
                           theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'
                         }`}
                       >
@@ -336,29 +402,33 @@ export default function ProjectsPage() {
 
                     {/* Footer */}
                     <div
-                      className={`flex items-center justify-between pt-2 border-t transition-colors ${
+                      className={`flex items-center justify-between pt-3 border-t transition-colors ${
                         theme === 'dark' ? 'border-zinc-800/50' : 'border-gray-100'
                       }`}
                     >
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-3">
                         {repo.language && (
-                          <Badge className={getLanguageColor(repo.language)}>{repo.language}</Badge>
+                          <Badge className={`${getLanguageColor(repo.language)} text-xs`}>
+                            {repo.language}
+                          </Badge>
                         )}
                         {repo.stargazers_count > 0 && (
                           <div
-                            className={`flex items-center gap-1 text-sm ${
+                            className={`flex items-center gap-1 text-xs ${
                               theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'
                             }`}
                           >
-                            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                            <span>{repo.stargazers_count}</span>
+                            <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
+                            <span className="font-medium">{repo.stargazers_count}</span>
                           </div>
                         )}
                       </div>
                       <GitBranch
-                        className={`h-4 w-4 group-hover:text-blue-400 transition-colors ${
-                          theme === 'dark' ? 'text-zinc-500' : 'text-gray-400'
-                        }`}
+                        className={`h-4 w-4 transition-all duration-200 ${
+                          theme === 'dark'
+                            ? 'text-zinc-600 group-hover:text-purple-400'
+                            : 'text-gray-400 group-hover:text-purple-600'
+                        } group-hover:scale-110`}
                       />
                     </div>
                   </div>
@@ -368,11 +438,24 @@ export default function ProjectsPage() {
           </div>
         ) : (
           <div
-            className={`text-center py-12 px-4 rounded-lg ${
-              theme === 'dark' ? 'bg-zinc-900/50' : 'bg-gray-50'
+            className={`text-center py-16 px-4 rounded-2xl ${
+              theme === 'dark'
+                ? 'bg-zinc-900/50 border border-zinc-800'
+                : 'bg-white/80 border border-gray-200'
             }`}
           >
-            <p className={`text-sm ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'}`}>
+            <div
+              className={`inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 ${
+                theme === 'dark' ? 'bg-zinc-800' : 'bg-gray-100'
+              }`}
+            >
+              <GitBranch
+                className={`h-8 w-8 ${theme === 'dark' ? 'text-zinc-600' : 'text-gray-400'}`}
+              />
+            </div>
+            <p
+              className={`text-base font-medium ${theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'}`}
+            >
               No repositories found for this organization
             </p>
           </div>

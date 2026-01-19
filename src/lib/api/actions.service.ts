@@ -85,6 +85,124 @@ export type WorkflowJob = {
 };
 
 /**
+ * Workflow definition
+ */
+export type Workflow = {
+  name: string;
+  path: string;
+  sha: string;
+  size: number;
+  url: string;
+  downloadUrl: string;
+  // Optional fields that might be added by frontend
+  id?: number;
+  state?: 'active' | 'inactive';
+  badge_url?: string;
+  html_url?: string;
+  created_at?: string;
+  updated_at?: string;
+};
+
+/**
+ * API Response interface for workflows list endpoint
+ */
+type WorkflowsApiResponse = {
+  success: boolean;
+  message: string;
+  data: {
+    count: number;
+    owner: string;
+    repository: string;
+    workflows: Workflow[];
+  };
+};
+
+/**
+ * Create Workflow Request Types
+ */
+export type EC2CommonFields = {
+  credentialId: string;
+  awsRegion: string;
+  jenkinsJobs: string;
+  releaseTag?: string;
+  codeownersEmails: string;
+  devopsStakeholdersEmails?: string;
+};
+
+export type KubernetesCommonFields = {
+  jenkinsJobName: string;
+  releaseTag: string;
+  helmValuesRepository: string;
+  codeownersEmailIds: string;
+  devopsStakeholdersEmailIds?: string;
+};
+
+export type KubernetesProject = {
+  id: string;
+  name: string;
+};
+
+export type EC2Project = {
+  id: string;
+  name: string;
+  command?: string;
+  port: string;
+  dockerNetwork?: string;
+  mountPath?: string;
+  enableGpu: boolean;
+  logDriver: string;
+  logDriverOptions?: string;
+};
+
+export type Project = {
+  id: string;
+  name: string;
+  dockerContextPath?: string;
+  dockerfilePath?: string;
+  dotEnvTesting?: string;
+  dotEnvProduction?: string;
+};
+
+export type CreateWorkflowRequest = {
+  owner: string;
+  repository: string;
+  workflowName: string;
+  deploymentType: 'kubernetes' | 'ec2';
+  projects: Project[];
+  ec2CommonFields?: EC2CommonFields;
+  ec2Projects?: EC2Project[];
+  kubernetesCommonFields?: KubernetesCommonFields;
+  kubernetesProjects?: KubernetesProject[];
+};
+
+export type CreateWorkflowResponse = {
+  success: boolean;
+  message: string;
+  data: {
+    workflow: {
+      id: number;
+      name: string;
+      path: string;
+      state: string;
+      created_at: string;
+      updated_at: string;
+    };
+    deploymentType: string;
+    projectsCount: number;
+  };
+};
+
+export type PreviewWorkflowResponse = {
+  success: boolean;
+  message: string;
+  data: {
+    workflow_name: string;
+    deployment_type: string;
+    yaml_content: string;
+  };
+};
+
+/**
  * API Response interface for workflow runs list endpoint
  */
 type WorkflowRunsApiResponse = {
@@ -114,10 +232,85 @@ type WorkflowRunDetailApiResponse = {
 };
 
 /**
+ * API Response interface for job logs endpoint
+ */
+type JobLogsApiResponse = {
+  success: boolean;
+  message: string;
+  data: {
+    owner: string;
+    repository: string;
+    job_id: number;
+    logs: string;
+  };
+};
+
+/**
  * GitHub Actions Service Object
  * Provides methods for workflow operations
  */
 export const actionsService = {
+  /**
+   * Preview a workflow before creation
+   *
+   * @param workflowData - Workflow preview data
+   * @returns Preview workflow response with YAML content
+   * @throws Error if preview generation fails
+   */
+  async previewWorkflow(workflowData: CreateWorkflowRequest): Promise<PreviewWorkflowResponse> {
+    try {
+      const response = await apiClient.post<PreviewWorkflowResponse>(
+        `/workflows/preview`,
+        workflowData
+      );
+
+      return response.data;
+    } catch (error) {
+      console.error('[ActionsService] Error previewing workflow:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Create a new workflow
+   *
+   * @param workflowData - Workflow creation data
+   * @returns Create workflow response
+   * @throws Error if creation fails
+   */
+  async createWorkflow(workflowData: CreateWorkflowRequest): Promise<CreateWorkflowResponse> {
+    try {
+      const response = await apiClient.post<CreateWorkflowResponse>(
+        `/workflows/create`,
+        workflowData
+      );
+
+      return response.data;
+    } catch (error) {
+      console.error('[ActionsService] Error creating workflow:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Fetch workflows for a repository
+   *
+   * @param owner - Repository owner
+   * @param repo - Repository name
+   * @returns Workflows response data
+   * @throws Error if fetch fails
+   */
+  async fetchWorkflows(owner: string, repo: string): Promise<WorkflowsApiResponse> {
+    try {
+      const response = await apiClient.get<WorkflowsApiResponse>(`/workflows/${owner}/${repo}`);
+
+      return response.data;
+    } catch (error) {
+      console.error('[ActionsService] Error fetching workflows:', error);
+      throw error;
+    }
+  },
+
   /**
    * Fetch workflow runs for a repository
    *
@@ -171,6 +364,28 @@ export const actionsService = {
       return response.data;
     } catch (error) {
       console.error('[ActionsService] Error fetching workflow run detail:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Fetch logs for a specific workflow job
+   *
+   * @param owner - Repository owner
+   * @param repo - Repository name
+   * @param jobId - Job ID
+   * @returns Job logs response data
+   * @throws Error if fetch fails
+   */
+  async fetchJobLogs(owner: string, repo: string, jobId: number): Promise<JobLogsApiResponse> {
+    try {
+      const response = await apiClient.get<JobLogsApiResponse>(
+        `/repositories/${owner}/${repo}/actions/jobs/${jobId}/logs`
+      );
+
+      return response.data;
+    } catch (error) {
+      console.error('[ActionsService] Error fetching job logs:', error);
       throw error;
     }
   },

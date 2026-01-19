@@ -42,6 +42,9 @@ export const API_ENDPOINTS = {
 
   // GitHub Actions endpoints
   ACTIONS: {
+    GET_WORKFLOWS: (owner: string, repo: string) => `/workflows/${owner}/${repo}`,
+    CREATE_WORKFLOW: '/workflows/create',
+    PREVIEW_WORKFLOW: '/workflows/preview',
     GET_WORKFLOW_RUNS: (owner: string, repo: string) =>
       `/repositories/${owner}/${repo}/actions/runs`,
     GET_WORKFLOW_RUN_DETAIL: (owner: string, repo: string, runId: number) =>

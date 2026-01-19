@@ -6,7 +6,7 @@
 import axios from 'axios';
 import { setupInterceptors } from './interceptor-setup';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
 /**
  * Create Axios instance with default configuration
