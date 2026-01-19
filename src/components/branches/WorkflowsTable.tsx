@@ -2,7 +2,7 @@
 
 import type { Workflow } from '@/lib/api/actions.service';
 import { Activity, Copy, Download, ExternalLink, Plus, RefreshCw } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import CreateWorkflowModal from '@/components/branches/CreateWorkflowModal';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -44,7 +44,7 @@ export function WorkflowsTable({ owner, repository }: WorkflowsTableProps) {
   const hasNextPage = page < totalPages;
   const hasPrevPage = page > 1;
 
-  const fetchWorkflows = async () => {
+  const fetchWorkflows = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -69,7 +69,7 @@ export function WorkflowsTable({ owner, repository }: WorkflowsTableProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [owner, repository]);
 
   useEffect(() => {
     fetchWorkflows();
