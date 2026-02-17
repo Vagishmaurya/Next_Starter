@@ -1,9 +1,10 @@
 'use client';
 
 import type { Workflow } from '@/lib/api/actions.service';
-import { Activity, Copy, Download, ExternalLink, Plus, RefreshCw } from 'lucide-react';
+import { Activity, Copy, Download, Edit, ExternalLink, Plus, RefreshCw } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import CreateWorkflowModal from '@/components/branches/CreateWorkflowModal';
+import { EditWorkflowModal } from '@/components/branches/EditWorkflowModal';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -26,6 +27,8 @@ type WorkflowsTableProps = {
 export function WorkflowsTable({ owner, repository }: WorkflowsTableProps) {
   const { theme } = useThemeStore();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingWorkflow, setEditingWorkflow] = useState<Workflow | null>(null);
   const [workflows, setWorkflows] = useState<Workflow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -91,6 +94,18 @@ export function WorkflowsTable({ owner, repository }: WorkflowsTableProps) {
   };
 
   const handleRefresh = () => {
+    fetchWorkflows();
+  };
+
+  const handleEditWorkflow = (workflow: Workflow) => {
+    setEditingWorkflow(workflow);
+    setIsEditModalOpen(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setEditingWorkflow(null);
+    // Optionally refresh workflows after edit
     fetchWorkflows();
   };
 
@@ -363,6 +378,7 @@ export function WorkflowsTable({ owner, repository }: WorkflowsTableProps) {
                           <Button
                             variant="ghost"
                             size="sm"
+                            aria-label="Copy SHA"
                             onClick={() => copyToClipboard(workflow.sha)}
                             className={`h-6 w-6 p-0 ${
                               theme === 'dark'
@@ -393,6 +409,19 @@ export function WorkflowsTable({ owner, repository }: WorkflowsTableProps) {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditWorkflow(workflow)}
+                            className={`h-8 px-3 ${
+                              theme === 'dark'
+                                ? 'text-blue-400 hover:text-blue-300 hover:bg-blue-500/10'
+                                : 'text-blue-600 hover:text-blue-700 hover:bg-blue-50'
+                            }`}
+                          >
+                            <Edit className="h-3 w-3 mr-1" />
+                            Edit
+                          </Button>
                           <Button
                             variant="ghost"
                             size="sm"
@@ -508,6 +537,18 @@ export function WorkflowsTable({ owner, repository }: WorkflowsTableProps) {
         owner={owner}
         repository={repository}
       />
+
+      {/* Edit Workflow Modal */}
+      {editingWorkflow && (
+        <EditWorkflowModal
+          isOpen={isEditModalOpen}
+          onClose={handleCloseEditModal}
+          owner={owner}
+          repository={repository}
+          workflowPath={editingWorkflow.path}
+          workflowName={editingWorkflow.name}
+        />
+      )}
     </div>
   );
 }

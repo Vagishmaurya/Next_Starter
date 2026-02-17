@@ -1,7 +1,7 @@
 'use client';
 
 import type { CreateWorkflowRequest } from '@/lib/api/actions.service';
-import { Minus, Plus, X } from 'lucide-react';
+import { Copy, Minus, Plus, X } from 'lucide-react';
 
 import React, { useState } from 'react';
 import { Badge } from '@/components/ui/badge';

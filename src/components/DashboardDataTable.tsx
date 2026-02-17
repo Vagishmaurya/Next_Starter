@@ -200,6 +200,7 @@ export function DashboardDataTable({
                   type="checkbox"
                   checked={selectAll}
                   onChange={handleSelectAll}
+                  aria-label="Select all rows"
                   className={`w-4 h-4 rounded cursor-pointer accent-blue-500 ${
                     isDark ? 'bg-zinc-700 border-zinc-600' : 'bg-white border-gray-300'
                   } border`}
@@ -285,6 +286,7 @@ export function DashboardDataTable({
                       type="checkbox"
                       checked={selectedRows.has(row.id)}
                       onChange={() => handleRowSelect(row.id)}
+                      aria-label="Select row"
                       className={`w-4 h-4 rounded cursor-pointer accent-blue-500 flex-shrink-0 ${
                         isDark ? 'bg-zinc-700 border-zinc-600' : 'bg-white border-gray-300'
                       } border`}

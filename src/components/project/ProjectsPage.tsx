@@ -1,10 +1,11 @@
 'use client';
 
 import type { Organization } from '@/lib/api/organizations.service';
-import { ArrowLeft, GitBranch, Github, Star } from 'lucide-react';
+import { ArrowLeft, GitBranch, Github, Package, Star } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useState } from 'react';
+import { AllPackagesModal } from '@/components/project/AllPackagesModal';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -17,6 +18,7 @@ import {
 } from '@/components/ui/select';
 import { organizationsService } from '@/lib/api/organizations.service';
 import { useOrganizationsStore } from '@/store/organizationsStore';
+import { usePackagesStore } from '@/store/packagesStore';
 import { useRepositoriesStore } from '@/store/repositoriesStore';
 import { useThemeStore } from '@/store/themeStore';
 import { useOrganizationsViewModel } from '@/viewmodels/OrganizationsViewModel';
@@ -36,6 +38,7 @@ export default function ProjectsPage() {
     setLoading: setRepositoriesLoading,
     setError: setRepositoriesError,
   } = useRepositoriesStore();
+  const { setShowPackagesModal } = usePackagesStore();
   const { theme } = useThemeStore();
   const [displayOrganizations, setDisplayOrganizations] = useState<Organization[]>([]);
 
@@ -157,41 +160,59 @@ export default function ProjectsPage() {
           </Button>
         </div>
 
-        {/* Organization Selector */}
+        {/* Header with Organization Selector and Packages Button */}
         <div className="mb-8">
-          <div
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg mb-4 ${
-              theme === 'dark' ? 'bg-zinc-800/50' : 'bg-white/80'
-            } backdrop-blur-sm border ${theme === 'dark' ? 'border-zinc-700' : 'border-gray-200'}`}
-          >
-            <Github className={`h-4 w-4 ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-500'}`} />
-            <label
-              htmlFor="organization-select"
-              className={`text-sm font-medium ${
-                theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'
-              }`}
+          <div className="flex items-center justify-between mb-4">
+            <div
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg ${
+                theme === 'dark' ? 'bg-zinc-800/50' : 'bg-white/80'
+              } backdrop-blur-sm border ${theme === 'dark' ? 'border-zinc-700' : 'border-gray-200'}`}
             >
-              Select Organization
-            </label>
-            {displayOrganizations.length > 0 && (
-              <span
-                className={`text-xs px-2 py-0.5 rounded-full ${
-                  theme === 'dark' ? 'bg-zinc-700 text-zinc-400' : 'bg-gray-200 text-gray-600'
+              <Github
+                className={`h-4 w-4 ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-500'}`}
+              />
+              <label
+                htmlFor="organization-select"
+                className={`text-sm font-medium ${
+                  theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'
                 }`}
               >
-                {displayOrganizations.length}
-              </span>
-            )}
+                Select Organization
+              </label>
+              {displayOrganizations.length > 0 && (
+                <span
+                  className={`text-xs px-2 py-0.5 rounded-full ${
+                    theme === 'dark' ? 'bg-zinc-700 text-zinc-400' : 'bg-gray-200 text-gray-600'
+                  }`}
+                >
+                  {displayOrganizations.length}
+                </span>
+              )}
+            </div>
+
+            {/* Packages Button */}
+            <Button
+              onClick={() => setShowPackagesModal(true)}
+              variant="outline"
+              size="sm"
+              className={`flex items-center gap-2 ${
+                theme === 'dark'
+                  ? 'border-purple-500/50 bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 hover:border-purple-400'
+                  : 'border-purple-300 bg-purple-50 text-purple-600 hover:bg-purple-100 hover:border-purple-400'
+              }`}
+            >
+              <Package className="h-4 w-4" />
+              All Packages
+            </Button>
           </div>
           <div className="max-w-md">
             <Select
               value={selectedOrganization || ''}
-              onValueChange={setSelectedOrganization}
-              id="organization-select"
               onValueChange={handleOrgChange}
               disabled={isLoading || repositoriesLoading}
             >
               <SelectTrigger
+                id="organization-select"
                 className={`transition-all duration-200 h-12 ${
                   theme === 'dark'
                     ? 'bg-zinc-900 border-zinc-800 text-white hover:border-zinc-700'
@@ -461,6 +482,9 @@ export default function ProjectsPage() {
           </div>
         )}
       </div>
+
+      {/* Packages Modal */}
+      <AllPackagesModal />
     </div>
   );
 }

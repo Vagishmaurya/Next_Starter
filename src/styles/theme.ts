@@ -13,7 +13,7 @@ export const lightTheme = {
   cardForeground: '#000000',
 
   // Primary colors
-  primary: '#3b82f6',
+  primary: '#2563eb',
   primaryForeground: '#ffffff',
 
   // Secondary colors

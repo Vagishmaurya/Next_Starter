@@ -85,6 +85,40 @@ export type WorkflowJob = {
 };
 
 /**
+ * Workflow File Content
+ */
+export type WorkflowFile = {
+  name: string;
+  path: string;
+  sha: string;
+  size: number;
+  content: string;
+};
+
+/**
+ * API Response interface for workflow file content endpoint
+ */
+type WorkflowFileApiResponse = {
+  success: boolean;
+  message: string;
+  data: WorkflowFile;
+};
+
+/**
+ * API Response interface for workflow file update endpoint
+ */
+type WorkflowFileUpdateApiResponse = {
+  success: boolean;
+  message: string;
+  data: {
+    name: string;
+    path: string;
+    sha: string;
+    size: number;
+  };
+};
+
+/**
  * Workflow definition
  */
 export type Workflow = {
@@ -438,5 +472,74 @@ export const actionsService = {
     }
 
     return 'outline'; // Gray - Unknown
+  },
+
+  /**
+   * Fetch workflow file content for editing
+   *
+   * @param owner - Repository owner
+   * @param repo - Repository name
+   * @param path - Workflow file path
+   * @returns Workflow file content response
+   * @throws Error if fetch fails
+   */
+  async fetchWorkflowFile(
+    owner: string,
+    repo: string,
+    path: string
+  ): Promise<WorkflowFileApiResponse> {
+    try {
+      const response = await apiClient.get<WorkflowFileApiResponse>(
+        `/workflows/${owner}/${repo}/file`,
+        {
+          params: {
+            path,
+          },
+        }
+      );
+
+      return response.data;
+    } catch (error) {
+      console.error('[ActionsService] Error fetching workflow file:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Update workflow file content
+   *
+   * @param owner - Repository owner
+   * @param repo - Repository name
+   * @param path - Workflow file path
+   * @param content - Updated file content
+   * @param sha - Current file SHA for update verification
+   * @returns Workflow file update response
+   * @throws Error if update fails
+   */
+  async updateWorkflowFile(
+    owner: string,
+    repo: string,
+    path: string,
+    content: string,
+    sha: string
+  ): Promise<WorkflowFileUpdateApiResponse> {
+    try {
+      const response = await apiClient.put<WorkflowFileUpdateApiResponse>(
+        `/workflows/${owner}/${repo}/file`,
+        {
+          owner,
+          repository: repo,
+          filePath: path,
+          content,
+          sha,
+          commitMessage: `Update workflow file: ${path.split('/').pop()}`,
+        }
+      );
+
+      return response.data;
+    } catch (error) {
+      console.error('[ActionsService] Error updating workflow file:', error);
+      throw error;
+    }
   },
 };

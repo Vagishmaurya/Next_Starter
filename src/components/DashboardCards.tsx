@@ -129,7 +129,7 @@ export function StatsCard({
 
         {/* Description */}
         {description && (
-          <p className={`text-xs ${isDark ? 'text-zinc-500' : 'text-gray-500'}`}>{description}</p>
+          <p className={`text-xs ${isDark ? 'text-zinc-500' : 'text-gray-600'}`}>{description}</p>
         )}
       </div>
     </div>

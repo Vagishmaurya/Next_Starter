@@ -3,22 +3,18 @@
 import {
   Activity,
   ArrowLeft,
-  Clock,
+  Building2,
   Download,
-  ExternalLink,
   GitBranch,
   GitCommit,
   PlayCircle,
   Shield,
   Tag,
-  User,
 } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
-import React, { useCallback, useEffect, useState } from 'react';
-import { ActionsTable } from '@/components/branches/ActionsTable';
-import { CreateTagModal } from '@/components/branches/CreateTagModal';
-import { WorkflowsTable } from '@/components/branches/WorkflowsTable';
-import { Badge } from '@/components/ui/badge';
+import React, { useCallback, useEffect, useState, useTransition } from 'react';
+import { CommitRow } from '@/components/branches/CommitRow';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
@@ -31,12 +27,39 @@ import {
 import { branchesService } from '@/lib/api/branches.service';
 import { tagsService } from '@/lib/api/tags.service';
 import { useBranchesStore } from '@/store/branchesStore';
+import { usePackagesStore } from '@/store/packagesStore';
 import { useThemeStore } from '@/store/themeStore';
+
+const ActionsTable = dynamic(
+  () => import('@/components/branches/ActionsTable').then((mod) => mod.ActionsTable),
+  {
+    loading: () => <p>Loading Actions...</p>,
+  }
+);
+const CreateTagModal = dynamic(
+  () => import('@/components/branches/CreateTagModal').then((mod) => mod.CreateTagModal),
+  { ssr: false }
+);
+const OrganizationPackagesModal = dynamic(
+  () =>
+    import('@/components/branches/OrganizationPackagesModal').then(
+      (mod) => mod.OrganizationPackagesModal
+    ),
+  { ssr: false }
+);
+const WorkflowsTable = dynamic(
+  () => import('@/components/branches/WorkflowsTable').then((mod) => mod.WorkflowsTable),
+  {
+    loading: () => <p>Loading Workflows...</p>,
+  }
+);
 
 export default function BranchesPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { theme } = useThemeStore();
+  const [_isPending, startTransition] = useTransition();
+  const { setShowOrgPackagesModal } = usePackagesStore();
   const {
     branches,
     commits,
@@ -82,8 +105,13 @@ export default function BranchesPage() {
         const response = await branchesService.fetchBranches(owner, repo);
         const branches = response.data.branches || [];
         setBranches(branches);
-        // Don't auto-select branch - let user choose
-        setSelectedBranch(null);
+        // Auto-select 'main' branch if it exists
+        const mainBranch = branches.find((b: any) => b.name === 'main');
+        if (mainBranch) {
+          setSelectedBranch('main');
+        } else {
+          setSelectedBranch(null);
+        }
         setCommits([]);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch branches');
@@ -209,52 +237,6 @@ export default function BranchesPage() {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    if (!dateString) {
-      return 'N/A';
-    }
-    const date = new Date(dateString);
-    if (Number.isNaN(date.getTime())) {
-      return 'Invalid date';
-    }
-    return new Intl.DateTimeFormat('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(date);
-  };
-
-  const getRelativeTime = (dateString: string) => {
-    if (!dateString) {
-      return 'N/A';
-    }
-    const date = new Date(dateString);
-    if (Number.isNaN(date.getTime())) {
-      return 'Invalid date';
-    }
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMins / 60);
-    const diffDays = Math.floor(diffHours / 24);
-
-    if (diffMins < 1) {
-      return 'just now';
-    }
-    if (diffMins < 60) {
-      return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
-    }
-    if (diffHours < 24) {
-      return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-    }
-    if (diffDays < 30) {
-      return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-    }
-    return formatDate(dateString);
-  };
-
   return (
     <div
       className={`min-h-screen transition-colors duration-200 ${
@@ -366,6 +348,21 @@ export default function BranchesPage() {
             >
               <Activity className="h-4 w-4" />
               Actions
+            </Button>
+
+            {/* Organization Packages Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => startTransition(() => setShowOrgPackagesModal(true))}
+              className={`flex items-center gap-2 ${
+                theme === 'dark'
+                  ? 'border-violet-500/50 bg-violet-500/10 text-violet-400 hover:bg-violet-500/20 hover:border-violet-400'
+                  : 'border-violet-300 bg-violet-50 text-violet-600 hover:bg-violet-100 hover:border-violet-400'
+              }`}
+            >
+              <Building2 className="h-4 w-4" />
+              Org Packages
             </Button>
           </div>
         </div>
@@ -487,7 +484,7 @@ export default function BranchesPage() {
               <GitBranch className="inline h-4 w-4 mr-2" />
               Select Branch
               <span
-                className={`text-xs font-normal ml-2 ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}
+                className={`text-xs font-normal ml-2 ${theme === 'dark' ? 'text-zinc-600' : 'text-gray-600'}`}
               >
                 ({branches.length} branches)
               </span>
@@ -499,6 +496,7 @@ export default function BranchesPage() {
                 disabled={isLoading}
               >
                 <SelectTrigger
+                  aria-label="Select a branch"
                   className={`transition-colors ${
                     theme === 'dark'
                       ? 'bg-zinc-900 border-zinc-800 text-white'
@@ -607,123 +605,12 @@ export default function BranchesPage() {
                   className={`divide-y ${theme === 'dark' ? 'divide-zinc-800' : 'divide-gray-200'}`}
                 >
                   {commits.map((commit) => (
-                    <tr
+                    <CommitRow
                       key={commit.sha}
-                      className={`transition-all duration-200 ${
-                        theme === 'dark' ? 'hover:bg-zinc-800/70' : 'hover:bg-gray-50/80'
-                      }`}
-                    >
-                      <td className="px-6 py-4">
-                        <div className="flex items-start gap-2">
-                          <GitCommit
-                            className={`h-4 w-4 mt-1 shrink-0 ${
-                              theme === 'dark' ? 'text-zinc-400' : 'text-gray-400'
-                            }`}
-                          />
-                          <div>
-                            <p
-                              className={`text-sm font-medium ${
-                                theme === 'dark' ? 'text-white' : 'text-gray-900'
-                              }`}
-                            >
-                              {commit.commit?.message?.split('\n')[0] || 'No commit message'}
-                            </p>
-                            {commit.commit?.comment_count > 0 && (
-                              <Badge
-                                variant="secondary"
-                                className={`mt-1 text-xs ${
-                                  theme === 'dark'
-                                    ? 'bg-zinc-800 text-zinc-300'
-                                    : 'bg-gray-100 text-gray-700'
-                                }`}
-                              >
-                                {commit.commit?.comment_count} comment
-                                {commit.commit?.comment_count !== 1 ? 's' : ''}
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <User
-                            className={`h-4 w-4 ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-400'}`}
-                          />
-                          <div>
-                            <p
-                              className={`text-sm font-medium ${
-                                theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'
-                              }`}
-                            >
-                              {commit.commit?.author?.name || 'Unknown'}
-                            </p>
-                            <p
-                              className={`text-xs ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}
-                            >
-                              {commit.commit?.author?.email || ''}
-                            </p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <Clock
-                            className={`h-4 w-4 ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-400'}`}
-                          />
-                          <div>
-                            <p
-                              className={`text-sm ${theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'}`}
-                            >
-                              {getRelativeTime(commit.commit?.author?.date || '')}
-                            </p>
-                            <p
-                              className={`text-xs ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}
-                            >
-                              {formatDate(commit.commit?.author?.date || '')}
-                            </p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <code
-                          className={`text-xs font-mono px-2 py-1 rounded ${
-                            theme === 'dark'
-                              ? 'bg-zinc-800 text-zinc-300'
-                              : 'bg-gray-100 text-gray-700'
-                          }`}
-                        >
-                          {commit.sha.substring(0, 7)}
-                        </code>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleCreateTag(commit.sha)}
-                            className={`text-xs ${
-                              theme === 'dark'
-                                ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800'
-                                : 'border-gray-300 text-gray-700 hover:bg-gray-100'
-                            }`}
-                          >
-                            <Tag className="h-3 w-3 mr-1" />
-                            Create Tag
-                          </Button>
-                          <a
-                            href={commit.html_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={`inline-flex items-center gap-1 text-sm hover:underline ${
-                              theme === 'dark' ? 'text-blue-400' : 'text-blue-600'
-                            }`}
-                          >
-                            View
-                            <ExternalLink className="h-3 w-3" />
-                          </a>
-                        </div>
-                      </td>
-                    </tr>
+                      commit={commit}
+                      theme={theme}
+                      onTagClick={handleCreateTag}
+                    />
                   ))}
                 </tbody>
               </table>
@@ -1005,6 +892,9 @@ export default function BranchesPage() {
         tags={tags}
         selectedBranch={selectedBranch}
       />
+
+      {/* Organization Packages Modal */}
+      <OrganizationPackagesModal organization={owner} />
     </div>
   );
 }
