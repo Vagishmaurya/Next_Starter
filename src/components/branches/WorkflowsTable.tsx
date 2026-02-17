@@ -1,8 +1,8 @@
 'use client';
 
 import type { Workflow } from '@/lib/api/actions.service';
-import { Activity, Copy, Download, Edit, ExternalLink, Plus, RefreshCw } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import { Activity, Copy, Download, Edit, ExternalLink } from 'lucide-react';
+import React, { useCallback, useEffect, useImperativeHandle, useState } from 'react';
 import CreateWorkflowModal from '@/components/branches/CreateWorkflowModal';
 import { EditWorkflowModal } from '@/components/branches/EditWorkflowModal';
 import { Badge } from '@/components/ui/badge';
@@ -20,12 +20,21 @@ import { TableSkeleton } from '@/components/ui/TableSkeleton';
 import { actionsService } from '@/lib/api/actions.service';
 import { useThemeStore } from '@/store/themeStore';
 
+export type WorkflowsTableRef = {
+  refresh: () => void;
+  openCreateModal: () => void;
+};
+
 type WorkflowsTableProps = {
   owner: string;
   repository: string;
 };
 
-export function WorkflowsTable({ owner, repository }: WorkflowsTableProps) {
+export const WorkflowsTable = ({
+  ref,
+  owner,
+  repository,
+}: WorkflowsTableProps & { ref?: React.RefObject<WorkflowsTableRef | null> }) => {
   const { theme } = useThemeStore();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -38,7 +47,7 @@ export function WorkflowsTable({ owner, repository }: WorkflowsTableProps) {
     message: string;
   } | null>(null);
   const [page, setPage] = useState(1);
-  const perPage = 10;
+  const perPage = 15;
 
   // Calculate pagination
   const startIndex = (page - 1) * perPage;
@@ -78,6 +87,11 @@ export function WorkflowsTable({ owner, repository }: WorkflowsTableProps) {
   useEffect(() => {
     fetchWorkflows();
   }, [owner, repository, fetchWorkflows]);
+
+  useImperativeHandle(ref, () => ({
+    refresh: fetchWorkflows,
+    openCreateModal: () => setIsCreateModalOpen(true),
+  }));
 
   const handleCreateWorkflow = (success: boolean, message?: string) => {
     if (success) {
@@ -191,50 +205,6 @@ export function WorkflowsTable({ owner, repository }: WorkflowsTableProps) {
           </div>
         </div>
       )}
-
-      {/* Header with Create Button */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Activity className={`h-6 w-6 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
-          <div>
-            <h2
-              className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}
-            >
-              Workflows
-            </h2>
-            <p className={`text-sm ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'}`}>
-              Manage GitHub Actions workflows for {owner}/{repository}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRefresh}
-            disabled={loading}
-            className={`flex items-center gap-2 ${
-              theme === 'dark'
-                ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800'
-                : 'border-gray-300 text-gray-700 hover:bg-gray-100'
-            }`}
-          >
-            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
-          <Button
-            onClick={() => setIsCreateModalOpen(true)}
-            className={`flex items-center gap-2 ${
-              theme === 'dark'
-                ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                : 'bg-blue-600 hover:bg-blue-700 text-white'
-            }`}
-          >
-            <Plus className="h-4 w-4" />
-            Create Workflow
-          </Button>
-        </div>
-      </div>
 
       {/* Workflows Table */}
       <Card
@@ -545,4 +515,6 @@ export function WorkflowsTable({ owner, repository }: WorkflowsTableProps) {
       )}
     </div>
   );
-}
+};
+
+WorkflowsTable.displayName = 'WorkflowsTable';

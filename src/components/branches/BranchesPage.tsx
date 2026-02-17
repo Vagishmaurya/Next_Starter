@@ -1,5 +1,7 @@
 'use client';
 
+import type { ActionsTableRef } from '@/components/branches/ActionsTable';
+import type { WorkflowsTableRef } from '@/components/branches/WorkflowsTable';
 import {
   Activity,
   ArrowLeft,
@@ -8,13 +10,17 @@ import {
   GitBranch,
   GitCommit,
   PlayCircle,
+  Plus,
+  RefreshCw,
   Shield,
   Tag,
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useCallback, useEffect, useState, useTransition } from 'react';
+import { ActionsTable } from '@/components/branches/ActionsTable';
 import { CommitRow } from '@/components/branches/CommitRow';
+import { WorkflowsTable } from '@/components/branches/WorkflowsTable';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
@@ -28,15 +34,10 @@ import { TableSkeleton } from '@/components/ui/TableSkeleton';
 import { branchesService } from '@/lib/api/branches.service';
 import { tagsService } from '@/lib/api/tags.service';
 import { useBranchesStore } from '@/store/branchesStore';
+
 import { usePackagesStore } from '@/store/packagesStore';
 import { useThemeStore } from '@/store/themeStore';
 
-const ActionsTable = dynamic(
-  () => import('@/components/branches/ActionsTable').then((mod) => mod.ActionsTable),
-  {
-    loading: () => <TableSkeleton rows={5} columns={6} />,
-  }
-);
 const CreateTagModal = dynamic(
   () => import('@/components/branches/CreateTagModal').then((mod) => mod.CreateTagModal),
   { ssr: false }
@@ -47,12 +48,6 @@ const OrganizationPackagesModal = dynamic(
       (mod) => mod.OrganizationPackagesModal
     ),
   { ssr: false }
-);
-const WorkflowsTable = dynamic(
-  () => import('@/components/branches/WorkflowsTable').then((mod) => mod.WorkflowsTable),
-  {
-    loading: () => <TableSkeleton rows={5} columns={4} />,
-  }
 );
 
 export default function BranchesPage() {
@@ -84,11 +79,14 @@ export default function BranchesPage() {
   } = useBranchesStore();
 
   const [page, setPage] = useState(1);
-  const perPage = 30;
+  const perPage = 15;
   const [tagsPage, setTagsPage] = useState(1);
   const tagsPerPage = 10;
   const [isTagModalOpen, setIsTagModalOpen] = useState(false);
   const [selectedCommitSha, setSelectedCommitSha] = useState<string>('');
+
+  const workflowsTableRef = React.useRef<WorkflowsTableRef>(null);
+  const actionsTableRef = React.useRef<ActionsTableRef>(null);
 
   // Calculate pagination for tags
   const tagsStartIndex = (tagsPage - 1) * tagsPerPage;
@@ -409,6 +407,56 @@ export default function BranchesPage() {
               </div>
             </div>
           )}
+
+          {/* Workflows Controls */}
+          {currentView === 'workflows' && (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => workflowsTableRef.current?.refresh()}
+                className={`flex items-center gap-2 ${
+                  theme === 'dark'
+                    ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800'
+                    : 'border-gray-300 text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                <RefreshCw className="h-4 w-4" />
+                Refresh
+              </Button>
+              <Button
+                onClick={() => workflowsTableRef.current?.openCreateModal()}
+                size="sm"
+                className={`flex items-center gap-2 ${
+                  theme === 'dark'
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                    : 'bg-blue-600 hover:bg-blue-700 text-white'
+                }`}
+              >
+                <Plus className="h-4 w-4" />
+                Create Workflow
+              </Button>
+            </div>
+          )}
+
+          {/* Actions Controls */}
+          {currentView === 'actions' && (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => actionsTableRef.current?.refresh()}
+                className={`flex items-center gap-2 ${
+                  theme === 'dark'
+                    ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800'
+                    : 'border-gray-300 text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                <RefreshCw className="h-4 w-4" />
+                Refresh
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Loading State */}
@@ -694,10 +742,14 @@ export default function BranchesPage() {
         )}
 
         {/* Actions View */}
-        {currentView === 'actions' && <ActionsTable owner={owner} repository={repository} />}
+        {currentView === 'actions' && (
+          <ActionsTable ref={actionsTableRef} owner={owner} repository={repository} />
+        )}
 
         {/* Workflows View */}
-        {currentView === 'workflows' && <WorkflowsTable owner={owner} repository={repository} />}
+        {currentView === 'workflows' && (
+          <WorkflowsTable ref={workflowsTableRef} owner={owner} repository={repository} />
+        )}
 
         {/* No Branches State */}
         {!isLoading && branches.length === 0 && (

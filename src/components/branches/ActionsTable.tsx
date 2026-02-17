@@ -8,13 +8,12 @@ import {
   Clock,
   ExternalLink,
   GitBranch,
-  RefreshCw,
   User,
   XCircle,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useImperativeHandle, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -23,19 +22,27 @@ import { TableSkeleton } from '@/components/ui/TableSkeleton';
 import { actionsService } from '@/lib/api/actions.service';
 import { useThemeStore } from '@/store/themeStore';
 
+export type ActionsTableRef = {
+  refresh: () => void;
+};
+
 type ActionsTableProps = {
   owner: string;
   repository: string;
 };
 
-export function ActionsTable({ owner, repository }: ActionsTableProps) {
+export const ActionsTable = ({
+  ref,
+  owner,
+  repository,
+}: ActionsTableProps & { ref?: React.RefObject<ActionsTableRef | null> }) => {
   const router = useRouter();
   const { theme } = useThemeStore();
   const [workflowRuns, setWorkflowRuns] = useState<WorkflowRun[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
-  const perPage = 10;
+  const perPage = 15;
 
   // Calculate pagination
   const startIndex = (page - 1) * perPage;
@@ -69,6 +76,14 @@ export function ActionsTable({ owner, repository }: ActionsTableProps) {
       fetchWorkflowRuns(owner, repository);
     }
   }, [owner, repository, fetchWorkflowRuns]);
+
+  useImperativeHandle(ref, () => ({
+    refresh: () => {
+      if (owner && repository) {
+        fetchWorkflowRuns(owner, repository);
+      }
+    },
+  }));
 
   const formatDate = (dateString: string) => {
     if (!dateString) {
@@ -149,38 +164,6 @@ export function ActionsTable({ owner, repository }: ActionsTableProps) {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Activity className={`h-6 w-6 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
-          <div>
-            <h2
-              className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}
-            >
-              Actions
-            </h2>
-            <p className={`text-sm ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'}`}>
-              GitHub Actions workflow runs for {owner}/{repository}
-            </p>
-          </div>
-        </div>
-
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleRefresh}
-          disabled={isLoading}
-          className={`flex items-center gap-2 ${
-            theme === 'dark'
-              ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800'
-              : 'border-gray-300 text-gray-700 hover:bg-gray-100'
-          }`}
-        >
-          <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-          Refresh
-        </Button>
-      </div>
-
       {/* Loading State */}
       {isLoading && workflowRuns.length === 0 && <TableSkeleton rows={5} columns={7} />}
 
@@ -264,7 +247,7 @@ export function ActionsTable({ owner, repository }: ActionsTableProps) {
               <tbody
                 className={`divide-y ${theme === 'dark' ? 'divide-zinc-800' : 'divide-gray-200'}`}
               >
-                {workflowRuns.map((run) => (
+                {_paginatedRuns.map((run) => (
                   <tr
                     key={run.id}
                     className={`transition-colors ${
@@ -437,4 +420,5 @@ export function ActionsTable({ owner, repository }: ActionsTableProps) {
       )}
     </div>
   );
-}
+};
+ActionsTable.displayName = 'ActionsTable';
