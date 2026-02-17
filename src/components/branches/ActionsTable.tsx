@@ -19,6 +19,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { TableSkeleton } from '@/components/ui/TableSkeleton';
 import { actionsService } from '@/lib/api/actions.service';
 import { useThemeStore } from '@/store/themeStore';
 
@@ -181,16 +182,7 @@ export function ActionsTable({ owner, repository }: ActionsTableProps) {
       </div>
 
       {/* Loading State */}
-      {isLoading && workflowRuns.length === 0 && (
-        <div className="text-center py-12">
-          <RefreshCw
-            className={`h-8 w-8 mx-auto mb-4 animate-spin ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'}`}
-          />
-          <p className={theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'}>
-            Loading workflow runs...
-          </p>
-        </div>
-      )}
+      {isLoading && workflowRuns.length === 0 && <TableSkeleton rows={5} columns={7} />}
 
       {/* Error State */}
       {error && (

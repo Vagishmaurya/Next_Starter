@@ -24,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { TableSkeleton } from '@/components/ui/TableSkeleton';
 import { branchesService } from '@/lib/api/branches.service';
 import { tagsService } from '@/lib/api/tags.service';
 import { useBranchesStore } from '@/store/branchesStore';
@@ -33,7 +34,7 @@ import { useThemeStore } from '@/store/themeStore';
 const ActionsTable = dynamic(
   () => import('@/components/branches/ActionsTable').then((mod) => mod.ActionsTable),
   {
-    loading: () => <p>Loading Actions...</p>,
+    loading: () => <TableSkeleton rows={5} columns={6} />,
   }
 );
 const CreateTagModal = dynamic(
@@ -50,7 +51,7 @@ const OrganizationPackagesModal = dynamic(
 const WorkflowsTable = dynamic(
   () => import('@/components/branches/WorkflowsTable').then((mod) => mod.WorkflowsTable),
   {
-    loading: () => <p>Loading Workflows...</p>,
+    loading: () => <TableSkeleton rows={5} columns={4} />,
   }
 );
 
@@ -244,32 +245,45 @@ export default function BranchesPage() {
       }`}
     >
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Back Button */}
-        <div className="mb-6">
+      <div className="max-w-7xl mx-auto px-4 py-4">
+        {/* Header Row: Back, Title, Org Packages */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => router.back()}
+              className={`${theme === 'dark' ? 'text-zinc-300 hover:text-white hover:bg-zinc-800' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'} transition-all`}
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
+            </Button>
+            <h1
+              className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}
+            >
+              {owner}/{repository}
+            </h1>
+          </div>
+
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
-            onClick={() => router.back()}
-            className={`${theme === 'dark' ? 'text-zinc-300 hover:text-white hover:bg-zinc-800' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'} transition-all`}
+            onClick={() => startTransition(() => setShowOrgPackagesModal(true))}
+            className={`flex items-center gap-2 ${
+              theme === 'dark'
+                ? 'border-violet-500/50 bg-violet-500/10 text-violet-400 hover:bg-violet-500/20 hover:border-violet-400'
+                : 'border-violet-300 bg-violet-50 text-violet-600 hover:bg-violet-100 hover:border-violet-400'
+            }`}
           >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
+            <Building2 className="h-4 w-4" />
+            Org Packages
           </Button>
         </div>
 
-        {/* Repository Header with Navigation */}
-        <div className="mb-8 text-center">
-          <h1
-            className={`text-3xl font-bold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}
-          >
-            {owner}/{repository}
-          </h1>
-          <p className={`text-lg mb-4 ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'}`}>
-            Repository Branches & History
-          </p>
+        {/* Controls Row: Navigation & Branch Selector */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
           {/* Navigation Buttons */}
-          <div className="flex items-center justify-center gap-3 mb-6">
+          <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
@@ -349,192 +363,56 @@ export default function BranchesPage() {
               <Activity className="h-4 w-4" />
               Actions
             </Button>
-
-            {/* Organization Packages Button */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => startTransition(() => setShowOrgPackagesModal(true))}
-              className={`flex items-center gap-2 ${
-                theme === 'dark'
-                  ? 'border-violet-500/50 bg-violet-500/10 text-violet-400 hover:bg-violet-500/20 hover:border-violet-400'
-                  : 'border-violet-300 bg-violet-50 text-violet-600 hover:bg-violet-100 hover:border-violet-400'
-              }`}
-            >
-              <Building2 className="h-4 w-4" />
-              Org Packages
-            </Button>
           </div>
+
+          {/* Branch Selector */}
+          {currentView === 'commits' && branches.length > 0 && (
+            <div className="flex items-center gap-2">
+              <div className="w-[240px]">
+                <Select
+                  value={selectedBranch || ''}
+                  onValueChange={handleBranchChange}
+                  disabled={isLoading}
+                >
+                  <SelectTrigger
+                    aria-label="Select a branch"
+                    className={`h-9 transition-colors ${
+                      theme === 'dark'
+                        ? 'bg-zinc-900 border-zinc-800 text-white'
+                        : 'bg-white border-gray-300 text-gray-900'
+                    }`}
+                  >
+                    <SelectValue placeholder="Select a branch" />
+                  </SelectTrigger>
+                  <SelectContent
+                    className={
+                      theme === 'dark' ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-gray-300'
+                    }
+                  >
+                    {branches.map((branch) => (
+                      <SelectItem key={branch.name} value={branch.name}>
+                        <div
+                          className={`flex items-center gap-2 ${theme === 'dark' ? 'text-zinc-200' : 'text-gray-900'}`}
+                        >
+                          <GitBranch className="h-4 w-4" />
+                          <span>{branch.name}</span>
+                          {branch.protected && (
+                            <Shield
+                              className={`h-3 w-3 ${theme === 'dark' ? 'text-yellow-400' : 'text-yellow-600'}`}
+                            />
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* View Toggle Buttons */}
-        {/* <div className="mb-8 flex items-center justify-center">
-          <div
-            className={`inline-flex items-center gap-1 p-1.5 rounded-xl ${
-              theme === 'dark'
-                ? 'bg-zinc-800/50 backdrop-blur-sm border border-zinc-700/50'
-                : 'bg-white/80 backdrop-blur-sm border border-gray-200 shadow-lg shadow-gray-200/50'
-            }`}
-          >
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleViewToggle('commits')}
-              className={`px-5 py-2.5 text-sm font-semibold rounded-lg transition-all duration-300 ${
-                currentView === 'commits'
-                  ? theme === 'dark'
-                    ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-500/30 scale-105'
-                    : 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-500/40 scale-105'
-                  : theme === 'dark'
-                    ? 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700/50'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100/80'
-              }`}
-            >
-              <GitCommit
-                className={`h-4 w-4 mr-2 ${currentView === 'commits' ? 'animate-pulse' : ''}`}
-              />
-              Commits
-              {commits.length > 0 && (
-                <span
-                  className={`ml-2 px-2 py-0.5 rounded-full text-xs font-bold ${
-                    currentView === 'commits'
-                      ? 'bg-white/20 text-white'
-                      : theme === 'dark'
-                        ? 'bg-zinc-700 text-zinc-300'
-                        : 'bg-gray-200 text-gray-700'
-                  }`}
-                >
-                  {commits.length}
-                </span>
-              )}
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleViewToggle('tags')}
-              className={`px-5 py-2.5 text-sm font-semibold rounded-lg transition-all duration-300 ${
-                currentView === 'tags'
-                  ? theme === 'dark'
-                    ? 'bg-gradient-to-r from-purple-600 to-purple-500 text-white shadow-lg shadow-purple-500/30 scale-105'
-                    : 'bg-gradient-to-r from-purple-600 to-purple-500 text-white shadow-lg shadow-purple-500/40 scale-105'
-                  : theme === 'dark'
-                    ? 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700/50'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100/80'
-              }`}
-            >
-              <Tag className={`h-4 w-4 mr-2 ${currentView === 'tags' ? 'animate-pulse' : ''}`} />
-              Tags
-              {tags.length > 0 && (
-                <span
-                  className={`ml-2 px-2 py-0.5 rounded-full text-xs font-bold ${
-                    currentView === 'tags'
-                      ? 'bg-white/20 text-white'
-                      : theme === 'dark'
-                        ? 'bg-zinc-700 text-zinc-300'
-                        : 'bg-gray-200 text-gray-700'
-                  }`}
-                >
-                  {tags.length}
-                </span>
-              )}
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleViewToggle('actions')}
-              className={`px-5 py-2.5 text-sm font-semibold rounded-lg transition-all duration-300 ${
-                currentView === 'actions'
-                  ? theme === 'dark'
-                    ? 'bg-gradient-to-r from-green-600 to-emerald-500 text-white shadow-lg shadow-green-500/30 scale-105'
-                    : 'bg-gradient-to-r from-green-600 to-emerald-500 text-white shadow-lg shadow-green-500/40 scale-105'
-                  : theme === 'dark'
-                    ? 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700/50'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100/80'
-              }`}
-            >
-              <Activity
-                className={`h-4 w-4 mr-2 ${currentView === 'actions' ? 'animate-pulse' : ''}`}
-              />
-              Actions
-              {workflowRuns.length > 0 && (
-                <span
-                  className={`ml-2 px-2 py-0.5 rounded-full text-xs font-bold ${
-                    currentView === 'actions'
-                      ? 'bg-white/20 text-white'
-                      : theme === 'dark'
-                        ? 'bg-zinc-700 text-zinc-300'
-                        : 'bg-gray-200 text-gray-700'
-                  }`}
-                >
-                  {workflowRuns.length}
-                </span>
-              )}
-            </Button>
-          </div>
-        </div> */}
-
-        {/* Branch Selector - Only show for commits view */}
-        {currentView === 'commits' && branches.length > 0 && (
-          <div className="mb-6">
-            <label
-              className={`block text-sm font-medium mb-3 ${
-                theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'
-              }`}
-            >
-              <GitBranch className="inline h-4 w-4 mr-2" />
-              Select Branch
-              <span
-                className={`text-xs font-normal ml-2 ${theme === 'dark' ? 'text-zinc-600' : 'text-gray-600'}`}
-              >
-                ({branches.length} branches)
-              </span>
-            </label>
-            <div className="max-w-xs">
-              <Select
-                value={selectedBranch || ''}
-                onValueChange={handleBranchChange}
-                disabled={isLoading}
-              >
-                <SelectTrigger
-                  aria-label="Select a branch"
-                  className={`transition-colors ${
-                    theme === 'dark'
-                      ? 'bg-zinc-900 border-zinc-800 text-white'
-                      : 'bg-white border-gray-300 text-gray-900'
-                  }`}
-                >
-                  <SelectValue placeholder="Select a branch" />
-                </SelectTrigger>
-                <SelectContent
-                  className={
-                    theme === 'dark' ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-gray-300'
-                  }
-                >
-                  {branches.map((branch) => (
-                    <SelectItem key={branch.name} value={branch.name}>
-                      <div className="flex items-center gap-2">
-                        <GitBranch className="h-4 w-4" />
-                        <span>{branch.name}</span>
-                        {branch.protected && (
-                          <Shield
-                            className={`h-3 w-3 ${theme === 'dark' ? 'text-yellow-400' : 'text-yellow-600'}`}
-                          />
-                        )}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        )}
-
         {/* Loading State */}
-        {isLoading && (
-          <div className="text-center py-12">
-            <p className={theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'}>Loading...</p>
-          </div>
-        )}
+        {isLoading && <TableSkeleton rows={8} columns={5} className="mb-6" />}
 
         {/* Error State */}
         {error && (
@@ -565,35 +443,35 @@ export default function BranchesPage() {
                 >
                   <tr>
                     <th
-                      className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                      className={`px-4 py-2 text-left text-xs font-medium uppercase tracking-wider ${
                         theme === 'dark' ? 'text-zinc-400' : 'text-gray-500'
                       }`}
                     >
                       Commit Message
                     </th>
                     <th
-                      className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                      className={`px-4 py-2 text-left text-xs font-medium uppercase tracking-wider ${
                         theme === 'dark' ? 'text-zinc-400' : 'text-gray-500'
                       }`}
                     >
                       Author
                     </th>
                     <th
-                      className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                      className={`px-4 py-2 text-left text-xs font-medium uppercase tracking-wider ${
                         theme === 'dark' ? 'text-zinc-400' : 'text-gray-500'
                       }`}
                     >
                       Date
                     </th>
                     <th
-                      className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                      className={`px-4 py-2 text-left text-xs font-medium uppercase tracking-wider ${
                         theme === 'dark' ? 'text-zinc-400' : 'text-gray-500'
                       }`}
                     >
                       SHA
                     </th>
                     <th
-                      className={`px-6 py-3 text-right text-xs font-medium uppercase tracking-wider ${
+                      className={`px-4 py-2 text-right text-xs font-medium uppercase tracking-wider ${
                         theme === 'dark' ? 'text-zinc-400' : 'text-gray-500'
                       }`}
                     >

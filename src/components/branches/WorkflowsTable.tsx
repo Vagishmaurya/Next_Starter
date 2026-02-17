@@ -16,6 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { TableSkeleton } from '@/components/ui/TableSkeleton';
 import { actionsService } from '@/lib/api/actions.service';
 import { useThemeStore } from '@/store/themeStore';
 
@@ -264,15 +265,8 @@ export function WorkflowsTable({ owner, repository }: WorkflowsTableProps) {
 
         {/* Loading State */}
         {loading && !error && (
-          <div className="p-12 text-center">
-            <RefreshCw
-              className={`h-8 w-8 mx-auto mb-4 animate-spin ${
-                theme === 'dark' ? 'text-zinc-400' : 'text-gray-400'
-              }`}
-            />
-            <p className={`text-sm ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'}`}>
-              Loading workflows...
-            </p>
+          <div className="p-6">
+            <TableSkeleton rows={5} columns={6} />
           </div>
         )}
 

@@ -64,7 +64,7 @@ export const CommitRow = memo(({ commit, theme, onTagClick }: CommitRowProps) =>
         theme === 'dark' ? 'hover:bg-zinc-800/70' : 'hover:bg-gray-50/80'
       }`}
     >
-      <td className="px-6 py-4">
+      <td className="px-4 py-2">
         <div className="flex items-start gap-2">
           <GitCommit
             className={`h-4 w-4 mt-1 shrink-0 ${
@@ -91,7 +91,7 @@ export const CommitRow = memo(({ commit, theme, onTagClick }: CommitRowProps) =>
           </div>
         </div>
       </td>
-      <td className="px-6 py-4">
+      <td className="px-4 py-2">
         <div className="flex items-center gap-2">
           <User className={`h-4 w-4 ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-400'}`} />
           <div>
@@ -108,7 +108,7 @@ export const CommitRow = memo(({ commit, theme, onTagClick }: CommitRowProps) =>
           </div>
         </div>
       </td>
-      <td className="px-6 py-4">
+      <td className="px-4 py-2">
         <div className="flex items-center gap-2">
           <Clock className={`h-4 w-4 ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-400'}`} />
           <div>
@@ -121,7 +121,7 @@ export const CommitRow = memo(({ commit, theme, onTagClick }: CommitRowProps) =>
           </div>
         </div>
       </td>
-      <td className="px-6 py-4">
+      <td className="px-4 py-2">
         <code
           className={`text-xs font-mono px-2 py-1 rounded ${
             theme === 'dark' ? 'bg-zinc-800 text-zinc-300' : 'bg-gray-100 text-gray-700'
