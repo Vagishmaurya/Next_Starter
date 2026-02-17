@@ -21,7 +21,7 @@ export function Navbar() {
   return (
     <nav
       className={`sticky top-0 z-50 w-full border-b transition-colors duration-300 ${
-        theme === 'dark' ? 'border-slate-800 bg-slate-950' : 'border-slate-200 bg-white'
+        theme === 'dark' ? 'border-zinc-800 bg-zinc-950' : 'border-zinc-200 bg-white'
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -41,14 +41,14 @@ export function Navbar() {
             <div className="flex flex-col">
               <span
                 className={`font-bold text-lg leading-none ${
-                  theme === 'dark' ? 'text-white' : 'text-slate-900'
+                  theme === 'dark' ? 'text-white' : 'text-zinc-900'
                 }`}
               >
                 Calance
               </span>
               <span
                 className={`text-xs leading-none ${
-                  theme === 'dark' ? 'text-slate-400' : 'text-slate-500'
+                  theme === 'dark' ? 'text-zinc-400' : 'text-zinc-500'
                 }`}
               >
                 Workflow Automation
@@ -64,8 +64,8 @@ export function Navbar() {
             aria-label="Toggle theme"
             className={`rounded-full mr-2 transition-colors ${
               theme === 'dark'
-                ? 'text-slate-300 hover:bg-slate-800'
-                : 'text-slate-600 hover:bg-slate-100'
+                ? 'text-zinc-300 hover:bg-zinc-800'
+                : 'text-zinc-600 hover:bg-zinc-100'
             }`}
           >
             {theme === 'light' ? (
@@ -80,8 +80,8 @@ export function Navbar() {
             type="button"
             className={`md:hidden p-2 rounded-full transition-colors ${
               theme === 'dark'
-                ? 'text-slate-300 hover:bg-slate-800'
-                : 'text-slate-600 hover:bg-slate-100'
+                ? 'text-zinc-300 hover:bg-zinc-800'
+                : 'text-zinc-600 hover:bg-zinc-100'
             }`}
             onClick={() => setIsOpen(!isOpen)}
             aria-label="Mobile menu"

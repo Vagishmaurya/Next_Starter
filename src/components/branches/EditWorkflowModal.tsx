@@ -1,14 +1,16 @@
 'use client';
 
-import type { WorkflowFile } from '@/lib/api/actions.service';
-import { Code, FileEdit, Loader2, Save, X } from 'lucide-react';
+import type { CreateWorkflowRequest, WorkflowFile } from '@/lib/api/actions.service';
+import { Loader2, Save, X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
+import { useWorkflowForm } from '@/hooks/useWorkflowForm';
 import { actionsService } from '@/lib/api/actions.service';
+
+import { parseWorkflowYaml } from '@/lib/workflow-parser';
 import { useThemeStore } from '@/store/themeStore';
+import { WorkflowForm } from './WorkflowForm';
 
 type EditWorkflowModalProps = {
   isOpen: boolean;
@@ -28,12 +30,26 @@ export function EditWorkflowModal({
   workflowName,
 }: EditWorkflowModalProps) {
   const { theme } = useThemeStore();
+  const form = useWorkflowForm();
+
+  // Destructure setters to avoid unstable dependencies in useCallback
+  const {
+    setWorkflowName,
+    setDeploymentType,
+    setProjects,
+    setEc2CommonFields,
+    setEc2Projects,
+    setKubernetesCommonFields,
+    setKubernetesProjects,
+  } = form;
+
   const [workflowFile, setWorkflowFile] = useState<WorkflowFile | null>(null);
-  const [editedContent, setEditedContent] = useState('');
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [hasChanges, setHasChanges] = useState(false);
+
+  // Track original parsed data to detect changes (simplified check)
+  // const [initialDataStr, setInitialDataStr] = useState('');
 
   const fetchWorkflowFile = useCallback(async () => {
     if (!isOpen || !workflowPath) {
@@ -46,17 +62,61 @@ export function EditWorkflowModal({
 
       const response = await actionsService.fetchWorkflowFile(owner, repository, workflowPath);
       setWorkflowFile(response.data);
-      setEditedContent(response.data.content);
-      setHasChanges(false);
+
+      try {
+        const parsedData = parseWorkflowYaml(response.data.content);
+
+        // Populate form using destructured setters
+        setWorkflowName(parsedData.workflowName || workflowName);
+        setDeploymentType(parsedData.deploymentType);
+        setProjects(parsedData.projects);
+
+        if (parsedData.deploymentType === 'ec2') {
+          if (parsedData.ec2CommonFields) {
+            setEc2CommonFields(parsedData.ec2CommonFields);
+          }
+          if (parsedData.ec2Projects) {
+            setEc2Projects(parsedData.ec2Projects);
+          }
+        } else {
+          if (parsedData.kubernetesCommonFields) {
+            setKubernetesCommonFields(parsedData.kubernetesCommonFields);
+          }
+          if (parsedData.kubernetesProjects) {
+            setKubernetesProjects(parsedData.kubernetesProjects);
+          }
+        }
+
+        // Store initial state for change detection
+        // setInitialDataStr(JSON.stringify(parsedData));
+      } catch (parseErr) {
+        console.error('Failed to parse workflow YAML:', parseErr);
+        setError(
+          'Failed to parse workflow content. The file format might be invalid or unsupported.'
+        );
+      }
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Failed to fetch workflow file');
     } finally {
       setLoading(false);
     }
-  }, [isOpen, owner, repository, workflowPath]);
+  }, [
+    isOpen,
+    owner,
+    repository,
+    workflowPath,
+    workflowName,
+    setWorkflowName,
+    setDeploymentType,
+    setProjects,
+    setEc2CommonFields,
+    setEc2Projects,
+    setKubernetesCommonFields,
+    setKubernetesProjects,
+  ]);
 
   const handleSave = useCallback(async () => {
-    if (!workflowFile || !hasChanges) {
+    if (!workflowFile) {
       return;
     }
 
@@ -64,48 +124,48 @@ export function EditWorkflowModal({
       setSaving(true);
       setError(null);
 
+      // 1. Construct payload from form (similar to CreateModal)
+      const payload: CreateWorkflowRequest = {
+        owner,
+        repository,
+        workflowName: form.workflowName,
+        deploymentType: form.deploymentType,
+        projects: form.projects,
+        ec2CommonFields: form.deploymentType === 'ec2' ? form.ec2CommonFields : undefined,
+        ec2Projects: form.deploymentType === 'ec2' ? form.ec2Projects : undefined,
+        kubernetesCommonFields:
+          form.deploymentType === 'kubernetes' ? form.kubernetesCommonFields : undefined,
+        kubernetesProjects:
+          form.deploymentType === 'kubernetes' ? form.kubernetesProjects : undefined,
+      };
+
+      // 2. Generate YAML via Preview API
+      const previewResponse = await actionsService.previewWorkflow(payload);
+      const generatedYaml = previewResponse.data.yaml_content;
+
+      // 3. Update File
       await actionsService.updateWorkflowFile(
         owner,
         repository,
         workflowFile.path,
-        editedContent,
+        generatedYaml,
         workflowFile.sha
       );
 
-      // Refresh the file data after successful update
+      // Refresh
       await fetchWorkflowFile();
-
-      // Show success notification or close modal
       onClose();
     } catch (error) {
+      console.error('Save error:', error);
       setError(error instanceof Error ? error.message : 'Failed to update workflow file');
     } finally {
       setSaving(false);
     }
-  }, [workflowFile, editedContent, hasChanges, owner, repository, fetchWorkflowFile, onClose]);
-
-  const handleContentChange = (content: string) => {
-    setEditedContent(content);
-    setHasChanges(content !== workflowFile?.content);
-  };
+  }, [workflowFile, form, owner, repository, fetchWorkflowFile, onClose]);
 
   const handleClose = () => {
-    if (hasChanges) {
-      // eslint-disable-next-line no-alert
-      if (window.confirm('You have unsaved changes. Are you sure you want to close?')) {
-        setWorkflowFile(null);
-        setEditedContent('');
-        setHasChanges(false);
-        setError(null);
-        onClose();
-      }
-    } else {
-      setWorkflowFile(null);
-      setEditedContent('');
-      setHasChanges(false);
-      setError(null);
-      onClose();
-    }
+    // Basic unsaved changes check can be added here
+    onClose();
   };
 
   useEffect(() => {
@@ -117,151 +177,114 @@ export function EditWorkflowModal({
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent
-        className={`max-w-7xl max-h-[95vh] overflow-hidden ${
+        className={`max-w-7xl max-h-[95vh] overflow-hidden flex flex-col ${
           theme === 'dark' ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-gray-300'
         }`}
       >
-        <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle
             className={`text-xl font-bold flex items-center gap-2 ${
               theme === 'dark' ? 'text-white' : 'text-gray-900'
             }`}
           >
-            <FileEdit className="h-5 w-5" />
             Edit Workflow: {workflowName}
-            {hasChanges && (
-              <Badge variant="outline" className="text-xs">
-                Unsaved changes
-              </Badge>
-            )}
           </DialogTitle>
         </DialogHeader>
 
         {loading ? (
-          <div className="flex items-center justify-center py-12">
+          <div className="flex-1 flex items-center justify-center">
             <div className="flex items-center gap-2">
               <Loader2 className="h-5 w-5 animate-spin" />
               <span className={theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'}>
-                Loading workflow file...
+                Loading workflow...
               </span>
             </div>
           </div>
         ) : error ? (
-          <div
-            className={`text-center py-8 px-4 rounded-lg ${
+          <div className="flex-1 p-6">
+            <div
+              className={`text-center py-8 px-4 rounded-lg ${
+                theme === 'dark'
+                  ? 'bg-red-500/10 border border-red-500/20 text-red-400'
+                  : 'bg-red-50 border border-red-200 text-red-600'
+              }`}
+            >
+              <p className="mb-4">{error}</p>
+              <Button
+                onClick={fetchWorkflowFile}
+                variant="outline"
+                size="sm"
+                className={
+                  theme === 'dark'
+                    ? 'border-red-500/50 text-red-400'
+                    : 'border-red-300 text-red-600'
+                }
+              >
+                Retry
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex-1 overflow-y-auto px-1 py-4">
+            {/* Render Step 1 (Basic Info) */}
+            <div className="mb-8">
+              <h3
+                className={`text-lg font-semibold mb-4 px-1 border-b pb-2 ${theme === 'dark' ? 'text-zinc-200 border-zinc-700' : 'text-gray-800 border-gray-200'}`}
+              >
+                General Settings & Projects
+              </h3>
+              <WorkflowForm form={form} currentStep={1} />
+            </div>
+
+            {/* Render Step 2 (Deployment Config) */}
+            <div>
+              <h3
+                className={`text-lg font-semibold mb-4 px-1 border-b pb-2 ${theme === 'dark' ? 'text-zinc-200 border-zinc-700' : 'text-gray-800 border-gray-200'}`}
+              >
+                Deployment Configuration
+              </h3>
+              <WorkflowForm form={form} currentStep={2} />
+            </div>
+          </div>
+        )}
+
+        {/* Footer Actions */}
+        <div
+          className={`flex-shrink-0 flex items-center justify-end gap-3 pt-4 border-t ${
+            theme === 'dark' ? 'border-zinc-700' : 'border-gray-200'
+          }`}
+        >
+          <Button
+            onClick={handleClose}
+            variant="outline"
+            disabled={saving}
+            className={
               theme === 'dark'
-                ? 'bg-red-500/10 border border-red-500/20 text-red-400'
-                : 'bg-red-50 border border-red-200 text-red-600'
+                ? 'border-zinc-600 text-zinc-300 hover:bg-zinc-700'
+                : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+            }
+          >
+            <X className="h-4 w-4 mr-2" />
+            Cancel
+          </Button>
+
+          <Button
+            onClick={handleSave}
+            disabled={loading || saving || !!error}
+            className={`${
+              theme === 'dark'
+                ? 'bg-green-600 hover:bg-green-700 text-white'
+                : 'bg-green-600 hover:bg-green-700 text-white'
             }`}
           >
-            <p className="mb-4">{error}</p>
-            <Button
-              onClick={fetchWorkflowFile}
-              variant="outline"
-              size="sm"
-              className={
-                theme === 'dark' ? 'border-red-500/50 text-red-400' : 'border-red-300 text-red-600'
-              }
-            >
-              Retry
-            </Button>
-          </div>
-        ) : workflowFile ? (
-          <div className="space-y-4 max-h-[calc(95vh-120px)] overflow-y-auto">
-            {/* File Info */}
-            <div
-              className={`p-3 rounded-lg ${
-                theme === 'dark'
-                  ? 'bg-zinc-800/50 border border-zinc-700'
-                  : 'bg-gray-50 border border-gray-200'
-              }`}
-            >
-              <div className="flex items-center gap-4 text-sm">
-                <div
-                  className={`flex items-center gap-1 ${
-                    theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'
-                  }`}
-                >
-                  <Code className="h-4 w-4" />
-                  <span>{workflowFile.path}</span>
-                </div>
-                <div className={`${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}>
-                  {workflowFile.size} bytes
-                </div>
-                <div className={`${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}>
-                  SHA: {workflowFile.sha.substring(0, 8)}...
-                </div>
-              </div>
-            </div>
-
-            {/* Content Editor */}
-            <div className="space-y-2">
-              <label
-                htmlFor="workflow-content"
-                className={`block text-sm font-medium ${
-                  theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'
-                }`}
-              >
-                Workflow Content
-              </label>
-              <Textarea
-                id="workflow-content"
-                value={editedContent}
-                onChange={(e) => handleContentChange(e.target.value)}
-                className={`min-h-[450px] max-h-[500px] font-mono text-sm resize-y ${
-                  theme === 'dark'
-                    ? 'bg-zinc-900/50 border-zinc-700 text-zinc-100'
-                    : 'bg-white border-gray-300 text-gray-900'
-                }`}
-                placeholder="Enter your workflow YAML content..."
-              />
-            </div>
-
-            {/* Action Buttons */}
-            <div
-              className={`flex items-center justify-between pt-4 border-t ${
-                theme === 'dark' ? 'border-zinc-700' : 'border-gray-200'
-              }`}
-            >
-              <div className={`text-xs ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}>
-                {hasChanges ? 'You have unsaved changes' : 'No changes made'}
-              </div>
-
-              <div className="flex items-center gap-3">
-                <Button
-                  onClick={handleClose}
-                  variant="outline"
-                  disabled={saving}
-                  className={
-                    theme === 'dark'
-                      ? 'border-zinc-600 text-zinc-300 hover:bg-zinc-700'
-                      : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                  }
-                >
-                  <X className="h-4 w-4 mr-2" />
-                  Cancel
-                </Button>
-
-                <Button
-                  onClick={handleSave}
-                  disabled={!hasChanges || saving}
-                  className={`${
-                    theme === 'dark'
-                      ? 'bg-green-600 hover:bg-green-700 text-white'
-                      : 'bg-green-600 hover:bg-green-700 text-white'
-                  }`}
-                >
-                  {saving ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <Save className="h-4 w-4 mr-2" />
-                  )}
-                  {saving ? 'Updating...' : 'Update Workflow'}
-                </Button>
-              </div>
-            </div>
-          </div>
-        ) : null}
+            {saving ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Save className="h-4 w-4 mr-2" />
+            )}
+            {saving ? 'Saving...' : 'Save Changes'}
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );
