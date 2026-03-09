@@ -361,90 +361,91 @@ export default function WorkflowRunDetailPage() {
       <div
         className={`border-b transition-colors duration-200 ${
           theme === 'dark' ? 'border-zinc-800 bg-zinc-900/50' : 'border-gray-200 bg-white/50'
-        } backdrop-blur-md`}
+        } backdrop-blur-md sticky top-0 z-10`}
       >
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => router.back()}
-              className={theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'}
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
-            </Button>
-            <div className="flex-1">
-              <h1
-                className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}
+        <div className="max-w-7xl mx-auto px-4 py-3">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => router.back()}
+                className={`h-8 w-8 p-0 ${theme === 'dark' ? 'text-zinc-400 hover:text-white' : 'text-gray-500 hover:text-gray-900'}`}
               >
-                {owner}/{repository}
-              </h1>
-              <p className={`text-sm ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'}`}>
-                Workflow Run Details
-              </p>
-
-              {/* Navigation Buttons */}
-              <div className="flex items-center gap-2 mt-3">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    if (selectedRun?.head_sha) {
-                      window.open(
-                        `https://github.com/${owner}/${repository}/commit/${selectedRun.head_sha}`,
-                        '_blank'
-                      );
-                    }
-                  }}
-                  className={`flex items-center gap-2 ${
-                    theme === 'dark'
-                      ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800'
-                      : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                  }`}
-                  disabled={!selectedRun?.head_sha}
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <div>
+                <h1
+                  className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}
                 >
-                  <GitCommit className="h-4 w-4" />
-                  Commit
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    window.open(`https://github.com/${owner}/${repository}/tags`, '_blank');
-                  }}
-                  className={`flex items-center gap-2 ${
-                    theme === 'dark'
-                      ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800'
-                      : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  <Tag className="h-4 w-4" />
-                  Tags
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    window.open(`https://github.com/${owner}/${repository}/actions`, '_blank');
-                  }}
-                  className={`flex items-center gap-2 ${
-                    theme === 'dark'
-                      ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800'
-                      : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  <Activity className="h-4 w-4" />
-                  Actions
-                </Button>
+                  {owner}/{repository}
+                </h1>
+                <p className={`text-xs ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}>
+                  Workflow Run Details
+                </p>
               </div>
+            </div>
+
+            {/* Navigation Buttons */}
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (selectedRun?.head_sha) {
+                    window.open(
+                      `https://github.com/${owner}/${repository}/commit/${selectedRun.head_sha}`,
+                      '_blank'
+                    );
+                  }
+                }}
+                className={`flex-1 sm:flex-none h-8 text-xs ${
+                  theme === 'dark'
+                    ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800'
+                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                }`}
+                disabled={!selectedRun?.head_sha}
+              >
+                <GitCommit className="h-3.5 w-3.5 mr-1.5" />
+                Commit
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  window.open(`https://github.com/${owner}/${repository}/tags`, '_blank');
+                }}
+                className={`flex-1 sm:flex-none h-8 text-xs ${
+                  theme === 'dark'
+                    ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800'
+                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <Tag className="h-3.5 w-3.5 mr-1.5" />
+                Tags
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  window.open(`https://github.com/${owner}/${repository}/actions`, '_blank');
+                }}
+                className={`flex-1 sm:flex-none h-8 text-xs ${
+                  theme === 'dark'
+                    ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800'
+                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <Activity className="h-3.5 w-3.5 mr-1.5" />
+                Actions
+              </Button>
             </div>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 py-4">
         {/* Loading State */}
         {isLoading && (
           <div className="text-center py-12">
@@ -473,7 +474,7 @@ export default function WorkflowRunDetailPage() {
           <div className="space-y-6">
             {/* Run Info Card */}
             <Card
-              className={`p-6 ${
+              className={`p-4 ${
                 theme === 'dark' ? 'bg-zinc-900/50 border-zinc-800' : 'bg-white border-gray-200'
               }`}
             >
@@ -482,12 +483,12 @@ export default function WorkflowRunDetailPage() {
                   {getStatusIcon(selectedRun.status, selectedRun.conclusion)}
                   <div>
                     <h2
-                      className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}
+                      className={`text-base font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}
                     >
                       {selectedRun.display_title}
                     </h2>
                     <p
-                      className={`text-sm ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'}`}
+                      className={`text-xs ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}
                     >
                       Run #{selectedRun.run_number} •{' '}
                       {getStatusText(selectedRun.status, selectedRun.conclusion)}
@@ -498,25 +499,25 @@ export default function WorkflowRunDetailPage() {
                   href={selectedRun.html_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`inline-flex items-center gap-2 text-sm hover:underline ${
+                  className={`inline-flex items-center gap-1.5 text-xs hover:underline ${
                     theme === 'dark' ? 'text-blue-400' : 'text-blue-600'
                   }`}
                 >
                   View on GitHub
-                  <ExternalLink className="h-4 w-4" />
+                  <ExternalLink className="h-3 w-3" />
                 </a>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div>
                   <p
-                    className={`text-xs font-medium mb-1 ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}
+                    className={`text-[10px] uppercase tracking-wider font-semibold mb-1 ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}
                   >
                     Branch
                   </p>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5">
                     <GitBranch
-                      className={`h-4 w-4 ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-400'}`}
+                      className={`h-3.5 w-3.5 ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-400'}`}
                     />
                     <span
                       className={`text-sm font-medium ${theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'}`}
@@ -528,13 +529,13 @@ export default function WorkflowRunDetailPage() {
 
                 <div>
                   <p
-                    className={`text-xs font-medium mb-1 ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}
+                    className={`text-[10px] uppercase tracking-wider font-semibold mb-1 ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}
                   >
                     Event
                   </p>
                   <Badge
                     variant="secondary"
-                    className={`text-xs ${
+                    className={`text-[10px] px-1.5 py-0 ${
                       theme === 'dark' ? 'bg-zinc-800 text-zinc-300' : 'bg-gray-100 text-gray-700'
                     }`}
                   >
@@ -544,13 +545,13 @@ export default function WorkflowRunDetailPage() {
 
                 <div>
                   <p
-                    className={`text-xs font-medium mb-1 ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}
+                    className={`text-[10px] uppercase tracking-wider font-semibold mb-1 ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}
                   >
                     Triggered By
                   </p>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5">
                     <User
-                      className={`h-4 w-4 ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-400'}`}
+                      className={`h-3.5 w-3.5 ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-400'}`}
                     />
                     <span
                       className={`text-sm font-medium ${theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'}`}
@@ -562,13 +563,13 @@ export default function WorkflowRunDetailPage() {
 
                 <div>
                   <p
-                    className={`text-xs font-medium mb-1 ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}
+                    className={`text-[10px] uppercase tracking-wider font-semibold mb-1 ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}
                   >
                     Started
                   </p>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5">
                     <Clock
-                      className={`h-4 w-4 ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-400'}`}
+                      className={`h-3.5 w-3.5 ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-400'}`}
                     />
                     <span
                       className={`text-sm ${theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'}`}
@@ -579,14 +580,14 @@ export default function WorkflowRunDetailPage() {
                 </div>
               </div>
 
-              <div className="mt-4 pt-4 border-t border-zinc-800">
+              <div className="mt-3 pt-3 border-t border-zinc-200 dark:border-zinc-800">
                 <p
-                  className={`text-xs font-medium mb-1 ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}
+                  className={`text-[10px] uppercase tracking-wider font-semibold mb-1 ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}
                 >
                   Commit SHA
                 </p>
                 <code
-                  className={`text-xs font-mono px-2 py-1 rounded ${
+                  className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
                     theme === 'dark' ? 'bg-zinc-800 text-zinc-300' : 'bg-gray-100 text-gray-700'
                   }`}
                 >
@@ -596,20 +597,20 @@ export default function WorkflowRunDetailPage() {
             </Card>
 
             {/* Jobs and Logs Tabs */}
-            <div>
+            <div className="mt-4">
               <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
                 <TabsList
-                  className={`grid w-full grid-cols-2 ${theme === 'dark' ? 'bg-zinc-800' : 'bg-gray-100'}`}
+                  className={`grid w-full grid-cols-2 h-9 ${theme === 'dark' ? 'bg-zinc-800/50' : 'bg-gray-100'}`}
                 >
                   <TabsTrigger
                     value="jobs"
-                    className={`${theme === 'dark' ? 'data-[state=active]:bg-zinc-700 text-zinc-300' : 'data-[state=active]:bg-white text-gray-700'}`}
+                    className={`text-xs ${theme === 'dark' ? 'data-[state=active]:bg-zinc-700 text-zinc-400 data-[state=active]:text-zinc-100' : 'data-[state=active]:bg-white text-gray-600 data-[state=active]:text-gray-900'}`}
                   >
                     Jobs ({selectedRunJobs.length})
                   </TabsTrigger>
                   <TabsTrigger
                     value="logs"
-                    className={`${theme === 'dark' ? 'data-[state=active]:bg-zinc-700 text-zinc-300' : 'data-[state=active]:bg-white text-gray-700'}`}
+                    className={`text-xs ${theme === 'dark' ? 'data-[state=active]:bg-zinc-700 text-zinc-400 data-[state=active]:text-zinc-100' : 'data-[state=active]:bg-white text-gray-600 data-[state=active]:text-gray-900'}`}
                   >
                     Logs
                   </TabsTrigger>
@@ -626,25 +627,22 @@ export default function WorkflowRunDetailPage() {
                             : 'bg-white border-gray-200'
                         }`}
                       >
-                        <div className="p-4">
+                        <div className="p-3">
                           <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3 flex-1">
+                            <div className="flex items-center gap-2 flex-1">
                               {getStatusIcon(job.status, job.conclusion)}
-                              <div className="flex-1">
+                              <div className="flex-1 min-w-0">
                                 <h4
-                                  className={`text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}
+                                  className={`text-sm font-medium truncate ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}
                                 >
                                   {job.name}
                                 </h4>
                                 <p
-                                  className={`text-xs ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}
+                                  className={`text-[10px] ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}
                                 >
                                   {getStatusText(job.status, job.conclusion)}
                                   {job.started_at && job.completed_at && (
-                                    <>
-                                      {' '}
-                                      • Duration: {getDuration(job.started_at, job.completed_at)}
-                                    </>
+                                    <> • {getDuration(job.started_at, job.completed_at)}</>
                                   )}
                                 </p>
                               </div>
@@ -654,58 +652,44 @@ export default function WorkflowRunDetailPage() {
                                 job.status,
                                 job.conclusion
                               )}
-                              className="text-xs shrink-0"
+                              className="text-[10px] px-1.5 py-0 shrink-0"
                             >
                               {getStatusText(job.status, job.conclusion)}
                             </Badge>
                           </div>
 
                           {/* Job Steps */}
-                          <div className="mt-3 pt-3 border-t border-zinc-800">
+                          <div className="mt-2 pt-2 border-t border-zinc-200 dark:border-zinc-800">
                             <h5
-                              className={`text-xs font-medium mb-3 uppercase ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}
+                              className={`text-[10px] uppercase tracking-wider font-semibold mb-2 ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}
                             >
                               Steps ({job.steps.length})
                             </h5>
-                            <div className="space-y-2">
+                            <div className="space-y-1">
                               {job.steps.map((step, index) => (
                                 <div
                                   key={`${job.id}-step-${step.number || index}`}
-                                  className={`flex items-start gap-3 p-3 rounded ${
+                                  className={`flex items-center gap-2 p-2 rounded ${
                                     theme === 'dark' ? 'bg-zinc-800/50' : 'bg-gray-50'
                                   }`}
                                 >
                                   <div className="flex items-center gap-2 min-w-0 flex-1">
                                     {getStatusIcon(step.status, step.conclusion)}
-                                    <div className="min-w-0 flex-1">
-                                      <p
-                                        className={`text-sm font-medium truncate ${theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'}`}
+                                    <div className="min-w-0 flex-1 flex items-center justify-between gap-2">
+                                      <span
+                                        className={`text-xs font-medium truncate ${theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'}`}
                                       >
                                         {step.name}
-                                      </p>
-                                      <p
-                                        className={`text-xs ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}
+                                      </span>
+                                      <span
+                                        className={`text-[10px] whitespace-nowrap ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}
                                       >
-                                        Step {step.number || index + 1}
-                                        {step.started_at && step.completed_at && (
-                                          <>
-                                            {' '}
-                                            • Duration:{' '}
-                                            {getDuration(step.started_at, step.completed_at)}
-                                          </>
-                                        )}
-                                      </p>
+                                        {step.started_at && step.completed_at
+                                          ? getDuration(step.started_at, step.completed_at)
+                                          : ''}
+                                      </span>
                                     </div>
                                   </div>
-                                  <Badge
-                                    variant={actionsService.getWorkflowStatusBadge(
-                                      step.status,
-                                      step.conclusion
-                                    )}
-                                    className="text-xs shrink-0"
-                                  >
-                                    {getStatusText(step.status, step.conclusion)}
-                                  </Badge>
                                 </div>
                               ))}
                             </div>

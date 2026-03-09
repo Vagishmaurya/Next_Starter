@@ -169,7 +169,10 @@ export function ProjectedVisitorsGraph({
         <div className={`mb-6 ${isDark ? 'border-zinc-800/50' : 'border-gray-200'} border-t`}></div>
 
         {/* Chart Container */}
-        <div className="w-full" style={{ height: `${height}px` }}>
+        <div
+          className="w-full"
+          style={{ height: height > 0 ? `${height}px` : '400px', minHeight: '300px' }}
+        >
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={filteredData} margin={{ top: 5, right: 30, left: 0, bottom: 0 }}>
               {/* Gradient Definitions */}

@@ -111,14 +111,13 @@ export default function BranchesPage() {
         } else {
           setSelectedBranch(null);
         }
-        setCommits([]);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch branches');
       } finally {
         setLoading(false);
       }
     },
-    [setBranches, setSelectedBranch, setCommits, setLoading, setError]
+    [setBranches, setSelectedBranch, setLoading, setError]
   );
 
   const fetchCommits = useCallback(

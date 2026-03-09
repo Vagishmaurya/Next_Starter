@@ -146,138 +146,92 @@ export default function ProjectsPage() {
       }`}
     >
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
-        {/* Back Button */}
-        <div className="mb-6">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.push('/dashboard')}
-            className={`${theme === 'dark' ? 'text-zinc-300 hover:text-white hover:bg-zinc-800' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'} transition-all`}
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Dashboard
-          </Button>
-        </div>
-
-        {/* Header with Organization Selector and Packages Button */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <div
-              className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg ${
-                theme === 'dark' ? 'bg-zinc-800/50' : 'bg-white/80'
-              } backdrop-blur-sm border ${theme === 'dark' ? 'border-zinc-700' : 'border-gray-200'}`}
+      <div className="max-w-7xl mx-auto px-4 py-4">
+        {/* Header Row */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+          <div className="flex items-center gap-4 w-full sm:w-auto">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => router.push('/dashboard')}
+              className={`${theme === 'dark' ? 'text-zinc-300 hover:text-white hover:bg-zinc-800' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'} transition-all shrink-0`}
             >
-              <Github
-                className={`h-4 w-4 ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-500'}`}
-              />
-              <label
-                htmlFor="organization-select"
-                className={`text-sm font-medium ${
-                  theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'
-                }`}
+              <ArrowLeft className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Back</span>
+            </Button>
+
+            <div className="flex-1 sm:w-[300px]">
+              <Select
+                value={selectedOrganization || ''}
+                onValueChange={handleOrgChange}
+                disabled={isLoading || repositoriesLoading}
               >
-                Select Organization
-              </label>
-              {displayOrganizations.length > 0 && (
-                <span
-                  className={`text-xs px-2 py-0.5 rounded-full ${
-                    theme === 'dark' ? 'bg-zinc-700 text-zinc-400' : 'bg-gray-200 text-gray-600'
+                <SelectTrigger
+                  id="organization-select"
+                  className={`h-9 transition-colors ${
+                    theme === 'dark'
+                      ? 'bg-zinc-900 border-zinc-800 text-white hover:border-zinc-700'
+                      : 'bg-white border-gray-300 text-gray-900 hover:border-gray-400'
                   }`}
                 >
-                  {displayOrganizations.length}
-                </span>
-              )}
-            </div>
-
-            {/* Packages Button */}
-            <Button
-              onClick={() => setShowPackagesModal(true)}
-              variant="outline"
-              size="sm"
-              className={`flex items-center gap-2 ${
-                theme === 'dark'
-                  ? 'border-purple-500/50 bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 hover:border-purple-400'
-                  : 'border-purple-300 bg-purple-50 text-purple-600 hover:bg-purple-100 hover:border-purple-400'
-              }`}
-            >
-              <Package className="h-4 w-4" />
-              All Packages
-            </Button>
-          </div>
-          <div className="max-w-md">
-            <Select
-              value={selectedOrganization || ''}
-              onValueChange={handleOrgChange}
-              disabled={isLoading || repositoriesLoading}
-            >
-              <SelectTrigger
-                id="organization-select"
-                className={`transition-all duration-200 h-12 ${
-                  theme === 'dark'
-                    ? 'bg-zinc-900 border-zinc-800 text-white hover:border-zinc-700'
-                    : 'bg-white border-gray-300 text-gray-900 hover:border-gray-400'
-                } shadow-sm`}
-              >
-                <SelectValue placeholder="Choose an organization to get started" />
-              </SelectTrigger>
-              <SelectContent
-                className={
-                  theme === 'dark' ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-gray-300'
-                }
-              >
-                {displayOrganizations.length > 0 ? (
-                  displayOrganizations.map((org) => (
-                    <SelectItem key={org.id} value={org.login}>
-                      <div
-                        className={`flex items-center gap-3 ${
-                          theme === 'dark' ? 'text-white' : 'text-gray-900'
-                        }`}
-                      >
-                        {typeof org.avatar_url === 'string' && org.avatar_url.startsWith('http') ? (
-                          <Image
-                            src={org.avatar_url}
-                            alt={org.login}
-                            width={20}
-                            height={20}
-                            className="rounded-full"
-                          />
-                        ) : (
-                          <span className="text-lg">{org.avatar_url}</span>
-                        )}
-                        <div className="flex flex-col">
-                          <span
-                            className={`text-sm font-medium ${
-                              theme === 'dark' ? 'text-white' : 'text-gray-900'
-                            }`}
-                          >
-                            {org.login}
-                          </span>
-                          {org.name && (
-                            <span
-                              className={`text-xs ${
-                                theme === 'dark' ? 'text-zinc-400' : 'text-gray-500'
-                              }`}
-                            >
-                              {org.name}
-                            </span>
+                  <SelectValue placeholder="Select Organization" />
+                </SelectTrigger>
+                <SelectContent
+                  className={
+                    theme === 'dark' ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-gray-300'
+                  }
+                >
+                  {displayOrganizations.length > 0 ? (
+                    displayOrganizations.map((org) => (
+                      <SelectItem key={org.id} value={org.login}>
+                        <div
+                          className={`flex items-center gap-2 ${
+                            theme === 'dark' ? 'text-white' : 'text-gray-900'
+                          }`}
+                        >
+                          {typeof org.avatar_url === 'string' &&
+                          org.avatar_url.startsWith('http') ? (
+                            <Image
+                              src={org.avatar_url}
+                              alt={org.login}
+                              width={16}
+                              height={16}
+                              className="rounded-full"
+                            />
+                          ) : (
+                            <span className="text-sm">{org.avatar_url}</span>
                           )}
+                          <span className="text-sm font-medium">{org.login}</span>
                         </div>
-                      </div>
-                    </SelectItem>
-                  ))
-                ) : (
-                  <div
-                    className={`px-2 py-1.5 text-xs ${
-                      theme === 'dark' ? 'text-zinc-400' : 'text-gray-500'
-                    }`}
-                  >
-                    No organizations available
-                  </div>
-                )}
-              </SelectContent>
-            </Select>
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <div
+                      className={`px-2 py-1.5 text-xs ${
+                        theme === 'dark' ? 'text-zinc-400' : 'text-gray-500'
+                      }`}
+                    >
+                      No organizations available
+                    </div>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
+
+          <Button
+            onClick={() => setShowPackagesModal(true)}
+            variant="outline"
+            size="sm"
+            className={`flex items-center gap-2 w-full sm:w-auto ${
+              theme === 'dark'
+                ? 'border-purple-500/50 bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 hover:border-purple-400'
+                : 'border-purple-300 bg-purple-50 text-purple-600 hover:bg-purple-100 hover:border-purple-400'
+            }`}
+          >
+            <Package className="h-4 w-4" />
+            All Packages
+          </Button>
         </div>
 
         {/* Repositories Grid */}
@@ -374,13 +328,13 @@ export default function ProjectsPage() {
                     : 'bg-white border-gray-200 hover:border-purple-300 hover:shadow-2xl hover:shadow-purple-500/20'
                 } hover:-translate-y-1`}
               >
-                <div className="p-6 h-full">
-                  <div className="space-y-4">
+                <div className="p-4 h-full flex flex-col">
+                  <div className="flex-1 space-y-3">
                     {/* Header */}
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
                         <h3
-                          className={`text-lg font-bold truncate transition-colors duration-200 ${
+                          className={`text-base font-semibold truncate transition-colors duration-200 ${
                             theme === 'dark'
                               ? 'text-white group-hover:text-purple-400'
                               : 'text-gray-900 group-hover:text-purple-600'
@@ -389,7 +343,7 @@ export default function ProjectsPage() {
                           {repo.name}
                         </h3>
                         <p
-                          className={`text-xs truncate mt-0.5 ${
+                          className={`text-xs truncate ${
                             theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'
                           }`}
                         >
@@ -399,7 +353,7 @@ export default function ProjectsPage() {
                       {repo.private && (
                         <Badge
                           variant="secondary"
-                          className={`shrink-0 ${
+                          className={`shrink-0 text-[10px] px-1.5 py-0 ${
                             theme === 'dark'
                               ? 'bg-zinc-800 text-zinc-300'
                               : 'bg-gray-200 text-gray-700'
@@ -413,45 +367,47 @@ export default function ProjectsPage() {
                     {/* Description */}
                     {repo.description && (
                       <p
-                        className={`text-sm line-clamp-2 min-h-[2.5rem] ${
+                        className={`text-xs line-clamp-2 min-h-[2rem] ${
                           theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'
                         }`}
                       >
                         {repo.description}
                       </p>
                     )}
+                  </div>
 
-                    {/* Footer */}
-                    <div
-                      className={`flex items-center justify-between pt-3 border-t transition-colors ${
-                        theme === 'dark' ? 'border-zinc-800/50' : 'border-gray-100'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        {repo.language && (
-                          <Badge className={`${getLanguageColor(repo.language)} text-xs`}>
-                            {repo.language}
-                          </Badge>
-                        )}
-                        {repo.stargazers_count > 0 && (
-                          <div
-                            className={`flex items-center gap-1 text-xs ${
-                              theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'
-                            }`}
-                          >
-                            <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
-                            <span className="font-medium">{repo.stargazers_count}</span>
-                          </div>
-                        )}
-                      </div>
-                      <GitBranch
-                        className={`h-4 w-4 transition-all duration-200 ${
-                          theme === 'dark'
-                            ? 'text-zinc-600 group-hover:text-purple-400'
-                            : 'text-gray-400 group-hover:text-purple-600'
-                        } group-hover:scale-110`}
-                      />
+                  {/* Footer */}
+                  <div
+                    className={`flex items-center justify-between pt-3 mt-3 border-t transition-colors ${
+                      theme === 'dark' ? 'border-zinc-800/50' : 'border-gray-100'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      {repo.language && (
+                        <Badge
+                          className={`${getLanguageColor(repo.language)} text-[10px] px-1.5 py-0`}
+                        >
+                          {repo.language}
+                        </Badge>
+                      )}
+                      {repo.stargazers_count > 0 && (
+                        <div
+                          className={`flex items-center gap-1 text-[10px] ${
+                            theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'
+                          }`}
+                        >
+                          <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                          <span className="font-medium">{repo.stargazers_count}</span>
+                        </div>
+                      )}
                     </div>
+                    <GitBranch
+                      className={`h-3.5 w-3.5 transition-all duration-200 ${
+                        theme === 'dark'
+                          ? 'text-zinc-600 group-hover:text-purple-400'
+                          : 'text-gray-400 group-hover:text-purple-600'
+                      } group-hover:scale-110`}
+                    />
                   </div>
                 </div>
               </Card>
