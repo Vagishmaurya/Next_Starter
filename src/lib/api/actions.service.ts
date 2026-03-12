@@ -201,6 +201,7 @@ export type CreateWorkflowRequest = {
   owner: string;
   repository: string;
   workflowName: string;
+  workflowFileName: string;
   deploymentType: 'kubernetes' | 'ec2';
   projects: Project[];
   ec2CommonFields?: EC2CommonFields;

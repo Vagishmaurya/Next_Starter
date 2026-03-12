@@ -18,6 +18,8 @@ export function WorkflowForm({ form, currentStep }: WorkflowFormProps) {
   const {
     workflowName,
     setWorkflowName,
+    workflowFileName,
+    setWorkflowFileName,
     deploymentType,
     setDeploymentType,
     projects,
@@ -41,216 +43,275 @@ export function WorkflowForm({ form, currentStep }: WorkflowFormProps) {
   if (currentStep === 1) {
     return (
       <div className="space-y-6">
-        {/* Workflow Name */}
-        <div className="space-y-2">
-          <Label
-            htmlFor="workflowName"
-            className={`text-sm font-medium ${
-              theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'
-            }`}
-          >
-            Workflow Name <span className="text-red-500">*</span>
-          </Label>
-          <Input
-            id="workflowName"
-            value={workflowName}
-            onChange={(e) => setWorkflowName(e.target.value)}
-            placeholder="Enter workflow name"
-            required
-            className={
-              theme === 'dark'
-                ? 'bg-zinc-800 border-zinc-700 text-white'
-                : 'bg-white border-gray-300 text-gray-900'
-            }
-          />
+        {/* Base Info Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Workflow Name */}
+          <div className="space-y-2">
+            <Label
+              htmlFor="workflowName"
+              className={`text-sm font-semibold tracking-tight ${
+                theme === 'dark' ? 'text-zinc-200' : 'text-gray-700'
+              }`}
+            >
+              Workflow Name <span className="text-red-500 font-bold">*</span>
+            </Label>
+            <div className="relative group">
+              <Input
+                id="workflowName"
+                value={workflowName}
+                onChange={(e) => setWorkflowName(e.target.value)}
+                placeholder="e.g., Production Deployment"
+                required
+                className={`
+                  h-11 px-4 transition-all duration-200
+                  ${
+                    theme === 'dark'
+                      ? 'bg-zinc-800/50 border-zinc-700 focus:border-blue-500 focus:ring-blue-500/20'
+                      : 'bg-white border-gray-200 focus:border-blue-600 focus:ring-blue-600/10'
+                  }
+                `}
+              />
+              <div className="absolute inset-0 rounded-md ring-1 ring-inset ring-transparent group-hover:ring-blue-400/20 pointer-events-none transition-all" />
+            </div>
+            <p className={`text-[11px] ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-400'}`}>
+              Display name for this workflow in the dashboard
+            </p>
+          </div>
+
+          {/* File Name */}
+          <div className="space-y-2">
+            <Label
+              htmlFor="workflowFileName"
+              className={`text-sm font-semibold tracking-tight ${
+                theme === 'dark' ? 'text-zinc-200' : 'text-gray-700'
+              }`}
+            >
+              File Name <span className="text-red-500 font-bold">*</span>
+            </Label>
+            <div className="relative flex items-center group">
+              <Input
+                id="workflowFileName"
+                value={workflowFileName}
+                onChange={(e) => setWorkflowFileName(e.target.value)}
+                placeholder="build.yml"
+                required
+                className={`
+                  h-11 px-4 pr-12 transition-all duration-200 font-mono text-xs
+                  ${
+                    theme === 'dark'
+                      ? 'bg-zinc-800/50 border-zinc-700 focus:border-blue-500 focus:ring-blue-500/20'
+                      : 'bg-white border-gray-200 focus:border-blue-600 focus:ring-blue-600/10'
+                  }
+                `}
+              />
+              <div className="absolute right-3 px-1.5 py-0.5 rounded bg-zinc-700/30 text-[10px] uppercase font-bold text-zinc-500 pointer-events-none">
+                .yml
+              </div>
+            </div>
+            <p className={`text-[11px] ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-400'}`}>
+              Actual YAML filename in .github/workflows/
+            </p>
+          </div>
         </div>
 
         {/* Projects Section */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <Label
-              className={`text-sm font-medium ${
-                theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'
-              }`}
-            >
-              Projects <span className="text-red-500">*</span>
-            </Label>
+        <div className="space-y-6 pt-4">
+          <div className="flex items-center justify-between border-b pb-4 border-zinc-700/30">
+            <div>
+              <Label
+                className={`text-lg font-bold tracking-tight ${
+                  theme === 'dark' ? 'text-white' : 'text-gray-800'
+                }`}
+              >
+                Project Configuration
+              </Label>
+              <p className={`text-xs ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-400'}`}>
+                Define services and their specific build environments
+              </p>
+            </div>
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={handleAddProject}
               disabled={projects.length >= 3}
-              className={`flex items-center gap-2 ${
+              className={`flex items-center gap-2 rounded-full px-4 h-9 shadow-sm transition-all ${
                 theme === 'dark'
-                  ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed'
-                  : 'border-gray-300 text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed'
+                  ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:border-zinc-600 disabled:opacity-30'
+                  : 'border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 disabled:opacity-30'
               }`}
             >
-              <Plus className="h-4 w-4" />
-              Add Project {projects.length >= 3 ? '(Max 3)' : `(${projects.length}/3)`}
+              <Plus className="h-3.5 w-3.5" />
+              <span>Add Project</span>
+              <span className="ml-1 opacity-50 font-mono text-[10px]">{projects.length}/3</span>
             </Button>
           </div>
 
-          {projects.map((project, _index) => (
-            <Card
-              key={project.id}
-              className={`p-6 ${
-                theme === 'dark' ? 'bg-zinc-800/50 border-zinc-700' : 'bg-gray-50 border-gray-200'
-              }`}
-            >
-              <div className="space-y-6">
-                {/* Project Header */}
-                <div className="flex items-start gap-4">
-                  <div className="flex-1 space-y-1">
-                    <Label
-                      className={`text-xs ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'}`}
-                    >
-                      Project Name
-                    </Label>
-                    <Input
-                      value={project.name}
-                      onChange={(e) => handleProjectChange(project.id, 'name', e.target.value)}
-                      placeholder="Enter project name"
-                      required
-                      className={`text-sm ${
-                        theme === 'dark'
-                          ? 'bg-zinc-700 border-zinc-600 text-white'
-                          : 'bg-white border-gray-300 text-gray-900'
-                      }`}
-                    />
-                  </div>
-                  {projects.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleRemoveProject(project.id)}
-                      className={`h-8 w-8 p-0 mt-1 ${
-                        theme === 'dark'
-                          ? 'text-zinc-400 hover:text-red-400 hover:bg-red-500/10'
-                          : 'text-gray-500 hover:text-red-600 hover:bg-red-50'
-                      }`}
-                    >
-                      <Minus className="h-4 w-4" />
-                    </Button>
-                  )}
+          <div className="grid grid-cols-1 gap-6">
+            {projects.map((project, index) => (
+              <div
+                key={project.id}
+                className={`
+                  relative group p-8 rounded-2xl border transition-all duration-300
+                  ${
+                    theme === 'dark'
+                      ? 'bg-zinc-800/30 border-zinc-700/50 hover:border-zinc-600 hover:bg-zinc-800/50'
+                      : 'bg-white border-gray-200 hover:border-gray-300 hover:shadow-md'
+                  }
+                `}
+              >
+                {/* Project Badge */}
+                <div className="absolute -top-3 left-6 px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase bg-blue-600 text-white shadow-lg shadow-blue-600/20">
+                  Project #{index + 1}
                 </div>
 
-                {/* Docker Configuration */}
-                <div className="space-y-4">
-                  <Label
-                    className={`text-sm font-medium ${
-                      theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'
-                    }`}
-                  >
-                    Docker Configuration
-                  </Label>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
+                <div className="space-y-8">
+                  {/* Project Header */}
+                  <div className="flex items-end gap-6">
+                    <div className="flex-1 space-y-2">
                       <Label
-                        className={`text-xs ${
-                          theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'
-                        }`}
+                        className={`text-xs font-bold uppercase tracking-wider ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-400'}`}
                       >
-                        Docker Context Path (optional)
+                        Project Name <span className="text-red-500">*</span>
                       </Label>
                       <Input
-                        value={project.dockerContextPath}
-                        onChange={(e) =>
-                          handleProjectChange(project.id, 'dockerContextPath', e.target.value)
-                        }
-                        placeholder="e.g., ./backend"
-                        className={`text-sm ${
+                        value={project.name}
+                        onChange={(e) => handleProjectChange(project.id, 'name', e.target.value)}
+                        placeholder="e.g., API Gateway"
+                        required
+                        className={`h-10 transition-all ${
                           theme === 'dark'
-                            ? 'bg-zinc-700 border-zinc-600 text-white'
-                            : 'bg-white border-gray-300 text-gray-900'
+                            ? 'bg-zinc-900 border-zinc-700 focus:border-blue-500'
+                            : 'bg-white border-gray-200'
                         }`}
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label
-                        className={`text-xs ${
-                          theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'
+                    {projects.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRemoveProject(project.id)}
+                        className={`h-10 w-10 p-0 rounded-xl transition-colors ${
+                          theme === 'dark'
+                            ? 'text-zinc-500 hover:text-red-400 hover:bg-red-500/10'
+                            : 'text-gray-400 hover:text-red-600 hover:bg-red-50'
                         }`}
                       >
-                        Dockerfile Path (optional)
-                      </Label>
-                      <Input
-                        value={project.dockerfilePath}
-                        onChange={(e) =>
-                          handleProjectChange(project.id, 'dockerfilePath', e.target.value)
-                        }
-                        placeholder="e.g., ./Dockerfile"
-                        className={`text-sm ${
-                          theme === 'dark'
-                            ? 'bg-zinc-700 border-zinc-600 text-white'
-                            : 'bg-white border-gray-300 text-gray-900'
-                        }`}
-                      />
-                    </div>
+                        <Minus className="h-5 w-5" />
+                      </Button>
+                    )}
                   </div>
-                </div>
 
-                {/* Environment Variables */}
-                <div className="space-y-4">
-                  <Label
-                    className={`text-sm font-medium ${
-                      theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'
-                    }`}
-                  >
-                    Environment Variables
-                  </Label>
+                  {/* Docker Section */}
                   <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label
-                        className={`text-xs ${
-                          theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'
-                        }`}
+                    <div className="flex items-center gap-2">
+                      <div className="h-0.5 w-6 bg-blue-500/50 rounded-full" />
+                      <span
+                        className={`text-xs font-bold tracking-widest uppercase ${theme === 'dark' ? 'text-zinc-400' : 'text-zinc-600'}`}
                       >
-                        Testing Environment Variables (optional)
-                      </Label>
-                      <Textarea
-                        value={project.dotEnvTesting}
-                        onChange={(e) =>
-                          handleProjectChange(project.id, 'dotEnvTesting', e.target.value)
-                        }
-                        placeholder={`NODE_ENV=testing\\nAPI_URL=https://api.testing.example.com\\nDEBUG=true`}
-                        rows={3}
-                        className={`text-sm ${
-                          theme === 'dark'
-                            ? 'bg-zinc-700 border-zinc-600 text-white'
-                            : 'bg-white border-gray-300 text-gray-900'
-                        }`}
-                      />
+                        Docker Context
+                      </span>
                     </div>
-                    <div className="space-y-2">
-                      <Label
-                        className={`text-xs ${
-                          theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'
-                        }`}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label
+                          className={`text-xs font-medium ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-400'}`}
+                        >
+                          Context Path
+                        </Label>
+                        <Input
+                          value={project.dockerContextPath}
+                          onChange={(e) =>
+                            handleProjectChange(project.id, 'dockerContextPath', e.target.value)
+                          }
+                          placeholder="./"
+                          className={`text-sm h-10 ${
+                            theme === 'dark'
+                              ? 'bg-zinc-900 border-zinc-700'
+                              : 'bg-white border-gray-200'
+                          }`}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label
+                          className={`text-xs font-medium ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-400'}`}
+                        >
+                          Dockerfile Path
+                        </Label>
+                        <Input
+                          value={project.dockerfilePath}
+                          onChange={(e) =>
+                            handleProjectChange(project.id, 'dockerfilePath', e.target.value)
+                          }
+                          placeholder="./Dockerfile"
+                          className={`text-sm h-10 ${
+                            theme === 'dark'
+                              ? 'bg-zinc-900 border-zinc-700'
+                              : 'bg-white border-gray-200'
+                          }`}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Env Section */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <div className="h-0.5 w-6 bg-emerald-500/50 rounded-full" />
+                      <span
+                        className={`text-xs font-bold tracking-widest uppercase ${theme === 'dark' ? 'text-zinc-400' : 'text-zinc-600'}`}
                       >
-                        Production Environment Variables (optional)
-                      </Label>
-                      <Textarea
-                        value={project.dotEnvProduction}
-                        onChange={(e) =>
-                          handleProjectChange(project.id, 'dotEnvProduction', e.target.value)
-                        }
-                        placeholder={`NODE_ENV=production\\nAPI_URL=https://api.example.com\\nDEBUG=false`}
-                        rows={3}
-                        className={`text-sm ${
-                          theme === 'dark'
-                            ? 'bg-zinc-700 border-zinc-600 text-white'
-                            : 'bg-white border-gray-300 text-gray-900'
-                        }`}
-                      />
+                        Environment Variables
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label
+                          className={`text-xs font-medium ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-400'}`}
+                        >
+                          Testing Configuration
+                        </Label>
+                        <Textarea
+                          value={project.dotEnvTesting}
+                          onChange={(e) =>
+                            handleProjectChange(project.id, 'dotEnvTesting', e.target.value)
+                          }
+                          placeholder="PORT=3000"
+                          rows={3}
+                          className={`text-xs font-mono resize-none ${
+                            theme === 'dark'
+                              ? 'bg-zinc-900 border-zinc-700'
+                              : 'bg-white border-gray-200'
+                          }`}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label
+                          className={`text-xs font-medium ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-400'}`}
+                        >
+                          Production Configuration
+                        </Label>
+                        <Textarea
+                          value={project.dotEnvProduction}
+                          onChange={(e) =>
+                            handleProjectChange(project.id, 'dotEnvProduction', e.target.value)
+                          }
+                          placeholder="PORT=80"
+                          rows={3}
+                          className={`text-xs font-mono resize-none ${
+                            theme === 'dark'
+                              ? 'bg-zinc-900 border-zinc-700'
+                              : 'bg-white border-gray-200'
+                          }`}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </Card>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     );

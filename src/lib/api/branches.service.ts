@@ -54,6 +54,14 @@ export type Branch = {
   };
 };
 
+export type PullRequest = {
+  number: number;
+  title: string;
+  state: string;
+  url: string;
+  branch: string;
+};
+
 /**
  * API Response interface for branches endpoint
  */
@@ -82,6 +90,20 @@ type CommitsApiResponse = {
     commit_count: number;
     page: number;
     per_page: number;
+  };
+};
+
+/**
+ * API Response interface for PRs endpoint
+ */
+type PRsApiResponse = {
+  status: number;
+  message: string;
+  data: {
+    count: number;
+    owner: string;
+    prs: PullRequest[];
+    repository: string;
   };
 };
 
@@ -179,6 +201,25 @@ export const branchesService = {
       return response.data;
     } catch (error) {
       console.error('[BranchesService] Error creating tag:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Fetch PRs for a specific repository
+   *
+   * @param owner - Repository owner
+   * @param repo - Repository name
+   * @returns PRs response data
+   * @throws Error if fetch fails
+   */
+  async fetchPRs(owner: string, repo: string): Promise<PRsApiResponse> {
+    try {
+      const response = await apiClient.get<PRsApiResponse>(`/workflows/${owner}/${repo}/prs`);
+
+      return response.data;
+    } catch (error) {
+      console.error('[BranchesService] Error fetching PRs:', error);
       throw error;
     }
   },

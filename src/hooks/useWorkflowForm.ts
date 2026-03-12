@@ -47,7 +47,8 @@ export type Project = {
 };
 
 export function useWorkflowForm() {
-  const [workflowName, setWorkflowName] = useState('');
+  const [workflowName, setWorkflowName] = useState('Build & Publish Image (Kubernetes)');
+  const [workflowFileName, setWorkflowFileName] = useState('');
   const [deploymentType, setDeploymentType] = useState<DeploymentType>('ec2');
   const [projects, setProjects] = useState<Project[]>([
     {
@@ -206,7 +207,8 @@ export function useWorkflowForm() {
   };
 
   const resetForm = () => {
-    setWorkflowName('');
+    setWorkflowName('Build & Publish Image (Kubernetes)');
+    setWorkflowFileName('');
     setDeploymentType('ec2');
     setProjects([
       {
@@ -257,6 +259,8 @@ export function useWorkflowForm() {
   return {
     workflowName,
     setWorkflowName,
+    workflowFileName,
+    setWorkflowFileName,
     deploymentType,
     setDeploymentType,
     projects,
@@ -283,6 +287,9 @@ export function useWorkflowForm() {
     resetForm,
     validateStep1: () => {
       if (!workflowName.trim()) {
+        return false;
+      }
+      if (!workflowFileName.trim()) {
         return false;
       }
       if (projects.length === 0) {

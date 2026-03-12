@@ -9,6 +9,7 @@ import {
   Download,
   GitBranch,
   GitCommit,
+  GitPullRequest,
   PlayCircle,
   Plus,
   RefreshCw,
@@ -60,7 +61,7 @@ export default function BranchesPage() {
     branches,
     commits,
     tags,
-    // workflowRuns, - not used in this component anymore
+    prs,
     selectedBranch,
     isLoading,
     error,
@@ -70,7 +71,7 @@ export default function BranchesPage() {
     setBranches,
     setCommits,
     setTags,
-    // setWorkflowRuns, - not used in this component anymore
+    setPrs,
     setSelectedBranch,
     setLoading,
     setError,
@@ -153,6 +154,22 @@ export default function BranchesPage() {
     [setLoading, setError, setTags]
   );
 
+  const fetchPRs = useCallback(
+    async (owner: string, repo: string) => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await branchesService.fetchPRs(owner, repo);
+        setPrs(response.data.prs || []);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch PRs');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [setLoading, setError, setPrs]
+  );
+
   useEffect(() => {
     const ownerParam = searchParams.get('owner');
     const repoParam = searchParams.get('repo');
@@ -165,6 +182,7 @@ export default function BranchesPage() {
         setCommits([]);
         setTags([]);
         setBranches([]);
+        setPrs([]);
         setCurrentView('commits');
       }
       setRepository(ownerParam, repoParam);
@@ -341,6 +359,27 @@ export default function BranchesPage() {
             >
               <Tag className="h-4 w-4" />
               Tags
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setCurrentView('prs');
+                fetchPRs(owner, repository);
+              }}
+              className={`flex items-center gap-2 ${
+                currentView === 'prs'
+                  ? theme === 'dark'
+                    ? 'border-indigo-500 bg-indigo-500/10 text-indigo-400'
+                    : 'border-indigo-500 bg-indigo-50 text-indigo-600'
+                  : theme === 'dark'
+                    ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800'
+                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <GitPullRequest className="h-4 w-4" />
+              Pull Requests
             </Button>
 
             <Button
@@ -740,6 +779,123 @@ export default function BranchesPage() {
           </Card>
         )}
 
+        {/* PRs Table */}
+        {currentView === 'prs' && !isLoading && prs.length > 0 && (
+          <Card
+            className={`overflow-hidden transition-shadow duration-300 ${
+              theme === 'dark'
+                ? 'bg-zinc-900/50 border-zinc-800 shadow-xl shadow-zinc-900/50'
+                : 'bg-white border-gray-200 shadow-xl shadow-gray-200/60'
+            }`}
+          >
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead
+                  className={`border-b ${
+                    theme === 'dark' ? 'border-zinc-800 bg-zinc-900' : 'border-gray-200 bg-gray-50'
+                  }`}
+                >
+                  <tr>
+                    <th
+                      className={`px-4 py-2 text-left text-xs font-medium uppercase tracking-wider ${
+                        theme === 'dark' ? 'text-zinc-400' : 'text-gray-500'
+                      }`}
+                    >
+                      PR
+                    </th>
+                    <th
+                      className={`px-4 py-2 text-left text-xs font-medium uppercase tracking-wider ${
+                        theme === 'dark' ? 'text-zinc-400' : 'text-gray-500'
+                      }`}
+                    >
+                      Title
+                    </th>
+                    <th
+                      className={`px-4 py-2 text-left text-xs font-medium uppercase tracking-wider ${
+                        theme === 'dark' ? 'text-zinc-400' : 'text-gray-500'
+                      }`}
+                    >
+                      State
+                    </th>
+                    <th
+                      className={`px-4 py-2 text-left text-xs font-medium uppercase tracking-wider ${
+                        theme === 'dark' ? 'text-zinc-400' : 'text-gray-500'
+                      }`}
+                    >
+                      Branch
+                    </th>
+                  </tr>
+                </thead>
+                <tbody
+                  className={`divide-y ${theme === 'dark' ? 'divide-zinc-800' : 'divide-gray-200'}`}
+                >
+                  {prs.map((pr) => (
+                    <tr
+                      key={pr.number}
+                      className={`group transition-colors hover:cursor-pointer ${
+                        theme === 'dark' ? 'hover:bg-zinc-800/50' : 'hover:bg-gray-50/80'
+                      }`}
+                      onClick={() => window.open(pr.url, '_blank')}
+                    >
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <div
+                          className={`text-sm font-medium ${theme === 'dark' ? 'text-indigo-400' : 'text-indigo-600'}`}
+                        >
+                          #{pr.number}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div
+                          className={`text-sm font-medium ${theme === 'dark' ? 'text-zinc-200' : 'text-gray-900'}`}
+                        >
+                          {pr.title}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <span
+                          className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                            pr.state === 'open'
+                              ? theme === 'dark'
+                                ? 'bg-green-500/10 text-green-400 border border-green-500/20'
+                                : 'bg-green-100 text-green-800 border border-green-200'
+                              : theme === 'dark'
+                                ? 'bg-red-500/10 text-red-400 border border-red-500/20'
+                                : 'bg-red-100 text-red-800 border border-red-200'
+                          }`}
+                        >
+                          {pr.state}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          <GitBranch
+                            className={`h-3 w-3 ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-400'}`}
+                          />
+                          <span
+                            className={`text-sm font-mono ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-500'}`}
+                          >
+                            {pr.branch}
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {/* simple pagination summary */}
+            <div
+              className={`px-6 py-4 border-t flex items-center justify-between ${
+                theme === 'dark' ? 'border-zinc-800 bg-zinc-900' : 'border-gray-200 bg-gray-50'
+              }`}
+            >
+              <p className={`text-sm ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'}`}>
+                Showing {prs.length} pull requests
+              </p>
+            </div>
+          </Card>
+        )}
+
         {/* Actions View */}
         {currentView === 'actions' && (
           <ActionsTable ref={actionsTableRef} owner={owner} repository={repository} />
@@ -807,6 +963,22 @@ export default function BranchesPage() {
             </p>
             <p className={`text-sm ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'}`}>
               This repository doesn't have any tags yet
+            </p>
+          </div>
+        )}
+
+        {!isLoading && currentView === 'prs' && prs.length === 0 && (
+          <div className="text-center py-12">
+            <GitPullRequest
+              className={`h-12 w-12 mx-auto mb-4 ${theme === 'dark' ? 'text-zinc-600' : 'text-gray-400'}`}
+            />
+            <p
+              className={`text-lg font-medium mb-2 ${theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'}`}
+            >
+              No pull requests found
+            </p>
+            <p className={`text-sm ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'}`}>
+              This repository doesn't have any pull requests yet
             </p>
           </div>
         )}
