@@ -207,7 +207,11 @@ export default function ProjectsPage() {
                             {org.login[0].toUpperCase()}
                           </div>
                         )}
-                        <span className="font-bold">{org.login}</span>
+                        <span
+                          className={`font-bold ${theme === 'dark' ? 'text-white' : 'text-zinc-700'}`}
+                        >
+                          {org.login}
+                        </span>
                         {org.type === 'Organization' && (
                           <Badge
                             variant="secondary"

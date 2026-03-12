@@ -139,7 +139,9 @@ export function AllPackagesModal() {
             <SelectContent>
               {packageTypeOptions.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
-                  <div className="flex items-center gap-2">
+                  <div
+                    className={`flex items-center gap-2 ${theme === 'dark' ? 'text-white' : 'text-zinc-700'}`}
+                  >
                     <option.icon className="h-4 w-4" />
                     {option.label}
                   </div>

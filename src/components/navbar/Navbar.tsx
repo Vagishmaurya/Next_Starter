@@ -1,6 +1,6 @@
 'use client';
 
-import { BookOpen, FolderKanban, LayoutDashboard, Menu, Moon, Sun, X } from 'lucide-react';
+import { FileText, FolderKanban, Menu, Moon, Sun, X } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -8,52 +8,17 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useThemeStore } from '@/store/themeStore';
 
-const NavLink = ({
-  href,
-  icon: Icon,
-  children,
-  active,
-}: {
-  href: string;
-  icon: any;
-  children: React.ReactNode;
-  active: boolean;
-}) => {
-  const { theme } = useThemeStore();
-
-  return (
-    <Link
-      href={href}
-      className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-        active
-          ? theme === 'dark'
-            ? 'bg-zinc-800 text-white'
-            : 'bg-purple-50 text-purple-700'
-          : theme === 'dark'
-            ? 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
-            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-      }`}
-    >
-      <Icon
-        className={`h-4 w-4 ${active ? (theme === 'dark' ? 'text-white' : 'text-purple-600') : ''}`}
-      />
-      {children}
-    </Link>
-  );
-};
-
 export function Navbar() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const { theme, toggleTheme } = useThemeStore();
 
-  // Handle scroll effect
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 10);
+      setScrolled(window.scrollY > 20);
     };
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -61,16 +26,21 @@ export function Navbar() {
     setIsOpen(false);
   }, [pathname]);
 
+  // Sync theme with document element for standard Tailwind dark mode support
+  useEffect(() => {
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [theme]);
+
   // Hide navbar on sign-in page
   if (pathname === '/sign-in') {
     return null;
   }
 
-  const navLinks = [
-    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/', label: 'Projects', icon: FolderKanban }, // Assuming Projects is home for now or /projects
-    { href: '/docs', label: 'Docs', icon: BookOpen },
-  ];
+  const isLanding = pathname === '/';
 
   const getInitials = (name: string) => {
     return name
@@ -84,28 +54,42 @@ export function Navbar() {
   const mockUser = {
     name: 'Admin User',
     email: 'admin@calance.com',
-    avatar: '', // Add avatar URL if available
   };
+
+  const navLinks = [
+    { name: 'Projects', href: '/projects', icon: FolderKanban },
+    { name: 'Docs', href: '/docs', icon: FileText },
+  ];
 
   return (
     <>
       <nav
-        className={`fixed top-0 z-50 w-full transition-all duration-300 ${
-          scrolled
-            ? theme === 'dark'
-              ? 'bg-zinc-950/80 border-b border-zinc-800 backdrop-blur-md shadow-sm'
-              : 'bg-white/80 border-b border-zinc-200 backdrop-blur-md shadow-sm'
-            : theme === 'dark'
-              ? 'bg-zinc-950 border-b border-transparent'
-              : 'bg-white border-b border-transparent'
+        className={`fixed top-0 z-50 w-full transition-all duration-500 ease-in-out ${
+          scrolled ? 'py-3' : 'py-0'
         }`}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            {/* Logo Section */}
-            <div className="flex items-center gap-8">
+        <div
+          className={`mx-auto px-4 sm:px-6 lg:px-8 transition-all duration-500 ease-in-out ${
+            scrolled ? 'max-w-5xl' : 'max-w-7xl'
+          }`}
+        >
+          <div
+            className={`flex justify-between items-center h-16 px-6 transition-all duration-500 ${
+              scrolled
+                ? theme === 'dark'
+                  ? 'bg-zinc-900/70 border border-white/10 backdrop-blur-2xl rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.4)]'
+                  : 'bg-white/70 border border-black/5 backdrop-blur-2xl rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.1)]'
+                : isLanding
+                  ? 'bg-transparent border-transparent'
+                  : theme === 'dark'
+                    ? 'bg-zinc-950 border-b border-zinc-800'
+                    : 'bg-white border-b border-zinc-200'
+            }`}
+          >
+            {/* Logo */}
+            <div className="flex items-center gap-10">
               <Link href="/" className="flex items-center gap-3 group">
-                <div className="relative w-8 h-8 transition-transform duration-300 group-hover:scale-110">
+                <div className="relative w-8 h-8 transition-transform duration-500 group-hover:rotate-[360deg]">
                   <Image
                     src="/calance_logo.png"
                     alt="Calance Logo"
@@ -115,73 +99,99 @@ export function Navbar() {
                 </div>
                 <div className="flex flex-col">
                   <span
-                    className={`font-bold text-lg leading-none tracking-tight ${
+                    className={`font-bold text-lg leading-none tracking-tight transition-colors ${
                       theme === 'dark' ? 'text-white' : 'text-zinc-900'
                     }`}
                   >
                     Calance
                   </span>
-                  <span
-                    className={`text-[10px] uppercase tracking-wider font-medium ${
-                      theme === 'dark' ? 'text-zinc-500' : 'text-zinc-500'
-                    }`}
-                  >
-                    Workflow Automation
+                  <span className="text-[10px] uppercase tracking-widest font-semibold text-zinc-500 mt-0.5">
+                    Workflow
                   </span>
                 </div>
               </Link>
 
               {/* Desktop Navigation */}
               <div className="hidden md:flex items-center gap-1">
-                {navLinks.map((link) => (
-                  <NavLink
-                    key={link.href}
-                    href={link.href}
-                    icon={link.icon}
-                    active={
-                      pathname === link.href ||
-                      (link.href !== '/' && pathname.startsWith(link.href))
-                    }
-                  >
-                    {link.label}
-                  </NavLink>
-                ))}
+                {navLinks.map((link) => {
+                  const isActive = pathname.startsWith(link.href);
+                  const Icon = link.icon;
+                  return (
+                    <Link
+                      key={link.name}
+                      href={link.href}
+                      className={`relative flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 group ${
+                        isActive
+                          ? theme === 'dark'
+                            ? 'text-white bg-zinc-800/50'
+                            : 'text-purple-700 bg-purple-50'
+                          : theme === 'dark'
+                            ? 'text-zinc-400 hover:text-white hover:bg-zinc-800/30'
+                            : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100/50'
+                      }`}
+                    >
+                      <Icon
+                        className={`h-4 w-4 transition-transform duration-300 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`}
+                      />
+                      {link.name}
+
+                      {/* Active Indicator Dot */}
+                      {isActive && (
+                        <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.8)]" />
+                      )}
+                    </Link>
+                  );
+                })}
               </div>
             </div>
 
-            {/* Right Side Actions */}
-            <div className="flex items-center gap-2">
+            {/* Right side */}
+            <div className="flex items-center gap-3">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={toggleTheme}
-                className={`rounded-full w-9 h-9 transition-colors ${
+                className={`rounded-full w-10 h-10 transition-all duration-300 ${
                   theme === 'dark'
-                    ? 'text-zinc-400 hover:text-white hover:bg-zinc-800'
-                    : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100'
+                    ? 'text-zinc-400 hover:text-white hover:bg-zinc-800 hover:rotate-12'
+                    : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 hover:rotate-12'
                 }`}
               >
-                {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+                {theme === 'light' ? (
+                  <Moon className="h-[18px] w-[18px]" />
+                ) : (
+                  <Sun className="h-[18px] w-[18px]" />
+                )}
               </Button>
 
-              {/* Profile Dropdown - Placeholder */}
-              <div className="hidden md:block pl-2 border-l border-zinc-200 dark:border-zinc-800 ml-2">
+              {/* Profile */}
+              <div
+                className={`hidden md:block pl-2 ml-1 ${
+                  theme === 'dark' ? 'border-l border-white/10' : 'border-l border-black/5'
+                }`}
+              >
                 <button
                   type="button"
-                  className={`flex items-center gap-2 p-1 rounded-full transition-all ${theme === 'dark' ? 'hover:bg-zinc-800' : 'hover:bg-zinc-100'}`}
+                  className={`flex items-center justify-center p-0.5 rounded-full transition-all duration-300 ring-2 ring-transparent hover:ring-purple-500/30 active:scale-95 ${
+                    theme === 'dark' ? 'bg-zinc-800/50' : 'bg-purple-100/50'
+                  }`}
                 >
                   <div
-                    className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-semibold ${theme === 'dark' ? 'bg-zinc-800 text-zinc-300' : 'bg-purple-100 text-purple-700'}`}
+                    className={`h-9 w-9 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
+                      theme === 'dark'
+                        ? 'bg-zinc-800 text-zinc-200'
+                        : 'bg-white text-purple-700 shadow-sm'
+                    }`}
                   >
                     {getInitials(mockUser.name)}
                   </div>
                 </button>
               </div>
 
-              {/* Mobile Menu Button */}
+              {/* Mobile menu button */}
               <button
                 type="button"
-                className={`md:hidden p-2 rounded-md transition-colors ${
+                className={`md:hidden p-2 rounded-xl transition-all duration-300 ${
                   theme === 'dark'
                     ? 'text-zinc-400 hover:text-white hover:bg-zinc-800'
                     : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100'
@@ -189,71 +199,67 @@ export function Navbar() {
                 onClick={() => setIsOpen(!isOpen)}
                 aria-label="Toggle menu"
               >
-                {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
               </button>
             </div>
           </div>
         </div>
 
-        {/* Mobile Menu Overlay */}
+        {/* Mobile menu */}
         <div
-          className={`md:hidden fixed inset-0 z-40 bg-black/50 backdrop-blur-sm transition-opacity duration-300 ${
-            isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
-          }`}
-          onClick={() => setIsOpen(false)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              setIsOpen(false);
-            }
-          }}
-          role="button"
-          tabIndex={0}
-          aria-label="Close menu overlay"
-        />
-
-        {/* Mobile Menu Content */}
-        <div
-          className={`md:hidden fixed top-16 left-0 w-full bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800 shadow-lg transition-transform duration-300 ease-in-out z-40 origin-top transform ${
-            isOpen ? 'scale-y-100 opacity-100' : 'scale-y-0 opacity-0'
+          className={`md:hidden fixed inset-x-4 top-20 shadow-2xl transition-all duration-500 ease-in-out z-40 rounded-2xl overflow-hidden border ${
+            isOpen
+              ? 'translate-y-0 opacity-100 scale-100'
+              : '-translate-y-4 opacity-0 scale-95 pointer-events-none'
+          } ${
+            theme === 'dark'
+              ? 'bg-zinc-950/95 border-white/10 backdrop-blur-xl'
+              : 'bg-white/95 border-black/5 backdrop-blur-xl'
           }`}
         >
-          <div className="px-4 py-6 space-y-4">
-            <div className="space-y-1">
-              {navLinks.map((link) => (
+          <div className="px-4 py-6 space-y-2">
+            {navLinks.map((link) => {
+              const isActive = pathname.startsWith(link.href);
+              const Icon = link.icon;
+              return (
                 <Link
-                  key={link.href}
+                  key={link.name}
                   href={link.href}
-                  className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
-                    pathname === link.href || (link.href !== '/' && pathname.startsWith(link.href))
+                  className={`flex items-center gap-4 px-4 py-4 rounded-xl text-base font-medium transition-all duration-300 ${
+                    isActive
                       ? theme === 'dark'
                         ? 'bg-zinc-800 text-white'
                         : 'bg-purple-50 text-purple-700'
                       : theme === 'dark'
                         ? 'text-zinc-400 hover:text-white hover:bg-zinc-800'
-                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                        : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50'
                   }`}
                 >
-                  <link.icon className="h-5 w-5" />
-                  {link.label}
+                  <Icon className="h-5 w-5" />
+                  {link.name}
                 </Link>
-              ))}
-            </div>
+              );
+            })}
 
-            <div className={`h-px w-full ${theme === 'dark' ? 'bg-zinc-800' : 'bg-zinc-100'}`} />
+            <div className={`h-px w-full my-4 ${theme === 'dark' ? 'bg-white/5' : 'bg-black/5'}`} />
 
-            <div className="flex items-center gap-3 px-3 py-2">
+            <div className="flex items-center gap-4 px-4 py-3">
               <div
-                className={`h-10 w-10 rounded-full flex items-center justify-center text-sm font-semibold ${theme === 'dark' ? 'bg-zinc-800 text-zinc-300' : 'bg-purple-100 text-purple-700'}`}
+                className={`h-12 w-12 rounded-full flex items-center justify-center text-sm font-bold ${
+                  theme === 'dark' ? 'bg-zinc-800 text-zinc-300' : 'bg-purple-100 text-purple-700'
+                }`}
               >
                 {getInitials(mockUser.name)}
               </div>
               <div className="flex flex-col">
                 <span
-                  className={`text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}
+                  className={`text-sm font-semibold ${
+                    theme === 'dark' ? 'text-white' : 'text-zinc-900'
+                  }`}
                 >
                   {mockUser.name}
                 </span>
-                <span className={`text-xs ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}>
+                <span className={`text-xs ${theme === 'dark' ? 'text-zinc-500' : 'text-zinc-500'}`}>
                   {mockUser.email}
                 </span>
               </div>
@@ -261,8 +267,14 @@ export function Navbar() {
           </div>
         </div>
       </nav>
-      {/* Spacer to prevent content from hiding behind fixed navbar */}
-      <div className="h-16" />
+      {/* Spacer - only show on subpages to push content down below the nav */}
+      {!isLanding && (
+        <div
+          className={`h-20 transition-colors duration-500 ${
+            theme === 'dark' ? 'bg-zinc-950' : 'bg-white'
+          }`}
+        />
+      )}
     </>
   );
 }
