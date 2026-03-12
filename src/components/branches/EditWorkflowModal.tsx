@@ -1,6 +1,6 @@
 'use client';
 
-import type { CreateWorkflowRequest, WorkflowFile } from '@/lib/api/actions.service';
+import type { WorkflowFile } from '@/lib/api/actions.service';
 import { Loader2, Save, X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -32,24 +32,13 @@ export function EditWorkflowModal({
   const { theme } = useThemeStore();
   const form = useWorkflowForm();
 
-  // Destructure setters to avoid unstable dependencies in useCallback
-  const {
-    setWorkflowName,
-    setDeploymentType,
-    setProjects,
-    setEc2CommonFields,
-    setEc2Projects,
-    setKubernetesCommonFields,
-    setKubernetesProjects,
-  } = form;
+  // Destructure needed methods from form
+  const { setValues, initializeFromTemplate, getFinalPayload } = form;
 
   const [workflowFile, setWorkflowFile] = useState<WorkflowFile | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // Track original parsed data to detect changes (simplified check)
-  // const [initialDataStr, setInitialDataStr] = useState('');
 
   const fetchWorkflowFile = useCallback(async () => {
     if (!isOpen || !workflowPath) {
@@ -60,35 +49,39 @@ export function EditWorkflowModal({
       setLoading(true);
       setError(null);
 
+      // 1. Fetch Template first (Required for form structure)
+      // We assume build-publish-v1 for now as it's the primary server-driven template
+      const templateResponse = await actionsService.fetchTemplateById('build-publish-v1');
+      initializeFromTemplate(templateResponse.data);
+
+      // 2. Fetch Workflow File
       const response = await actionsService.fetchWorkflowFile(owner, repository, workflowPath);
       setWorkflowFile(response.data);
 
       try {
         const parsedData = parseWorkflowYaml(response.data.content);
 
-        // Populate form using destructured setters
-        setWorkflowName(parsedData.workflowName || workflowName);
-        setDeploymentType(parsedData.deploymentType);
-        setProjects(parsedData.projects);
+        // 3. Map parsed data to the nested sections the dynamic form expects
+        const initialValues: Record<string, any> = {
+          base_info: {
+            workflowName: parsedData.workflowName || workflowName,
+            workflowFileName: workflowPath.split('/').pop() || '',
+          },
+          deployment_selection: {
+            deploymentType: parsedData.deploymentType,
+          },
+          project_config: parsedData.projects,
+        };
 
         if (parsedData.deploymentType === 'ec2') {
-          if (parsedData.ec2CommonFields) {
-            setEc2CommonFields(parsedData.ec2CommonFields);
-          }
-          if (parsedData.ec2Projects) {
-            setEc2Projects(parsedData.ec2Projects);
-          }
+          initialValues.ec2_common = parsedData.ec2CommonFields;
+          initialValues.ec2_projects = parsedData.ec2Projects;
         } else {
-          if (parsedData.kubernetesCommonFields) {
-            setKubernetesCommonFields(parsedData.kubernetesCommonFields);
-          }
-          if (parsedData.kubernetesProjects) {
-            setKubernetesProjects(parsedData.kubernetesProjects);
-          }
+          initialValues.kubernetes_common = parsedData.kubernetesCommonFields;
+          initialValues.kubernetes_projects = parsedData.kubernetesProjects;
         }
 
-        // Store initial state for change detection
-        // setInitialDataStr(JSON.stringify(parsedData));
+        setValues(initialValues);
       } catch (parseErr) {
         console.error('Failed to parse workflow YAML:', parseErr);
         setError(
@@ -100,20 +93,7 @@ export function EditWorkflowModal({
     } finally {
       setLoading(false);
     }
-  }, [
-    isOpen,
-    owner,
-    repository,
-    workflowPath,
-    workflowName,
-    setWorkflowName,
-    setDeploymentType,
-    setProjects,
-    setEc2CommonFields,
-    setEc2Projects,
-    setKubernetesCommonFields,
-    setKubernetesProjects,
-  ]);
+  }, [isOpen, owner, repository, workflowPath, workflowName, setValues, initializeFromTemplate]);
 
   const handleSave = useCallback(async () => {
     if (!workflowFile) {
@@ -124,20 +104,13 @@ export function EditWorkflowModal({
       setSaving(true);
       setError(null);
 
-      // 1. Construct payload from form (similar to CreateModal)
-      const payload: CreateWorkflowRequest = {
-        owner,
-        repository,
-        workflowName: form.workflowName,
-        deploymentType: form.deploymentType,
-        projects: form.projects,
-        ec2CommonFields: form.deploymentType === 'ec2' ? form.ec2CommonFields : undefined,
-        ec2Projects: form.deploymentType === 'ec2' ? form.ec2Projects : undefined,
-        kubernetesCommonFields:
-          form.deploymentType === 'kubernetes' ? form.kubernetesCommonFields : undefined,
-        kubernetesProjects:
-          form.deploymentType === 'kubernetes' ? form.kubernetesProjects : undefined,
-      };
+      // 1. Construct payload from form using the new centralized mapper
+      const payload = getFinalPayload(owner, repository);
+
+      // Handle the workflowFileName .yml extension if present in payload
+      if (payload.workflowFileName && !payload.workflowFileName.endsWith('.yml')) {
+        payload.workflowFileName = `${payload.workflowFileName}.yml`;
+      }
 
       // 2. Generate YAML via Preview API
       const previewResponse = await actionsService.previewWorkflow(payload);
@@ -161,7 +134,7 @@ export function EditWorkflowModal({
     } finally {
       setSaving(false);
     }
-  }, [workflowFile, form, owner, repository, fetchWorkflowFile, onClose]);
+  }, [workflowFile, getFinalPayload, owner, repository, fetchWorkflowFile, onClose]);
 
   const handleClose = () => {
     // Basic unsaved changes check can be added here

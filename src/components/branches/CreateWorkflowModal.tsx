@@ -1,8 +1,8 @@
 'use client';
 
-import type { CreateWorkflowRequest } from '@/lib/api/actions.service';
-import { Check, ChevronRight, Eye, FileText, Settings, X } from 'lucide-react';
-import React, { useState } from 'react';
+import type { WorkflowTemplateSummary } from '@/lib/api/actions.service';
+import { Check, Eye, Layout, Loader2, Settings, X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { WorkflowForm } from '@/components/branches/WorkflowForm';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -26,121 +26,138 @@ export default function CreateWorkflowModal({
   repository,
 }: CreateWorkflowModalProps) {
   const { theme } = useThemeStore();
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(0); // 0: Selection, 1...n: Template Steps, n+1: Preview
+  const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [previewing, setPreviewing] = useState(false);
+  const [templates, setTemplates] = useState<WorkflowTemplateSummary[]>([]);
   const [previewData, setPreviewData] = useState<{
     yaml_content: string;
     workflow_name: string;
   } | null>(null);
 
   const form = useWorkflowForm();
-  const {
-    workflowName,
-    workflowFileName,
-    deploymentType,
-    projects,
-    ec2CommonFields,
-    ec2Projects,
-    kubernetesCommonFields,
-    kubernetesProjects,
-    resetForm,
-    validateStep1,
-    validateStep2,
-  } = form;
+  const { template, initializeFromTemplate, validateStep, getFinalPayload, resetForm } = form;
+
+  // Load templates on open
+  useEffect(() => {
+    if (isOpen) {
+      loadTemplates();
+    }
+  }, [isOpen]);
+
+  const loadTemplates = async () => {
+    try {
+      setLoading(true);
+      const response = await actionsService.fetchTemplates();
+      if (response.success) {
+        setTemplates(response.data.templates);
+        // If only one template, select it automatically
+        if (response.data.templates.length === 1) {
+          selectTemplate(response.data.templates[0].templateId);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading templates:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const selectTemplate = async (templateId: string) => {
+    try {
+      setLoading(true);
+      const response = await actionsService.fetchTemplateById(templateId);
+      if (response.success) {
+        console.log(
+          '[CreateWorkflowModal] Selected Template Schema:',
+          JSON.stringify(response.data, null, 2)
+        );
+        initializeFromTemplate(response.data);
+        setCurrentStep(1);
+      }
+    } catch (error) {
+      console.error('Error selecting template:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handlePreviewWorkflow = async () => {
     try {
       setPreviewing(true);
-      const formData: CreateWorkflowRequest = {
-        owner,
-        repository,
-        workflowName,
-        workflowFileName: workflowFileName.endsWith('.yml')
-          ? workflowFileName
-          : `${workflowFileName}.yml`,
-        deploymentType,
-        projects,
-        ec2CommonFields: deploymentType === 'ec2' ? ec2CommonFields : undefined,
-        ec2Projects: deploymentType === 'ec2' ? ec2Projects : undefined,
-        kubernetesCommonFields:
-          deploymentType === 'kubernetes' ? kubernetesCommonFields : undefined,
-        kubernetesProjects: deploymentType === 'kubernetes' ? kubernetesProjects : undefined,
-      };
-      const response = await actionsService.previewWorkflow(formData);
+
+      const payload = getFinalPayload(owner, repository);
+
+      // Handle the workflowFileName .yml extension if present in payload
+      if (payload.workflowFileName && !payload.workflowFileName.endsWith('.yml')) {
+        payload.workflowFileName = `${payload.workflowFileName}.yml`;
+      }
+
+      console.log('[CreateWorkflowModal] Preview Payload:', payload);
+
+      const response = await actionsService.previewWorkflow(payload);
       if (response.success) {
         setPreviewData({
           yaml_content: response.data.yaml_content,
           workflow_name: response.data.workflow_name,
         });
-        setCurrentStep(3); // Move to preview step
+        setCurrentStep((template?.schema.steps.length || 0) + 1);
       } else {
-        console.error('Preview failed:', response.message);
         onSubmit(false, response.message || 'Failed to generate preview');
       }
     } catch (error: any) {
       console.error('Error generating preview:', error);
-
-      // Check if the error response contains the actual data we need
-      if (error.response?.data?.success && error.response?.data?.data) {
-        const responseData = error.response.data;
-        setPreviewData({
-          yaml_content: responseData.data.yaml_content,
-          workflow_name: responseData.data.workflow_name,
-        });
-        setCurrentStep(3); // Move to preview step
-      } else {
-        // Handle actual error - could show error message to user
-        onSubmit(false, error instanceof Error ? error.message : 'Failed to generate preview');
-      }
+      onSubmit(false, error instanceof Error ? error.message : 'Failed to generate preview');
     } finally {
       setPreviewing(false);
+    }
+  };
+
+  const handleNext = async () => {
+    const totalSteps = template?.schema.steps.length || 0;
+
+    if (currentStep === 0) {
+      return;
+    }
+
+    if (currentStep <= totalSteps) {
+      const currentStepObj = template?.schema.steps[currentStep - 1];
+      if (currentStepObj && validateStep(currentStepObj)) {
+        if (currentStep === totalSteps) {
+          await handlePreviewWorkflow();
+        } else {
+          setCurrentStep(currentStep + 1);
+        }
+      }
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (currentStep === 1) {
-      if (validateStep1()) {
-        setCurrentStep(2);
-      }
+    if (currentStep <= (template?.schema.steps.length || 0)) {
+      handleNext();
       return;
     }
 
-    if (currentStep === 2) {
-      if (validateStep2()) {
-        await handlePreviewWorkflow();
-      }
-      return;
-    }
-
-    // Final submission (currentStep === 3) - call API
     try {
       setSubmitting(true);
 
-      const formData: CreateWorkflowRequest = {
-        owner,
-        repository,
-        workflowName,
-        workflowFileName: workflowFileName.endsWith('.yml')
-          ? workflowFileName
-          : `${workflowFileName}.yml`,
-        deploymentType,
-        projects,
-        ec2CommonFields: deploymentType === 'ec2' ? ec2CommonFields : undefined,
-        ec2Projects: deploymentType === 'ec2' ? ec2Projects : undefined,
-        kubernetesCommonFields:
-          deploymentType === 'kubernetes' ? kubernetesCommonFields : undefined,
-        kubernetesProjects: deploymentType === 'kubernetes' ? kubernetesProjects : undefined,
-      };
+      const payload = getFinalPayload(owner, repository);
 
-      const response = await actionsService.createWorkflow(formData);
+      // Handle the workflowFileName .yml extension if present in payload
+      if (payload.workflowFileName && !payload.workflowFileName.endsWith('.yml')) {
+        payload.workflowFileName = `${payload.workflowFileName}.yml`;
+      }
+
+      console.log('[CreateWorkflowModal] Creation Payload:', payload);
+
+      const response = await actionsService.createWorkflow(payload);
 
       if (response.success) {
         onSubmit(true, response.message);
-        handleReset();
-        onClose();
+        handleClose();
       } else {
         onSubmit(false, response.message || 'Failed to create workflow');
       }
@@ -152,16 +169,10 @@ export default function CreateWorkflowModal({
     }
   };
 
-  const handleReset = () => {
-    setCurrentStep(1);
-    resetForm();
-    setSubmitting(false);
-    setPreviewing(false);
-    setPreviewData(null);
-  };
-
   const handleClose = () => {
-    handleReset();
+    setCurrentStep(0);
+    resetForm();
+    setPreviewData(null);
     onClose();
   };
 
@@ -169,23 +180,24 @@ export default function CreateWorkflowModal({
     return null;
   }
 
+  const steps = [
+    { label: 'Template', icon: Layout },
+    ...(template?.schema.steps.map((s: any) => ({ label: s.title, icon: Settings })) || []),
+    { label: 'Preview', icon: Eye },
+  ];
+
+  const totalSteps = steps.length;
+  const isLastFormStep = template && currentStep === template.schema.steps.length;
+  const isPreviewStep = template && currentStep > template.schema.steps.length;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
       <button
         type="button"
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm cursor-default"
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm cursor-default"
         onClick={handleClose}
-        onKeyDown={(e) => {
-          if (e.key === 'Escape') {
-            handleClose();
-          }
-        }}
-        tabIndex={-1}
-        aria-label="Close modal"
       />
 
-      {/* Modal */}
       <Card
         className={`relative w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl ${
           theme === 'dark'
@@ -195,9 +207,7 @@ export default function CreateWorkflowModal({
       >
         {/* Header */}
         <div
-          className={`flex items-center justify-between p-6 border-b ${
-            theme === 'dark' ? 'border-zinc-700' : 'border-gray-200'
-          }`}
+          className={`flex items-center justify-between p-6 border-b ${theme === 'dark' ? 'border-zinc-700' : 'border-gray-200'}`}
         >
           <div className="flex items-center gap-3">
             <div className={`p-2 rounded-lg ${theme === 'dark' ? 'bg-blue-500/10' : 'bg-blue-50'}`}>
@@ -212,7 +222,9 @@ export default function CreateWorkflowModal({
                 Create Workflow
               </h2>
               <p className={`text-xs ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-400'}`}>
-                Configure and deploy your automation workflow
+                {template
+                  ? `${template.name} v${template.version}`
+                  : 'Select a workflow template to begin'}
               </p>
             </div>
           </div>
@@ -220,38 +232,29 @@ export default function CreateWorkflowModal({
             variant="ghost"
             size="sm"
             onClick={handleClose}
-            className={`h-9 w-9 p-0 rounded-full transition-colors ${
-              theme === 'dark'
-                ? 'text-zinc-400 hover:text-white hover:bg-zinc-800'
-                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
-            }`}
+            className="h-9 w-9 p-0 rounded-full"
           >
             <X className="h-5 w-5" />
           </Button>
         </div>
 
         {/* Content */}
-        <form className="flex flex-col flex-1 overflow-hidden" onSubmit={handleSubmit}>
-          {/* Content Area - Scrollable */}
-          <div className="flex-1 overflow-y-auto custom-scrollbar">
-            <div className="p-8 space-y-8">
-              {/* New Step Indicator */}
-              <div className="relative mb-12">
-                <div className="flex items-center justify-between max-w-2xl mx-auto relative z-10">
-                  {[
-                    { step: 1, label: 'Basic Info', icon: FileText },
-                    { step: 2, label: 'Deployment', icon: Settings },
-                    { step: 3, label: 'Preview', icon: Eye },
-                  ].map((item, index) => (
-                    <React.Fragment key={item.step}>
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
+          <div className="p-8">
+            {/* Step Indicator */}
+            {template && (
+              <div className="relative mb-12 overflow-x-auto pb-4">
+                <div className="flex items-center justify-between min-w-[600px] mx-auto relative z-10 px-4">
+                  {steps.map((item, index) => (
+                    <React.Fragment key={index}>
                       <div className="flex flex-col items-center group">
                         <div
                           className={`
-                            relative flex items-center justify-center w-12 h-12 rounded-2xl transition-all duration-300 border-2
+                            relative flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300 border-2
                             ${
-                              currentStep === item.step
-                                ? 'bg-blue-600 border-blue-600 shadow-lg shadow-blue-500/30 scale-110 text-white'
-                                : currentStep > item.step
+                              currentStep === index
+                                ? 'bg-blue-600 border-blue-600 shadow-lg shadow-blue-500/30 text-white'
+                                : currentStep > index
                                   ? 'bg-emerald-500 border-emerald-500 text-white'
                                   : theme === 'dark'
                                     ? 'bg-zinc-800 border-zinc-700 text-zinc-500'
@@ -259,300 +262,130 @@ export default function CreateWorkflowModal({
                             }
                           `}
                         >
-                          {currentStep > item.step ? (
-                            <Check className="h-6 w-6" />
+                          {currentStep > index ? (
+                            <Check className="h-5 w-5" />
                           ) : (
-                            <item.icon className="h-5 w-5" />
-                          )}
-
-                          {/* Status Pulse */}
-                          {currentStep === item.step && (
-                            <span className="absolute inset-0 rounded-2xl bg-blue-500 animate-ping opacity-20" />
+                            <item.icon className="h-4 w-4" />
                           )}
                         </div>
                         <span
-                          className={`
-                          mt-3 text-xs font-semibold uppercase tracking-wider transition-colors
-                          ${
-                            currentStep === item.step
-                              ? 'text-blue-500'
-                              : currentStep > item.step
-                                ? 'text-emerald-500'
-                                : theme === 'dark'
-                                  ? 'text-zinc-500'
-                                  : 'text-gray-400'
-                          }
-                        `}
+                          className={`mt-2 text-[10px] font-bold uppercase tracking-tighter ${currentStep === index ? 'text-blue-500' : 'text-zinc-500'}`}
                         >
                           {item.label}
                         </span>
                       </div>
-                      {index < 2 && (
-                        <div className="flex-1 px-4 mb-7">
-                          <div
-                            className={`h-1 rounded-full transition-all duration-500 ${
-                              currentStep > item.step
-                                ? 'bg-emerald-500'
-                                : theme === 'dark'
-                                  ? 'bg-zinc-800'
-                                  : 'bg-gray-100'
-                            }`}
-                          >
-                            <div
-                              className="h-full bg-blue-600 rounded-full transition-all duration-500"
-                              style={{ width: currentStep > item.step ? '100%' : '0%' }}
-                            />
-                          </div>
-                        </div>
+                      {index < totalSteps - 1 && (
+                        <div
+                          className={`flex-1 h-0.5 mx-2 mb-4 ${currentStep > index ? 'bg-emerald-500' : 'bg-zinc-800'}`}
+                        />
                       )}
                     </React.Fragment>
                   ))}
                 </div>
               </div>
+            )}
 
-              {/* Repository Context Card */}
-              <div
-                className={`
-                flex items-center gap-3 p-4 rounded-xl border transition-all
-                ${
-                  theme === 'dark'
-                    ? 'bg-zinc-800/40 border-zinc-700/50 hover:bg-zinc-800/60'
-                    : 'bg-gray-50/50 border-gray-200 hover:bg-gray-50'
-                }
-              `}
-              >
-                <div className="p-2 rounded-lg bg-zinc-700/20">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                </div>
-                <div className="flex flex-col">
-                  <span
-                    className={`text-[10px] uppercase font-bold tracking-widest ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-400'}`}
-                  >
-                    Target Repository
-                  </span>
-                  <span
-                    className={`text-sm font-medium ${theme === 'dark' ? 'text-zinc-200' : 'text-gray-700'}`}
-                  >
-                    {owner} / <span className="text-blue-500">{repository}</span>
-                  </span>
-                </div>
+            {loading ? (
+              <div className="flex flex-col items-center justify-center py-20 gap-4">
+                <Loader2 className="h-10 w-10 text-blue-500 animate-spin" />
+                <p className="text-sm text-zinc-500 font-medium">Loading schema...</p>
               </div>
-
-              {/* Form Content */}
-              {currentStep < 3 && (
-                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                  <WorkflowForm form={form} currentStep={currentStep} />
-                </div>
-              )}
-
-              {/* Preview Step */}
-              {currentStep === 3 && previewData && (
-                <div className="space-y-8 animate-in fade-in zoom-in-95 duration-500">
-                  <div className="flex flex-col gap-6">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-1">
-                        <h3
-                          className={`text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}
-                        >
-                          Workflow Definition Ready
-                        </h3>
-                        <p
-                          className={`text-sm ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-400'}`}
-                        >
-                          Please review the generated GitHub Actions YAML configuration below.
-                        </p>
-                      </div>
-                      <div
-                        className={`
-                        flex items-center gap-2 px-3 py-1.5 rounded-full border
-                        ${theme === 'dark' ? 'bg-zinc-800/50 border-zinc-700 text-zinc-300' : 'bg-gray-50 border-gray-200 text-gray-600'}
-                      `}
-                      >
-                        <FileText className="h-3.5 w-3.5" />
-                        <span className="text-[10px] font-bold uppercase tracking-widest font-mono">
-                          .github/workflows/
-                          {workflowFileName.endsWith('.yml')
-                            ? workflowFileName.toLowerCase()
-                            : `${workflowFileName.toLowerCase()}.yml`}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="relative group">
-                      <div
-                        className={`
-                        absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-emerald-500 rounded-2xl blur opacity-20 group-hover:opacity-30 transition duration-1000
-                      `}
-                      />
-                      <div
-                        className={`
-                        relative p-0.5 rounded-2xl border ${theme === 'dark' ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-900 border-gray-200'}
-                      `}
-                      >
-                        <div
-                          className={`
-                          flex items-center justify-between px-4 py-2 border-b ${theme === 'dark' ? 'border-zinc-800' : 'border-zinc-800'}
-                        `}
-                        >
-                          <div className="flex gap-1.5">
-                            <div className="w-2.5 h-2.5 rounded-full bg-red-500/50" />
-                            <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/50" />
-                            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/50" />
-                          </div>
-                          <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">
-                            yaml / workflow
+            ) : currentStep === 0 ? (
+              /* Selection Step */
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-4">
+                {templates.map((tpl) => (
+                  <Card
+                    key={tpl.templateId}
+                    onClick={() => selectTemplate(tpl.templateId)}
+                    className={`p-6 cursor-pointer border-2 transition-all hover:scale-[1.02] ${
+                      theme === 'dark'
+                        ? 'bg-zinc-800/50 border-zinc-700 hover:border-blue-500/50 hover:bg-zinc-800'
+                        : 'bg-gray-50 border-gray-100 hover:border-blue-500/50 hover:bg-white'
+                    }`}
+                  >
+                    <div className="flex flex-col h-full justify-between gap-4">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <h3 className="font-bold text-lg">{tpl.name}</h3>
+                          <span className="text-[10px] bg-blue-500/10 text-blue-500 px-2 py-0.5 rounded-full font-bold">
+                            v{tpl.version}
                           </span>
                         </div>
-                        <pre
-                          className={`
-                            text-[11px] p-6 overflow-x-auto max-h-[400px] font-mono leading-relaxed custom-scrollbar
-                            ${theme === 'dark' ? 'text-blue-300/90' : 'text-blue-300/90'}
-                          `}
+                        <p
+                          className={`text-xs ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-500'}`}
                         >
-                          <code>{previewData.yaml_content}</code>
-                        </pre>
+                          {tpl.description}
+                        </p>
+                      </div>
+                      <Button variant="outline" size="sm" className="w-full">
+                        Select Template
+                      </Button>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            ) : currentStep <= (template?.schema.steps.length || 0) ? (
+              /* Dynamic Form Steps */
+              <WorkflowForm form={form} currentStep={currentStep} />
+            ) : (
+              /* Preview Step */
+              previewData && (
+                <div className="space-y-6 animate-in fade-in zoom-in-95">
+                  <div className="flex flex-col gap-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-bold">Preview Workflow</h3>
+                      <div className="text-[10px] font-mono text-zinc-500 bg-zinc-800 px-3 py-1 rounded-full border border-zinc-700">
+                        {previewData.workflow_name || 'workflow.yml'}
                       </div>
                     </div>
-
-                    <div
-                      className={`flex gap-3 p-4 rounded-xl border ${
-                        theme === 'dark'
-                          ? 'bg-blue-500/5 border-blue-500/20'
-                          : 'bg-blue-50 border-blue-100'
-                      }`}
-                    >
-                      <div
-                        className={`p-2 rounded-lg h-fit ${theme === 'dark' ? 'bg-blue-500/20' : 'bg-blue-100'}`}
-                      >
-                        <Check
-                          className={`h-4 w-4 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <p
-                          className={`text-sm font-semibold ${theme === 'dark' ? 'text-blue-400' : 'text-blue-800'}`}
-                        >
-                          Validation Passed
-                        </p>
-                        <p
-                          className={`text-xs ${theme === 'dark' ? 'text-blue-300/70' : 'text-blue-700/70'}`}
-                        >
-                          The configuration has been verified. Clicking 'Commit' will automatically
-                          create this file in your repository.
-                        </p>
-                      </div>
+                    <div className="relative group">
+                      <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-emerald-500 rounded-xl blur opacity-10" />
+                      <pre className="relative p-6 bg-zinc-950 border border-zinc-800 rounded-xl text-[11px] text-blue-300/90 font-mono overflow-x-auto max-h-[400px] custom-scrollbar">
+                        <code>{previewData.yaml_content}</code>
+                      </pre>
                     </div>
                   </div>
                 </div>
-              )}
-            </div>
+              )
+            )}
           </div>
+        </div>
 
-          {/* Actions Footer */}
-          <div
-            className={`px-8 py-5 flex items-center justify-between border-t ${
-              theme === 'dark'
-                ? 'border-zinc-700/50 bg-zinc-900/50'
-                : 'border-gray-100 bg-gray-50/50'
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              {(currentStep === 2 || currentStep === 3) && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => setCurrentStep(currentStep === 3 ? 2 : 1)}
-                  disabled={previewing || submitting}
-                  className={`flex items-center gap-2 px-4 transition-all ${
-                    theme === 'dark'
-                      ? 'text-zinc-400 hover:text-white hover:bg-zinc-800 disabled:opacity-50'
-                      : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100 disabled:opacity-50'
-                  }`}
-                >
-                  Back to {currentStep === 3 ? 'Deployment' : 'Basic Info'}
-                </Button>
-              )}
-            </div>
-
-            <div className="flex items-center gap-3">
+        {/* Footer */}
+        <div
+          className={`p-6 border-t flex items-center justify-between ${theme === 'dark' ? 'border-zinc-700 bg-zinc-900/50' : 'border-gray-100 bg-gray-50/50'}`}
+        >
+          <div className="flex gap-2">
+            {currentStep > 0 && (
               <Button
-                type="button"
-                variant="outline"
-                onClick={handleClose}
-                className={`px-6 border-transparent hover:border-zinc-500 transition-all ${
-                  theme === 'dark'
-                    ? 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
+                variant="ghost"
+                onClick={() => setCurrentStep(currentStep - 1)}
+                disabled={loading || submitting || previewing}
               >
-                Cancel
+                Back
               </Button>
-              <Button
-                type="button"
-                size="lg"
-                onClick={
-                  currentStep === 1
-                    ? () => setCurrentStep(2)
-                    : currentStep === 2
-                      ? handlePreviewWorkflow
-                      : handleSubmit
-                }
-                disabled={
-                  previewing ||
-                  submitting ||
-                  (currentStep === 1
-                    ? !workflowName || !workflowFileName || projects.some((p) => !p.name)
-                    : currentStep === 2
-                      ? deploymentType === 'ec2'
-                        ? !ec2CommonFields.credentialId ||
-                          !ec2CommonFields.awsRegion ||
-                          !ec2CommonFields.jenkinsJobs ||
-                          !ec2CommonFields.releaseTag ||
-                          !ec2CommonFields.codeownersEmails ||
-                          ec2Projects.some((p) => !p.name || !p.port)
-                        : deploymentType === 'kubernetes'
-                          ? !kubernetesCommonFields.jenkinsJobName ||
-                            !kubernetesCommonFields.releaseTag ||
-                            !kubernetesCommonFields.helmValuesRepository ||
-                            !kubernetesCommonFields.codeownersEmailIds ||
-                            kubernetesProjects.some((p) => !p.name)
-                          : false
-                      : false)
-                }
-                className={`
-                  px-8 relative overflow-hidden group transition-all duration-300
-                  ${
-                    theme === 'dark'
-                      ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/20'
-                      : 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/20'
-                  }
-                  ${previewing || submitting ? 'pl-10' : ''}
-                `}
-              >
-                {(previewing || submitting) && (
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2">
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  </div>
-                )}
-
-                <span className="flex items-center gap-2">
-                  {previewing
-                    ? 'Preparing Preview...'
-                    : submitting
-                      ? 'Creating Workflow...'
-                      : currentStep === 1
-                        ? 'Continue to Deployment'
-                        : currentStep === 2
-                          ? 'Generate YAML Preview'
-                          : 'Commit Workflow to Repository'}
-                  {!previewing && !submitting && (
-                    <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                  )}
-                </span>
-              </Button>
-            </div>
+            )}
           </div>
-        </form>
+          <div className="flex gap-3">
+            <Button variant="outline" onClick={handleClose}>
+              Cancel
+            </Button>
+            {currentStep > 0 && (
+              <Button
+                onClick={isPreviewStep ? handleSubmit : handleNext}
+                disabled={loading || submitting || previewing}
+                className="bg-blue-600 hover:bg-blue-500 text-white min-w-[140px]"
+              >
+                {submitting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : previewing ? (
+                  <Loader2 className="h-4 w-4 animate-spin pr-2" />
+                ) : null}
+                {isPreviewStep ? 'Commit Workflow' : isLastFormStep ? 'Preview' : 'Continue'}
+              </Button>
+            )}
+          </div>
+        </div>
       </Card>
     </div>
   );

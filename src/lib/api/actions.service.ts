@@ -16,6 +16,89 @@ export type WorkflowActor = {
 };
 
 /**
+ * Workflow Template Schema Types
+ */
+export type FormFieldType = 'text' | 'textarea' | 'select' | 'boolean' | 'number';
+
+export type FormFieldOption = {
+  label: string;
+  value: string;
+};
+
+export type FormField = {
+  id: string;
+  label: string;
+  type: FormFieldType;
+  required?: boolean;
+  placeholder?: string;
+  helpText?: string;
+  defaultValue?: any;
+  options?: FormFieldOption[];
+  suffix?: string;
+  disabled?: boolean;
+  bindTo?: string;
+};
+
+export type FormSection = {
+  id: string;
+  title?: string;
+  description?: string;
+  layout?: 'single' | 'grid-2';
+  fields?: FormField[];
+  isList?: boolean;
+  maxItems?: number;
+  itemLabel?: string;
+  linkedToList?: string;
+  conditionalSections?: ConditionalSection[];
+};
+
+export type ConditionalSection = {
+  when: {
+    field: string;
+    equals: string;
+  };
+  sections: FormSection[];
+};
+
+export type FormStep = {
+  id: string;
+  title: string;
+  sections?: FormSection[];
+  conditionalSections?: ConditionalSection[];
+};
+
+export type WorkflowTemplate = {
+  templateId: string;
+  name: string;
+  version: string;
+  description: string;
+  schema: {
+    steps: FormStep[];
+  };
+};
+
+export type WorkflowTemplateSummary = {
+  templateId: string;
+  name: string;
+  version: string;
+  description: string;
+};
+
+export type WorkflowTemplatesApiResponse = {
+  success: boolean;
+  message: string;
+  data: {
+    templates: WorkflowTemplateSummary[];
+  };
+};
+
+export type WorkflowTemplateDetailApiResponse = {
+  success: boolean;
+  message: string;
+  data: WorkflowTemplate;
+};
+
+/**
  * Workflow Run
  */
 export type WorkflowRun = {
@@ -200,14 +283,8 @@ export type Project = {
 export type CreateWorkflowRequest = {
   owner: string;
   repository: string;
-  workflowName: string;
-  workflowFileName: string;
-  deploymentType: 'kubernetes' | 'ec2';
-  projects: Project[];
-  ec2CommonFields?: EC2CommonFields;
-  ec2Projects?: EC2Project[];
-  kubernetesCommonFields?: KubernetesCommonFields;
-  kubernetesProjects?: KubernetesProject[];
+  templateId?: string;
+  [key: string]: any;
 };
 
 export type CreateWorkflowResponse = {
@@ -473,6 +550,34 @@ export const actionsService = {
     }
 
     return 'outline'; // Gray - Unknown
+  },
+
+  /**
+   * Fetch all available workflow templates
+   */
+  async fetchTemplates(): Promise<WorkflowTemplatesApiResponse> {
+    try {
+      const response = await apiClient.get<WorkflowTemplatesApiResponse>(`/workflows/templates`);
+      return response.data;
+    } catch (error) {
+      console.error('[ActionsService] Error fetching templates:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Fetch a specific workflow template by ID
+   */
+  async fetchTemplateById(templateId: string): Promise<WorkflowTemplateDetailApiResponse> {
+    try {
+      const response = await apiClient.get<WorkflowTemplateDetailApiResponse>(
+        `/workflows/templates/${templateId}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error('[ActionsService] Error fetching template detail:', error);
+      throw error;
+    }
   },
 
   /**

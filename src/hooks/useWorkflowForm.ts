@@ -1,333 +1,309 @@
+import type { FormField, FormSection, FormStep, WorkflowTemplate } from '@/lib/api/actions.service';
 // src/hooks/useWorkflowForm.ts
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
-export type DeploymentType = 'ec2' | 'kubernetes';
-
-export type EC2CommonFields = {
-  credentialId: string;
-  awsRegion: string;
-  jenkinsJobs: string;
-  releaseTag: string;
-  codeownersEmails: string;
-  devopsStakeholdersEmails: string;
-};
-
-export type KubernetesCommonFields = {
-  jenkinsJobName: string;
-  releaseTag: string;
-  helmValuesRepository: string;
-  codeownersEmailIds: string;
-  devopsStakeholdersEmailIds: string;
-};
-
-export type KubernetesProject = {
-  id: string;
-  name: string;
-};
-
-export type EC2Project = {
-  id: string;
-  name: string;
-  command: string;
-  port: string;
-  dockerNetwork: string;
-  mountPath: string;
-  enableGpu: boolean;
-  logDriver: string;
-  logDriverOptions: string;
-};
-
-export type Project = {
-  id: string;
-  name: string;
-  dockerContextPath: string;
-  dockerfilePath: string;
-  dotEnvTesting: string;
-  dotEnvProduction: string;
-};
-
+/**
+ * Hook to manage complex server-driven workflow forms.
+ * Stores values nested by section ID to maintain exact payload structure.
+ */
 export function useWorkflowForm() {
-  const [workflowName, setWorkflowName] = useState('Build & Publish Image (Kubernetes)');
-  const [workflowFileName, setWorkflowFileName] = useState('');
-  const [deploymentType, setDeploymentType] = useState<DeploymentType>('ec2');
-  const [projects, setProjects] = useState<Project[]>([
-    {
-      id: '1',
-      name: '',
-      dockerContextPath: '',
-      dockerfilePath: '',
-      dotEnvTesting: '',
-      dotEnvProduction: '',
-    },
-  ]);
+  const [template, setTemplate] = useState<WorkflowTemplate | null>(null);
+  const [values, setValues] = useState<Record<string, any>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // EC2 specific states
-  const [ec2CommonFields, setEc2CommonFields] = useState<EC2CommonFields>({
-    credentialId: '',
-    awsRegion: '',
-    jenkinsJobs: '',
-    releaseTag: '',
-    codeownersEmails: '',
-    devopsStakeholdersEmails: '',
-  });
+  // Initialize values from template - NESTED structure
+  const initializeFromTemplate = useCallback((tpl: WorkflowTemplate) => {
+    setTemplate(tpl);
+    const initialValues: Record<string, any> = {};
 
-  const [ec2Projects, setEc2Projects] = useState<EC2Project[]>([
-    {
-      id: '1',
-      name: '',
-      command: '',
-      port: '',
-      dockerNetwork: '',
-      mountPath: '',
-      enableGpu: false,
-      logDriver: '',
-      logDriverOptions: '',
-    },
-  ]);
+    if (tpl.schema?.steps) {
+      tpl.schema.steps.forEach((step) => {
+        const processSection = (section: FormSection) => {
+          if (section.fields) {
+            if (section.isList) {
+              // List section initialization
+              initialValues[section.id] = [{}];
+              section.fields.forEach((field) => {
+                let val = field.defaultValue;
+                if (val === undefined && field.type === 'select' && field.options?.length) {
+                  val = field.options[0].value;
+                }
+                if (val !== undefined) {
+                  initialValues[section.id][0][field.id] = val;
+                }
+              });
+            } else {
+              // Regular section initialization - ALWAYS NESTED
+              initialValues[section.id] = initialValues[section.id] || {};
+              section.fields.forEach((field) => {
+                let val = field.defaultValue;
+                if (val === undefined && field.type === 'select' && field.options?.length) {
+                  val = field.options[0].value;
+                }
+                if (val !== undefined) {
+                  initialValues[section.id][field.id] = val;
+                }
+              });
+            }
+          }
+          section.conditionalSections?.forEach((cond) => {
+            cond.sections.forEach(processSection);
+          });
+        };
 
-  // Kubernetes specific states
-  const [kubernetesCommonFields, setKubernetesCommonFields] = useState<KubernetesCommonFields>({
-    jenkinsJobName: '',
-    releaseTag: '',
-    helmValuesRepository: '',
-    codeownersEmailIds: '',
-    devopsStakeholdersEmailIds: '',
-  });
-
-  const [kubernetesProjects, setKubernetesProjects] = useState<KubernetesProject[]>([
-    {
-      id: '1',
-      name: '',
-    },
-  ]);
-
-  const handleAddProject = () => {
-    if (projects.length >= 3) {
-      return;
+        step.sections?.forEach(processSection);
+        step.conditionalSections?.forEach((cond) => {
+          cond.sections.forEach(processSection);
+        });
+      });
     }
-    const newProject: Project = {
-      id: Date.now().toString(),
-      name: '',
-      dockerContextPath: '',
-      dockerfilePath: '',
-      dotEnvTesting: '',
-      dotEnvProduction: '',
-    };
-    setProjects([...projects, newProject]);
-  };
 
-  const handleRemoveProject = (id: string) => {
-    if (projects.length > 1) {
-      setProjects(projects.filter((project) => project.id !== id));
-    }
-  };
+    setValues(initialValues);
+    setErrors({});
+  }, []);
 
-  const handleProjectChange = (id: string, field: keyof Project, value: string) => {
-    setProjects(
-      projects.map((project) => (project.id === id ? { ...project, [field]: value } : project))
-    );
-  };
-
-  // EC2 handlers
-  const handleAddEc2Project = () => {
-    if (ec2Projects.length >= 3) {
-      return;
-    }
-    const newProject: EC2Project = {
-      id: Date.now().toString(),
-      name: '',
-      command: '',
-      port: '',
-      dockerNetwork: '',
-      mountPath: '',
-      enableGpu: false,
-      logDriver: '',
-      logDriverOptions: '',
-    };
-    setEc2Projects([...ec2Projects, newProject]);
-  };
-
-  const handleRemoveEc2Project = (id: string) => {
-    if (ec2Projects.length > 1) {
-      setEc2Projects(ec2Projects.filter((project) => project.id !== id));
-    }
-  };
-
-  const handleEc2ProjectChange = (id: string, field: keyof EC2Project, value: string | boolean) => {
-    setEc2Projects(
-      ec2Projects.map((project) => (project.id === id ? { ...project, [field]: value } : project))
-    );
-  };
-
-  const handleEc2CommonFieldChange = (field: keyof EC2CommonFields, value: string) => {
-    setEc2CommonFields((prev) => ({
+  // Update a field inside a regular section
+  const handleFieldChange = (sectionId: string, fieldId: string, value: any) => {
+    setValues((prev) => ({
       ...prev,
-      [field]: value,
+      [sectionId]: {
+        ...(prev[sectionId] || {}),
+        [fieldId]: value,
+      },
     }));
-  };
 
-  // Kubernetes handlers
-  const handleAddKubernetesProject = () => {
-    if (kubernetesProjects.length >= 3) {
-      return;
-    }
-    const newProject: KubernetesProject = {
-      id: Date.now().toString(),
-      name: '',
-    };
-    setKubernetesProjects([...kubernetesProjects, newProject]);
-  };
-
-  const handleRemoveKubernetesProject = (id: string) => {
-    if (kubernetesProjects.length > 1) {
-      setKubernetesProjects(kubernetesProjects.filter((project) => project.id !== id));
+    // Clear error
+    const errorKey = `${sectionId}.${fieldId}`;
+    if (errors[errorKey]) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[errorKey];
+        return newErrors;
+      });
     }
   };
 
-  const handleKubernetesProjectChange = (
-    id: string,
-    field: keyof KubernetesProject,
-    value: string
-  ) => {
-    setKubernetesProjects(
-      kubernetesProjects.map((project) =>
-        project.id === id ? { ...project, [field]: value } : project
-      )
+  // Update a field inside a list item
+  const handleListFieldChange = (sectionId: string, index: number, fieldId: string, value: any) => {
+    console.log(
+      `[useWorkflowForm] handleListFieldChange ${sectionId}[${index}].${fieldId} =`,
+      value
     );
+    setValues((prev) => {
+      const list = [...(prev[sectionId] || [])];
+      list[index] = { ...list[index], [fieldId]: value };
+      return { ...prev, [sectionId]: list };
+    });
+
+    const errorKey = `${sectionId}.${index}.${fieldId}`;
+    if (errors[errorKey]) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[errorKey];
+        return newErrors;
+      });
+    }
   };
 
-  const handleKubernetesCommonFieldChange = (
-    field: keyof KubernetesCommonFields,
-    value: string
-  ) => {
-    setKubernetesCommonFields((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+  const addListItem = (sectionId: string, templateFields: FormField[]) => {
+    setValues((prev) => {
+      const list = [...(prev[sectionId] || [])];
+      if (list.length >= 10) {
+        return prev;
+      } // Logical cap
+
+      const newItem: Record<string, any> = {};
+      templateFields.forEach((f) => {
+        let val = f.defaultValue;
+        if (val === undefined && f.type === 'select' && f.options?.length) {
+          val = f.options[0].value;
+        }
+        if (val !== undefined) {
+          newItem[f.id] = val;
+        }
+      });
+
+      return { ...prev, [sectionId]: [...list, newItem] };
+    });
+  };
+
+  const removeListItem = (sectionId: string, index: number) => {
+    setValues((prev) => {
+      const list = [...(prev[sectionId] || [])];
+      if (list.length <= 1) {
+        return prev;
+      }
+      list.splice(index, 1);
+      return { ...prev, [sectionId]: list };
+    });
+  };
+
+  const validateStep = (step: FormStep): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    const validateSection = (section: FormSection) => {
+      if (section.fields) {
+        if (section.isList) {
+          const list = values[section.id] || [];
+          list.forEach((item: any, idx: number) => {
+            section.fields?.forEach((field) => {
+              if (field.required && (!item[field.id] || String(item[field.id]).trim() === '')) {
+                newErrors[`${section.id}.${idx}.${field.id}`] = `${field.label} is required`;
+              }
+            });
+          });
+        } else {
+          const sectionData = values[section.id] || {};
+          section.fields.forEach((field) => {
+            if (
+              field.required &&
+              (!sectionData[field.id] || String(sectionData[field.id]).trim() === '')
+            ) {
+              newErrors[`${section.id}.${field.id}`] = `${field.label} is required`;
+            }
+          });
+        }
+      }
+
+      section.conditionalSections?.forEach((cond) => {
+        if (getFieldValue(cond.when.field) === cond.when.equals) {
+          cond.sections.forEach(validateSection);
+        }
+      });
+    };
+
+    step.sections?.forEach(validateSection);
+    step.conditionalSections?.forEach((cond) => {
+      if (getFieldValue(cond.when.field) === cond.when.equals) {
+        cond.sections.forEach(validateSection);
+      }
+    });
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // Helper to find a field value in the nested structure
+  const getFieldValue = (fieldId: string) => {
+    for (const sectionId in values) {
+      if (!Array.isArray(values[sectionId])) {
+        if (values[sectionId][fieldId] !== undefined) {
+          return values[sectionId][fieldId];
+        }
+      }
+    }
+    return undefined;
+  };
+
+  /**
+   * Transforms nested form values into the final payload.
+   * Restores the exact structure required by the backend by mapping
+   * section IDs to specific keys and flattening metadata sections.
+   * Also filters out irrelevant deployment-specific sections.
+   */
+  const getFinalPayload = (owner: string, repository: string) => {
+    const payload: any = {
+      owner,
+      repository,
+      templateId: template?.templateId,
+    };
+
+    if (!template?.schema?.steps) {
+      return payload;
+    }
+
+    // First pass: flatten metadata to get deploymentType
+    Object.keys(values).forEach((sectionId) => {
+      if (['base_info', 'deployment_selection'].includes(sectionId)) {
+        const sectionValue = values[sectionId];
+        if (sectionValue && !Array.isArray(sectionValue) && typeof sectionValue === 'object') {
+          Object.assign(payload, sectionValue);
+        }
+      }
+    });
+
+    const deploymentType = payload.deploymentType;
+
+    // Second pass: Process other sections with deployment-type filtering
+    Object.keys(values).forEach((sectionId) => {
+      // Skip already processed metadata sections
+      if (['base_info', 'deployment_selection'].includes(sectionId)) {
+        return;
+      }
+
+      const sectionValue = values[sectionId];
+      if (!sectionValue) {
+        return;
+      }
+
+      // Map section IDs to the keys the backend expects
+      let targetKey = sectionId;
+      if (sectionId === 'ec2_common') {
+        targetKey = 'ec2CommonFields';
+      }
+      if (sectionId === 'ec2_projects') {
+        targetKey = 'ec2Projects';
+      }
+      if (sectionId === 'kubernetes_common') {
+        targetKey = 'kubernetesCommonFields';
+      }
+      if (sectionId === 'kubernetes_projects') {
+        targetKey = 'kubernetesProjects';
+      }
+      if (sectionId === 'project_config') {
+        targetKey = 'projects';
+      }
+
+      // FILTERING: Only include sections relevant to the selected deployment type
+      const isEc2Section = ['ec2CommonFields', 'ec2Projects'].includes(targetKey);
+      const isK8sSection = ['kubernetesCommonFields', 'kubernetesProjects'].includes(targetKey);
+
+      if (isEc2Section && deploymentType !== 'ec2') {
+        return;
+      }
+      if (isK8sSection && deploymentType !== 'kubernetes') {
+        return;
+      }
+
+      // Project ID Injection: Add "id" to list items in specific structural sections
+      let processedValue = sectionValue;
+      if (
+        ['projects', 'ec2Projects', 'kubernetesProjects'].includes(targetKey) &&
+        Array.isArray(sectionValue)
+      ) {
+        processedValue = sectionValue.map((item, idx) => ({
+          ...item,
+          id: (idx + 1).toString(),
+        }));
+      }
+
+      // Add the section to the payload
+      payload[targetKey] = processedValue;
+    });
+
+    console.log('[useWorkflowForm] Final Filtered Payload:', payload);
+    return payload;
   };
 
   const resetForm = () => {
-    setWorkflowName('Build & Publish Image (Kubernetes)');
-    setWorkflowFileName('');
-    setDeploymentType('ec2');
-    setProjects([
-      {
-        id: '1',
-        name: '',
-        dockerContextPath: '',
-        dockerfilePath: '',
-        dotEnvTesting: '',
-        dotEnvProduction: '',
-      },
-    ]);
-    setEc2CommonFields({
-      credentialId: '',
-      awsRegion: '',
-      jenkinsJobs: '',
-      releaseTag: '',
-      codeownersEmails: '',
-      devopsStakeholdersEmails: '',
-    });
-    setEc2Projects([
-      {
-        id: '1',
-        name: '',
-        command: '',
-        port: '',
-        dockerNetwork: '',
-        mountPath: '',
-        enableGpu: false,
-        logDriver: '',
-        logDriverOptions: '',
-      },
-    ]);
-    setKubernetesCommonFields({
-      jenkinsJobName: '',
-      releaseTag: '',
-      helmValuesRepository: '',
-      codeownersEmailIds: '',
-      devopsStakeholdersEmailIds: '',
-    });
-    setKubernetesProjects([
-      {
-        id: '1',
-        name: '',
-      },
-    ]);
+    setValues({});
+    setErrors({});
+    setTemplate(null);
   };
 
   return {
-    workflowName,
-    setWorkflowName,
-    workflowFileName,
-    setWorkflowFileName,
-    deploymentType,
-    setDeploymentType,
-    projects,
-    setProjects,
-    ec2CommonFields,
-    setEc2CommonFields,
-    ec2Projects,
-    setEc2Projects,
-    kubernetesCommonFields,
-    setKubernetesCommonFields,
-    kubernetesProjects,
-    setKubernetesProjects,
-    handleAddProject,
-    handleRemoveProject,
-    handleProjectChange,
-    handleAddEc2Project,
-    handleRemoveEc2Project,
-    handleEc2ProjectChange,
-    handleEc2CommonFieldChange,
-    handleAddKubernetesProject,
-    handleRemoveKubernetesProject,
-    handleKubernetesProjectChange,
-    handleKubernetesCommonFieldChange,
+    template,
+    values,
+    errors,
+    setValues,
+    initializeFromTemplate,
+    handleFieldChange,
+    handleListFieldChange,
+    addListItem,
+    removeListItem,
+    validateStep,
+    getFinalPayload,
     resetForm,
-    validateStep1: () => {
-      if (!workflowName.trim()) {
-        return false;
-      }
-      if (!workflowFileName.trim()) {
-        return false;
-      }
-      if (projects.length === 0) {
-        return false;
-      }
-      if (projects.some((p) => !p.name.trim())) {
-        return false;
-      }
-      return true;
-    },
-    validateStep2: () => {
-      if (deploymentType === 'ec2') {
-        if (
-          !ec2CommonFields.credentialId ||
-          !ec2CommonFields.awsRegion ||
-          !ec2CommonFields.jenkinsJobs ||
-          !ec2CommonFields.releaseTag ||
-          !ec2CommonFields.codeownersEmails
-        ) {
-          return false;
-        }
-        if (ec2Projects.some((p) => !p.name || !p.port)) {
-          return false;
-        }
-      } else {
-        if (
-          !kubernetesCommonFields.jenkinsJobName ||
-          !kubernetesCommonFields.releaseTag ||
-          !kubernetesCommonFields.helmValuesRepository ||
-          !kubernetesCommonFields.codeownersEmailIds
-        ) {
-          return false;
-        }
-        if (kubernetesProjects.some((p) => !p.name)) {
-          return false;
-        }
-      }
-      return true;
-    },
+    getFieldValue,
   };
 }
