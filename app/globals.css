@@ -25,7 +25,7 @@ body {
     color 0.5s ease-in-out;
 }
 
-:global(.dark) body {
+.dark body {
   background-color: var(--color-zinc-950);
   color: var(--color-white);
 }

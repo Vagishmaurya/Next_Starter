@@ -12,16 +12,15 @@ import {
   ExternalLink,
   GitBranch,
   GitCommit,
-  Tag,
   User,
   XCircle,
 } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { actionsService } from '@/lib/api/actions.service';
 import { useActionsStore } from '@/store/actionsStore';
 import { useThemeStore } from '@/store/themeStore';
@@ -51,8 +50,9 @@ export default function WorkflowRunDetailPage() {
     setRepository,
   } = useActionsStore();
 
-  const [activeTab, setActiveTab] = useState<'jobs' | 'logs'>('jobs');
-  const [allLogsLoaded, setAllLogsLoaded] = useState(false);
+  const [expandedJobs, setExpandedJobs] = useState<Set<number>>(new Set());
+  const [loadingJobLogsMap, setLoadingJobLogsMap] = useState<Record<number, boolean>>({});
+
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(() => new Set());
 
   const fetchWorkflowRunDetail = useCallback(
@@ -72,53 +72,6 @@ export default function WorkflowRunDetailPage() {
     [setLoading, setError, setSelectedRun, setSelectedRunJobs]
   );
 
-  const fetchAllLogs = useCallback(async () => {
-    if (!selectedRunJobs.length || allLogsLoaded || isLoadingJobLogs) {
-      return;
-    }
-
-    try {
-      setJobLogsLoading(true);
-      setJobLogsError(null);
-
-      // Fetch logs for all jobs
-      const logPromises: Promise<void>[] = [];
-
-      selectedRunJobs.forEach((job) => {
-        // Skip if logs already exist for this job
-        if (!jobLogs[job.id]) {
-          const promise = actionsService
-            .fetchJobLogs(owner, repository, job.id)
-            .then((response) => {
-              setJobLogs(job.id, response.data.logs);
-            })
-            .catch((err) => {
-              console.warn(`Failed to fetch logs for job ${job.id}:`, err);
-              setJobLogs(job.id, `Error loading logs: ${err.message || 'Unknown error'}`);
-            });
-          logPromises.push(promise);
-        }
-      });
-
-      await Promise.all(logPromises);
-      setAllLogsLoaded(true);
-    } catch (err) {
-      setJobLogsError(err instanceof Error ? err.message : 'Failed to fetch logs');
-    } finally {
-      setJobLogsLoading(false);
-    }
-  }, [
-    selectedRunJobs,
-    allLogsLoaded,
-    isLoadingJobLogs,
-    jobLogs,
-    owner,
-    repository,
-    setJobLogsLoading,
-    setJobLogsError,
-    setJobLogs,
-  ]);
-
   useEffect(() => {
     const ownerParam = searchParams.get('owner');
     const repoParam = searchParams.get('repo');
@@ -128,30 +81,54 @@ export default function WorkflowRunDetailPage() {
       setRepository(ownerParam, repoParam);
       // Reset logs when navigating to a different run
       clearJobLogs();
-      setAllLogsLoaded(false);
       fetchWorkflowRunDetail(ownerParam, repoParam, Number.parseInt(runIdParam, 10));
     }
   }, [searchParams, setRepository, clearJobLogs, fetchWorkflowRunDetail]);
 
-  // Handle tab changes
-  const handleTabChange = useCallback(
-    (value: string) => {
-      setActiveTab(value as 'jobs' | 'logs');
-      if (value === 'logs' && !allLogsLoaded) {
-        fetchAllLogs();
+  const toggleJobLogs = useCallback(
+    async (jobId: number) => {
+      const isExpanded = expandedJobs.has(jobId);
+
+      if (!isExpanded) {
+        if (!jobLogs[jobId]) {
+          try {
+            setLoadingJobLogsMap((prev) => ({ ...prev, [jobId]: true }));
+            const response = await actionsService.fetchJobLogs(owner, repository, jobId);
+            setJobLogs(jobId, response.data.logs);
+          } catch (err) {
+            console.error(`Failed to fetch logs for job ${jobId}:`, err);
+            setJobLogs(
+              jobId,
+              `Error loading logs: ${err instanceof Error ? err.message : 'Unknown error'}`
+            );
+          } finally {
+            setLoadingJobLogsMap((prev) => ({ ...prev, [jobId]: false }));
+          }
+        }
+
+        setExpandedJobs((prev) => {
+          const next = new Set(prev);
+          next.add(jobId);
+          return next;
+        });
+      } else {
+        setExpandedJobs((prev) => {
+          const next = new Set(prev);
+          next.delete(jobId);
+          return next;
+        });
       }
     },
-    [allLogsLoaded, fetchAllLogs]
+    [expandedJobs, jobLogs, owner, repository, setJobLogs]
   );
 
   // Parse logs and create expandable groups
   const parseLogsWithGroups = useCallback(
     (logs: string, jobId: number) => {
       const lines = logs.split('\n');
-      const elements: JSX.Element[] = [];
+      const elements: React.ReactNode[] = [];
       let currentGroup: { name: string; lines: string[]; startIndex: number } | null = null;
       let currentLines: string[] = [];
-      const _lineIndex = 0;
 
       const flushCurrentLines = () => {
         if (currentLines.length > 0) {
@@ -180,7 +157,7 @@ export default function WorkflowRunDetailPage() {
               <div
                 key={groupKey}
                 className={`border rounded mt-2 mb-2 ${
-                  theme === 'dark' ? 'border-zinc-600' : 'border-gray-300'
+                  theme === 'dark' ? 'border-zinc-800' : 'border-gray-300'
                 }`}
               >
                 <button
@@ -198,7 +175,7 @@ export default function WorkflowRunDetailPage() {
                   }}
                   className={`w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-opacity-50 ${
                     theme === 'dark'
-                      ? 'hover:bg-zinc-700 text-zinc-300'
+                      ? 'hover:bg-zinc-800 text-zinc-400'
                       : 'hover:bg-gray-100 text-gray-700'
                   }`}
                 >
@@ -207,9 +184,9 @@ export default function WorkflowRunDetailPage() {
                   ) : (
                     <ChevronRight className="h-4 w-4 flex-shrink-0" />
                   )}
-                  <span className="font-medium text-sm">{currentGroup.name}</span>
+                  <span className="font-medium text-xs">{currentGroup.name}</span>
                   <span
-                    className={`text-xs ml-auto ${
+                    className={`text-[9px] ml-auto opacity-50 ${
                       theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'
                     }`}
                   >
@@ -220,8 +197,8 @@ export default function WorkflowRunDetailPage() {
                   <div
                     className={`px-3 pb-3 border-t whitespace-pre-wrap ${
                       theme === 'dark'
-                        ? 'border-zinc-600 text-zinc-400'
-                        : 'border-gray-300 text-gray-600'
+                        ? 'border-zinc-800 text-zinc-400'
+                        : 'border-gray-200 text-gray-600'
                     }`}
                   >
                     {currentGroup.lines.join('\n')}
@@ -248,19 +225,6 @@ export default function WorkflowRunDetailPage() {
     },
     [theme, expandedGroups]
   );
-
-  // Toggle group expansion
-  const _toggleGroup = useCallback((groupKey: string) => {
-    setExpandedGroups((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(groupKey)) {
-        newSet.delete(groupKey);
-      } else {
-        newSet.add(groupKey);
-      }
-      return newSet;
-    });
-  }, []);
 
   const formatDate = (dateString: string) => {
     if (!dateString) {
@@ -354,451 +318,400 @@ export default function WorkflowRunDetailPage() {
   return (
     <div
       className={`min-h-screen transition-colors duration-200 ${
-        theme === 'dark' ? 'bg-zinc-950' : 'bg-gray-50'
+        theme === 'dark' ? 'bg-zinc-950 text-zinc-300' : 'bg-zinc-50 text-zinc-700'
       }`}
     >
-      {/* Header */}
+      {/* Cinematic Header */}
       <div
-        className={`border-b transition-colors duration-200 ${
-          theme === 'dark' ? 'border-zinc-800 bg-zinc-900/50' : 'border-gray-200 bg-white/50'
-        } backdrop-blur-md sticky top-0 z-10`}
+        className={`border-b transition-all duration-500 ${
+          theme === 'dark' ? 'bg-zinc-950 border-white/5' : 'bg-white border-black/5'
+        }`}
       >
-        <div className="max-w-7xl mx-auto px-4 py-3">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => router.back()}
-                className={`h-8 w-8 p-0 ${theme === 'dark' ? 'text-zinc-400 hover:text-white' : 'text-gray-500 hover:text-gray-900'}`}
-              >
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-              <div>
-                <h1
-                  className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}
-                >
-                  {owner}/{repository}
-                </h1>
-                <p className={`text-xs ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}>
-                  Workflow Run Details
-                </p>
+        <div className="max-w-[1600px] mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link
+              href={`/branches?owner=${owner}&repo=${repository}`}
+              className={`h-8 w-8 rounded-full border flex items-center justify-center transition-all ${
+                theme === 'dark'
+                  ? 'border-white/10 hover:bg-white/5 text-zinc-400 hover:text-white'
+                  : 'border-black/5 hover:bg-black/5 text-zinc-500 hover:text-black'
+              }`}
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
+            <div className="flex flex-col">
+              <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">
+                <span>{owner}</span>
+                <ChevronRight className="h-2 w-2 opacity-50" />
+                <span>{repository}</span>
               </div>
+              <h1
+                className={`text-sm font-black tracking-tight ${theme === 'dark' ? 'text-white' : 'text-zinc-900'}`}
+              >
+                {selectedRun?.display_title || 'Workflow Run'}
+              </h1>
             </div>
+          </div>
 
-            {/* Navigation Buttons */}
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  if (selectedRun?.head_sha) {
-                    window.open(
-                      `https://github.com/${owner}/${repository}/commit/${selectedRun.head_sha}`,
-                      '_blank'
-                    );
-                  }
-                }}
-                className={`flex-1 sm:flex-none h-8 text-xs ${
-                  theme === 'dark'
-                    ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800'
-                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                }`}
-                disabled={!selectedRun?.head_sha}
-              >
-                <GitCommit className="h-3.5 w-3.5 mr-1.5" />
-                Commit
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  window.open(`https://github.com/${owner}/${repository}/tags`, '_blank');
-                }}
-                className={`flex-1 sm:flex-none h-8 text-xs ${
-                  theme === 'dark'
-                    ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800'
-                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                <Tag className="h-3.5 w-3.5 mr-1.5" />
-                Tags
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  window.open(`https://github.com/${owner}/${repository}/actions`, '_blank');
-                }}
-                className={`flex-1 sm:flex-none h-8 text-xs ${
-                  theme === 'dark'
-                    ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800'
-                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                <Activity className="h-3.5 w-3.5 mr-1.5" />
-                Actions
-              </Button>
-            </div>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                if (selectedRun?.head_sha) {
+                  window.open(
+                    `https://github.com/${owner}/${repository}/commit/${selectedRun.head_sha}`,
+                    '_blank'
+                  );
+                }
+              }}
+              className="h-8 text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-blue-400 hover:bg-blue-500/10"
+              disabled={!selectedRun?.head_sha}
+            >
+              <GitCommit className="h-3.5 w-3.5 mr-2" />
+              Commit
+            </Button>
+            <div className={`h-4 w-px ${theme === 'dark' ? 'bg-white/10' : 'bg-black/10'}`} />
+            <a
+              href={selectedRun?.html_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`h-8 px-3 flex items-center gap-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${
+                theme === 'dark'
+                  ? 'bg-zinc-900 text-zinc-400 hover:text-white hover:bg-zinc-800'
+                  : 'bg-zinc-100 text-zinc-500 hover:text-black hover:bg-zinc-200'
+              }`}
+            >
+              GitHub
+              <ExternalLink className="h-3 w-3" />
+            </a>
           </div>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 py-4">
+      <div className="max-w-[1600px] mx-auto px-6 py-8">
         {/* Loading State */}
         {isLoading && (
-          <div className="text-center py-12">
-            <Activity
-              className={`h-8 w-8 mx-auto mb-4 animate-spin ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'}`}
-            />
-            <p className={theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'}>
-              Loading workflow run details...
+          <div className="flex flex-col items-center justify-center py-20 gap-4">
+            <div className="relative h-12 w-12">
+              <div className="absolute inset-0 rounded-full border-2 border-blue-500/20" />
+              <div className="absolute inset-0 rounded-full border-2 border-t-blue-500 animate-spin" />
+            </div>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 animate-pulse">
+              Initializing Pipeline Data...
             </p>
           </div>
         )}
 
         {/* Error State */}
         {error && (
-          <div
-            className={`p-4 rounded-lg mb-6 ${
-              theme === 'dark' ? 'bg-red-500/10 text-red-400' : 'bg-red-50 text-red-600'
-            }`}
-          >
+          <div className="p-6 rounded-2xl border border-red-500/10 bg-red-500/5 text-red-500 text-sm font-medium flex items-center gap-3 mb-8">
+            <XCircle className="h-5 w-5" />
             {error}
           </div>
         )}
 
-        {/* Workflow Run Summary */}
         {!isLoading && selectedRun && (
-          <div className="space-y-6">
-            {/* Run Info Card */}
-            <Card
-              className={`p-4 ${
-                theme === 'dark' ? 'bg-zinc-900/50 border-zinc-800' : 'bg-white border-gray-200'
-              }`}
-            >
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  {getStatusIcon(selectedRun.status, selectedRun.conclusion)}
-                  <div>
-                    <h2
-                      className={`text-base font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}
-                    >
-                      {selectedRun.display_title}
-                    </h2>
-                    <p
-                      className={`text-xs ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}
-                    >
-                      Run #{selectedRun.run_number} •{' '}
-                      {getStatusText(selectedRun.status, selectedRun.conclusion)}
-                    </p>
-                  </div>
-                </div>
-                <a
-                  href={selectedRun.html_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`inline-flex items-center gap-1.5 text-xs hover:underline ${
-                    theme === 'dark' ? 'text-blue-400' : 'text-blue-600'
-                  }`}
-                >
-                  View on GitHub
-                  <ExternalLink className="h-3 w-3" />
-                </a>
-              </div>
+          <div className="space-y-10">
+            {/* Status Spotlight Hero (Compact) */}
+            <div className="relative group">
+              <div
+                className={`absolute -inset-0.5 rounded-3xl blur-2xl opacity-20 transition-opacity group-hover:opacity-30 ${
+                  selectedRun.conclusion === 'success'
+                    ? 'bg-green-500'
+                    : selectedRun.conclusion === 'failure'
+                      ? 'bg-red-500'
+                      : 'bg-blue-500'
+                }`}
+              />
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div>
-                  <p
-                    className={`text-[10px] uppercase tracking-wider font-semibold mb-1 ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}
-                  >
-                    Branch
-                  </p>
-                  <div className="flex items-center gap-1.5">
-                    <GitBranch
-                      className={`h-3.5 w-3.5 ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-400'}`}
-                    />
-                    <span
-                      className={`text-sm font-medium ${theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'}`}
-                    >
-                      {selectedRun.head_branch}
-                    </span>
-                  </div>
-                </div>
-
-                <div>
-                  <p
-                    className={`text-[10px] uppercase tracking-wider font-semibold mb-1 ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}
-                  >
-                    Event
-                  </p>
-                  <Badge
-                    variant="secondary"
-                    className={`text-[10px] px-1.5 py-0 ${
-                      theme === 'dark' ? 'bg-zinc-800 text-zinc-300' : 'bg-gray-100 text-gray-700'
-                    }`}
-                  >
-                    {selectedRun.event}
-                  </Badge>
-                </div>
-
-                <div>
-                  <p
-                    className={`text-[10px] uppercase tracking-wider font-semibold mb-1 ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}
-                  >
-                    Triggered By
-                  </p>
-                  <div className="flex items-center gap-1.5">
-                    <User
-                      className={`h-3.5 w-3.5 ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-400'}`}
-                    />
-                    <span
-                      className={`text-sm font-medium ${theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'}`}
-                    >
-                      {selectedRun.actor.login}
-                    </span>
-                  </div>
-                </div>
-
-                <div>
-                  <p
-                    className={`text-[10px] uppercase tracking-wider font-semibold mb-1 ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}
-                  >
-                    Started
-                  </p>
-                  <div className="flex items-center gap-1.5">
-                    <Clock
-                      className={`h-3.5 w-3.5 ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-400'}`}
-                    />
-                    <span
-                      className={`text-sm ${theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'}`}
-                    >
-                      {formatDate(selectedRun.run_started_at)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-3 pt-3 border-t border-zinc-200 dark:border-zinc-800">
-                <p
-                  className={`text-[10px] uppercase tracking-wider font-semibold mb-1 ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}
-                >
-                  Commit SHA
-                </p>
-                <code
-                  className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
-                    theme === 'dark' ? 'bg-zinc-800 text-zinc-300' : 'bg-gray-100 text-gray-700'
-                  }`}
-                >
-                  {selectedRun.head_sha}
-                </code>
-              </div>
-            </Card>
-
-            {/* Jobs and Logs Tabs */}
-            <div className="mt-4">
-              <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-                <TabsList
-                  className={`grid w-full grid-cols-2 h-9 ${theme === 'dark' ? 'bg-zinc-800/50' : 'bg-gray-100'}`}
-                >
-                  <TabsTrigger
-                    value="jobs"
-                    className={`text-xs ${theme === 'dark' ? 'data-[state=active]:bg-zinc-700 text-zinc-400 data-[state=active]:text-zinc-100' : 'data-[state=active]:bg-white text-gray-600 data-[state=active]:text-gray-900'}`}
-                  >
-                    Jobs ({selectedRunJobs.length})
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="logs"
-                    className={`text-xs ${theme === 'dark' ? 'data-[state=active]:bg-zinc-700 text-zinc-400 data-[state=active]:text-zinc-100' : 'data-[state=active]:bg-white text-gray-600 data-[state=active]:text-gray-900'}`}
-                  >
-                    Logs
-                  </TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="jobs" className="mt-6">
-                  <div className="space-y-4">
-                    {selectedRunJobs.map((job: WorkflowJob) => (
-                      <Card
-                        key={job.id}
-                        className={`overflow-hidden ${
-                          theme === 'dark'
-                            ? 'bg-zinc-900/50 border-zinc-800'
-                            : 'bg-white border-gray-200'
+              <Card
+                className={`relative overflow-hidden rounded-3xl border-0 shadow-2xl ${
+                  theme === 'dark' ? 'bg-zinc-900/40' : 'bg-white'
+                }`}
+              >
+                <div className="flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-white/5">
+                  {/* Status Big Indicator */}
+                  <div className="p-6 md:p-8 flex flex-col items-center justify-center gap-4 min-w-[200px]">
+                    <div className="relative">
+                      <div
+                        className={`absolute inset-0 blur-xl opacity-40 animate-pulse ${
+                          selectedRun.conclusion === 'success'
+                            ? 'bg-green-500'
+                            : selectedRun.conclusion === 'failure'
+                              ? 'bg-red-500'
+                              : 'bg-blue-500'
+                        }`}
+                      />
+                      <div
+                        className={`relative h-14 w-14 rounded-xl flex items-center justify-center transform group-hover:scale-110 transition-transform duration-500 ${
+                          theme === 'dark' ? 'bg-zinc-950/80 shadow-2xl' : 'bg-zinc-50 shadow-xl'
                         }`}
                       >
-                        <div className="p-3">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2 flex-1">
-                              {getStatusIcon(job.status, job.conclusion)}
-                              <div className="flex-1 min-w-0">
+                        {getStatusIcon(selectedRun.status, selectedRun.conclusion)}
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-[9px] font-black uppercase tracking-[0.3em] text-zinc-500 mb-1">
+                        Conclusion
+                      </p>
+                      <h2
+                        className={`text-xl font-black tracking-tight ${
+                          selectedRun.conclusion === 'success'
+                            ? 'text-green-500'
+                            : selectedRun.conclusion === 'failure'
+                              ? 'text-red-500'
+                              : theme === 'dark'
+                                ? 'text-white'
+                                : 'text-zinc-900'
+                        }`}
+                      >
+                        {getStatusText(selectedRun.status, selectedRun.conclusion)}
+                      </h2>
+                    </div>
+                  </div>
+
+                  {/* Metadata Grid (Dense) */}
+                  <div className="flex-1 p-6 md:p-8">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                      <div>
+                        <p className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-2 flex items-center gap-1.5 leading-none">
+                          <GitBranch className="h-2.5 w-2.5" />
+                          Branch
+                        </p>
+                        <div
+                          className={`text-xs font-bold truncate ${theme === 'dark' ? 'text-zinc-200' : 'text-zinc-800'}`}
+                        >
+                          {selectedRun.head_branch}
+                        </div>
+                      </div>
+
+                      <div>
+                        <p className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-2 flex items-center gap-1.5 leading-none">
+                          <Activity className="h-2.5 w-2.5" />
+                          Event
+                        </p>
+                        <Badge
+                          className={`text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 ${
+                            theme === 'dark'
+                              ? 'bg-zinc-950 text-blue-400 border-white/5'
+                              : 'bg-blue-50 text-blue-600 border-black/5'
+                          } border`}
+                        >
+                          {selectedRun.event}
+                        </Badge>
+                      </div>
+
+                      <div>
+                        <p className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-2 flex items-center gap-1.5 leading-none">
+                          <User className="h-2.5 w-2.5" />
+                          Actor
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <div className="h-5 w-5 rounded-full bg-gradient-to-br from-zinc-500 to-zinc-700 flex items-center justify-center text-[8px] font-bold text-white uppercase">
+                            {selectedRun.actor.login.charAt(0)}
+                          </div>
+                          <span
+                            className={`text-xs font-bold ${theme === 'dark' ? 'text-zinc-300' : 'text-zinc-700'}`}
+                          >
+                            {selectedRun.actor.login}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div>
+                        <p className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-2 flex items-center gap-1.5 leading-none">
+                          <Clock className="h-2.5 w-2.5" />
+                          Runtime
+                        </p>
+                        <div
+                          className={`text-xs font-bold ${theme === 'dark' ? 'text-zinc-200' : 'text-zinc-800'}`}
+                        >
+                          {getDuration(selectedRun.run_started_at, selectedRun.updated_at)}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            </div>
+
+            {/* Interactive Jobs List */}
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">
+                  Pipeline Execution ({selectedRunJobs.length})
+                </h3>
+              </div>
+
+              <div className="space-y-4">
+                {selectedRunJobs.map((job: WorkflowJob) => {
+                  const isExpanded = expandedJobs.has(job.id);
+                  const isLoadingLogs = loadingJobLogsMap[job.id];
+
+                  return (
+                    <div key={job.id} className="space-y-2">
+                      <Card
+                        onClick={() => toggleJobLogs(job.id)}
+                        className={`group cursor-pointer overflow-hidden transition-all duration-300 ${
+                          isExpanded
+                            ? theme === 'dark'
+                              ? 'bg-zinc-900 border-blue-500/30'
+                              : 'bg-white border-blue-500/30 ring-1 ring-blue-500/10 shadow-2xl'
+                            : theme === 'dark'
+                              ? 'bg-zinc-900/40 border-white/5 hover:bg-zinc-900/60'
+                              : 'bg-white border-black/5 hover:shadow-md'
+                        }`}
+                      >
+                        <div className="p-4">
+                          <div className="flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-4 min-w-0 flex-1">
+                              <div className="relative">
+                                <div
+                                  className={`absolute inset-0 blur-sm opacity-20 ${
+                                    job.conclusion === 'success'
+                                      ? 'bg-green-500'
+                                      : job.conclusion === 'failure'
+                                        ? 'bg-red-500'
+                                        : 'bg-blue-500'
+                                  }`}
+                                />
+                                <div className="relative">
+                                  {getStatusIcon(job.status, job.conclusion)}
+                                </div>
+                              </div>
+                              <div className="truncate flex-1">
                                 <h4
-                                  className={`text-sm font-medium truncate ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}
+                                  className={`text-sm font-bold truncate ${theme === 'dark' ? 'text-zinc-200' : 'text-zinc-800'}`}
                                 >
                                   {job.name}
                                 </h4>
-                                <p
-                                  className={`text-[10px] ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}
-                                >
-                                  {getStatusText(job.status, job.conclusion)}
-                                  {job.started_at && job.completed_at && (
-                                    <> • {getDuration(job.started_at, job.completed_at)}</>
-                                  )}
-                                </p>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  <p className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">
+                                    {getStatusText(job.status, job.conclusion)}
+                                    {job.started_at && job.completed_at && (
+                                      <> • {getDuration(job.started_at, job.completed_at)}</>
+                                    )}
+                                  </p>
+                                </div>
                               </div>
                             </div>
-                            <Badge
-                              variant={actionsService.getWorkflowStatusBadge(
-                                job.status,
-                                job.conclusion
+
+                            <div className="flex items-center gap-3">
+                              {isLoadingLogs && (
+                                <Activity className="h-3 w-3 animate-spin text-blue-500" />
                               )}
-                              className="text-[10px] px-1.5 py-0 shrink-0"
-                            >
-                              {getStatusText(job.status, job.conclusion)}
-                            </Badge>
+                              <div
+                                className={`h-6 w-6 rounded-full flex items-center justify-center transition-all ${
+                                  isExpanded
+                                    ? 'bg-blue-500 text-white rotate-180'
+                                    : 'bg-zinc-500/10 text-zinc-500'
+                                }`}
+                              >
+                                <ChevronDown className="h-3.5 w-3.5" />
+                              </div>
+                            </div>
                           </div>
 
-                          {/* Job Steps */}
-                          <div className="mt-2 pt-2 border-t border-zinc-200 dark:border-zinc-800">
-                            <h5
-                              className={`text-[10px] uppercase tracking-wider font-semibold mb-2 ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}
-                            >
-                              Steps ({job.steps.length})
-                            </h5>
-                            <div className="space-y-1">
-                              {job.steps.map((step, index) => (
-                                <div
-                                  key={`${job.id}-step-${step.number || index}`}
-                                  className={`flex items-center gap-2 p-2 rounded ${
-                                    theme === 'dark' ? 'bg-zinc-800/50' : 'bg-gray-50'
-                                  }`}
+                          {/* Steps Visualization (Horizontal Pills) */}
+                          <div className="mt-4 flex flex-wrap gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity">
+                            {job.steps.map((step, idx) => (
+                              <div
+                                key={`${job.id}-step-badge-${idx}`}
+                                className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[9px] font-bold ${
+                                  theme === 'dark'
+                                    ? 'bg-black/20 border-white/5'
+                                    : 'bg-zinc-50 border-black/5'
+                                }`}
+                              >
+                                {getStatusIcon(step.status, step.conclusion)}
+                                <span
+                                  className={theme === 'dark' ? 'text-zinc-400' : 'text-zinc-600'}
                                 >
-                                  <div className="flex items-center gap-2 min-w-0 flex-1">
-                                    {getStatusIcon(step.status, step.conclusion)}
-                                    <div className="min-w-0 flex-1 flex items-center justify-between gap-2">
-                                      <span
-                                        className={`text-xs font-medium truncate ${theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'}`}
-                                      >
-                                        {step.name}
-                                      </span>
-                                      <span
-                                        className={`text-[10px] whitespace-nowrap ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}
-                                      >
-                                        {step.started_at && step.completed_at
-                                          ? getDuration(step.started_at, step.completed_at)
-                                          : ''}
-                                      </span>
-                                    </div>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
+                                  {step.name}
+                                </span>
+                              </div>
+                            ))}
                           </div>
                         </div>
                       </Card>
-                    ))}
-                  </div>
-                </TabsContent>
 
-                <TabsContent value="logs" className="mt-6">
-                  {isLoadingJobLogs && (
-                    <div className="text-center py-12">
-                      <Activity
-                        className={`h-8 w-8 mx-auto mb-4 animate-spin ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'}`}
-                      />
-                      <p className={theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'}>
-                        Loading all logs...
-                      </p>
-                    </div>
-                  )}
-
-                  {jobLogsError && (
-                    <div
-                      className={`p-4 rounded-lg mb-6 ${
-                        theme === 'dark' ? 'bg-red-500/10 text-red-400' : 'bg-red-50 text-red-600'
-                      }`}
-                    >
-                      {jobLogsError}
-                    </div>
-                  )}
-
-                  {!isLoadingJobLogs && selectedRunJobs.length > 0 && (
-                    <Card
-                      className={`${
-                        theme === 'dark'
-                          ? 'bg-zinc-900/50 border-zinc-800'
-                          : 'bg-white border-gray-200'
-                      }`}
-                    >
-                      <div
-                        className={`px-3 py-2 text-xs font-medium border-b ${
-                          theme === 'dark'
-                            ? 'text-zinc-400 border-zinc-700 bg-zinc-800/50'
-                            : 'text-gray-600 border-gray-200 bg-gray-50'
-                        }`}
-                      >
-                        Complete Workflow Logs
-                      </div>
-                      <div
-                        className={`max-h-[80vh] overflow-auto ${
-                          theme === 'dark' ? 'bg-black/20' : 'bg-gray-50/50'
-                        }`}
-                      >
-                        <div
-                          className={`p-4 text-xs font-mono ${
-                            theme === 'dark' ? 'text-zinc-300' : 'text-gray-800'
+                      {/* Expandable Log Section */}
+                      {isExpanded && (
+                        <Card
+                          className={`overflow-hidden rounded-2xl border-0 shadow-2xl animate-in slide-in-from-top-2 duration-300 ${
+                            theme === 'dark' ? 'bg-black/60 shadow-black/40' : 'bg-zinc-50'
                           }`}
                         >
-                          {selectedRunJobs.map((job: WorkflowJob) => {
-                            const currentJobLogs = jobLogs[job.id];
+                          <div
+                            className={`flex items-center justify-between px-5 py-2.5 border-b ${
+                              theme === 'dark'
+                                ? 'border-white/5 bg-white/5'
+                                : 'border-black/5 bg-black/5'
+                            }`}
+                          >
+                            <div className="flex items-center gap-1.5">
+                              <div className="h-2 w-2 rounded-full bg-red-500/40" />
+                              <div className="h-2 w-2 rounded-full bg-yellow-500/40" />
+                              <div className="h-2 w-2 rounded-full bg-green-500/40" />
+                            </div>
+                            <div
+                              className={`text-[9px] font-black uppercase tracking-[0.2em] font-mono ${
+                                theme === 'dark' ? 'text-zinc-500/60' : 'text-zinc-500'
+                              }`}
+                            >
+                              {job.name.toLowerCase().replace(/\s+/g, '_')}.log
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {isLoadingLogs && (
+                                <span className="text-[8px] font-black uppercase text-blue-500 animate-pulse">
+                                  Syncing...
+                                </span>
+                              )}
+                            </div>
+                          </div>
 
-                            if (!currentJobLogs) {
-                              return null;
-                            }
-
-                            return (
-                              <div key={`job-logs-${job.id}`} className="mb-6">
-                                <div
-                                  className={`font-bold text-sm mb-3 pb-2 border-b ${
-                                    theme === 'dark'
-                                      ? 'text-zinc-200 border-zinc-600'
-                                      : 'text-gray-800 border-gray-300'
-                                  }`}
-                                >
-                                  {job.name} (Job ID: {job.id})
-                                </div>
-                                {parseLogsWithGroups(currentJobLogs, job.id)}
+                          <div
+                            className={`font-mono text-[11px] leading-relaxed selection:bg-blue-500/30 p-6 ${
+                              theme === 'dark' ? 'text-zinc-300' : 'text-zinc-600'
+                            }`}
+                          >
+                            {jobLogs[job.id] ? (
+                              <div className="space-y-1">
+                                {parseLogsWithGroups(jobLogs[job.id], job.id)}
                               </div>
-                            );
-                          })}
-                          {Object.keys(jobLogs).length === 0 && (
-                            <span className={theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}>
-                              No logs available. Logs will appear here once loaded.
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </Card>
-                  )}
-                </TabsContent>
-              </Tabs>
+                            ) : (
+                              <div className="flex flex-col items-center justify-center py-10 text-zinc-500">
+                                <Activity className="h-6 w-6 mb-3 animate-spin opacity-40" />
+                                <p className="text-[9px] font-black uppercase tracking-widest opacity-40">
+                                  Streaming logs...
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </Card>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         )}
 
         {/* Empty State */}
         {!isLoading && !selectedRun && !error && (
-          <div className="text-center py-12">
+          <div className="text-center py-20">
             <Activity
-              className={`h-12 w-12 mx-auto mb-4 ${theme === 'dark' ? 'text-zinc-600' : 'text-gray-400'}`}
+              className={`h-12 w-12 mx-auto mb-4 ${theme === 'dark' ? 'text-zinc-800' : 'text-gray-300'}`}
             />
             <p
-              className={`text-lg font-medium mb-2 ${theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'}`}
+              className={`text-sm font-black uppercase tracking-[0.3em] ${theme === 'dark' ? 'text-zinc-600' : 'text-gray-400'}`}
             >
-              No workflow run found
+              Protocol Offline
             </p>
-            <p className={`text-sm ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'}`}>
-              Unable to load workflow run details
+            <p className={`text-xs mt-2 ${theme === 'dark' ? 'text-zinc-700' : 'text-gray-500'}`}>
+              Unable to establish uplink with this workflow run.
             </p>
           </div>
         )}

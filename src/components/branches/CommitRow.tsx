@@ -1,7 +1,6 @@
 import type { Commit } from '@/lib/api/branches.service';
-import { Clock, ExternalLink, GitCommit, Tag, User } from 'lucide-react';
+import { ExternalLink, GitCommit, Tag } from 'lucide-react';
 import React, { memo } from 'react';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
 // Helper functions moved outside component to avoid recreation
@@ -60,100 +59,93 @@ type CommitRowProps = {
 export const CommitRow = memo(({ commit, theme, onTagClick }: CommitRowProps) => {
   return (
     <tr
-      className={`transition-all duration-200 ${
-        theme === 'dark' ? 'hover:bg-zinc-800/70' : 'hover:bg-gray-50/80'
+      className={`group transition-all duration-300 ${
+        theme === 'dark' ? 'hover:bg-white/[0.02]' : 'hover:bg-black/[0.01]'
       }`}
     >
-      <td className="px-4 py-2">
-        <div className="flex items-start gap-2">
-          <GitCommit
-            className={`h-4 w-4 mt-1 shrink-0 ${
-              theme === 'dark' ? 'text-zinc-400' : 'text-gray-400'
-            }`}
-          />
-          <div>
+      <td className="px-5 py-3">
+        <div className="flex items-start gap-3">
+          <div
+            className={`mt-1 h-5 w-5 rounded-md flex items-center justify-center ${theme === 'dark' ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50 text-blue-600'}`}
+          >
+            <GitCommit className="h-3 w-3" />
+          </div>
+          <div className="flex flex-col gap-0.5">
             <p
-              className={`text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}
+              className={`text-xs font-bold tracking-tight ${theme === 'dark' ? 'text-zinc-200' : 'text-zinc-800'}`}
             >
               {commit.commit?.message?.split('\n')[0] || 'No commit message'}
             </p>
             {commit.commit?.comment_count > 0 && (
-              <Badge
-                variant="secondary"
-                className={`mt-1 text-xs ${
-                  theme === 'dark' ? 'bg-zinc-800 text-zinc-300' : 'bg-gray-100 text-gray-700'
-                }`}
-              >
-                {commit.commit?.comment_count} comment
-                {commit.commit?.comment_count !== 1 ? 's' : ''}
-              </Badge>
+              <div className="flex items-center gap-1 opacity-60">
+                <div className="w-1 h-1 rounded-full bg-zinc-500" />
+                <span className="text-[10px] uppercase font-black tracking-widest text-zinc-500">
+                  {commit.commit?.comment_count} comment
+                  {commit.commit?.comment_count !== 1 ? 's' : ''}
+                </span>
+              </div>
             )}
           </div>
         </div>
       </td>
-      <td className="px-4 py-2">
+      <td className="px-5 py-3">
         <div className="flex items-center gap-2">
-          <User className={`h-4 w-4 ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-400'}`} />
-          <div>
-            <p
-              className={`text-sm font-medium ${
-                theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'
-              }`}
+          <div className="h-6 w-6 rounded-full bg-gradient-to-br from-zinc-500 to-zinc-700 flex items-center justify-center text-[10px] font-bold text-white uppercase">
+            {commit.commit?.author?.name?.charAt(0) || 'U'}
+          </div>
+          <div className="flex flex-col">
+            <span
+              className={`text-[11px] font-bold ${theme === 'dark' ? 'text-zinc-300' : 'text-zinc-700'}`}
             >
               {commit.commit?.author?.name || 'Unknown'}
-            </p>
-            <p className={`text-xs ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}>
-              {commit.commit?.author?.email || ''}
-            </p>
+            </span>
           </div>
         </div>
       </td>
-      <td className="px-4 py-2">
-        <div className="flex items-center gap-2">
-          <Clock className={`h-4 w-4 ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-400'}`} />
-          <div>
-            <p className={`text-sm ${theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'}`}>
-              {getRelativeTime(commit.commit?.author?.date || '')}
-            </p>
-            <p className={`text-xs ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}>
-              {formatDate(commit.commit?.author?.date || '')}
-            </p>
-          </div>
+      <td className="px-5 py-3">
+        <div className="flex flex-col">
+          <span
+            className={`text-[11px] font-medium ${theme === 'dark' ? 'text-zinc-400' : 'text-zinc-500'}`}
+          >
+            {getRelativeTime(commit.commit?.author?.date || '')}
+          </span>
+          <span className="text-[9px] uppercase tracking-tighter text-zinc-500/60 font-black">
+            {formatDate(commit.commit?.author?.date || '')}
+          </span>
         </div>
       </td>
-      <td className="px-4 py-2">
+      <td className="px-5 py-3">
         <code
-          className={`text-xs font-mono px-2 py-1 rounded ${
-            theme === 'dark' ? 'bg-zinc-800 text-zinc-300' : 'bg-gray-100 text-gray-700'
+          className={`text-[10px] font-black font-mono px-2 py-0.5 rounded-md border ${
+            theme === 'dark'
+              ? 'bg-zinc-900/50 border-white/5 text-zinc-400'
+              : 'bg-zinc-100 border-black/5 text-zinc-600'
           }`}
         >
           {commit.sha.substring(0, 7)}
         </code>
       </td>
-      <td className="px-6 py-4 text-right">
-        <div className="flex items-center justify-end gap-2">
+      <td className="px-5 py-3 text-right">
+        <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
             onClick={() => onTagClick(commit.sha)}
-            className={`text-xs ${
-              theme === 'dark'
-                ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800'
-                : 'border-gray-300 text-gray-700 hover:bg-gray-100'
-            }`}
+            className="h-7 px-2 text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-purple-400 hover:bg-purple-500/10"
           >
             <Tag className="h-3 w-3 mr-1" />
-            Create Tag
+            Tag
           </Button>
           <a
             href={commit.html_url}
             target="_blank"
             rel="noopener noreferrer"
-            className={`inline-flex items-center gap-1 text-sm hover:underline ${
-              theme === 'dark' ? 'text-blue-400' : 'text-blue-600'
+            className={`h-7 w-7 flex items-center justify-center rounded-lg transition-colors ${
+              theme === 'dark'
+                ? 'bg-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-700'
+                : 'bg-zinc-100 text-zinc-500 hover:text-zinc-900 hover:bg-zinc-200'
             }`}
           >
-            View
             <ExternalLink className="h-3 w-3" />
           </a>
         </div>

@@ -28,6 +28,13 @@ export function WorkflowForm({ form, currentStep }: WorkflowFormProps) {
     getFieldValue,
   } = form;
 
+  // Synchronize project names from Step 1 to Step 2 targets automatically
+  useEffect(() => {
+    if (currentStep === 1) {
+      form.syncLinkedProjects();
+    }
+  }, [values.project_config, values.deployment_selection, currentStep, form.syncLinkedProjects]);
+
   // Auto-scroll to first error
   useEffect(() => {
     const errorIds = Object.keys(errors);
@@ -54,7 +61,8 @@ export function WorkflowForm({ form, currentStep }: WorkflowFormProps) {
     value: any,
     error: string | undefined,
     onChange: (val: any) => void,
-    idPrefix?: string
+    idPrefix?: string,
+    key?: string
   ) => {
     const fieldId = idPrefix ? `${idPrefix}-${field.id}` : field.id;
     const commonProps = {
@@ -134,7 +142,7 @@ export function WorkflowForm({ form, currentStep }: WorkflowFormProps) {
     })();
 
     return (
-      <div className="space-y-1.5">
+      <div key={key || fieldId} className="space-y-1.5">
         <Label
           htmlFor={fieldId}
           className={`text-sm font-semibold flex items-center gap-1.5 ${theme === 'dark' ? 'text-zinc-200' : 'text-gray-700'}`}
@@ -237,7 +245,7 @@ export function WorkflowForm({ form, currentStep }: WorkflowFormProps) {
 
               return (
                 <Card
-                  key={index}
+                  key={item._id || index}
                   className={`relative group p-8 rounded-2xl border transition-all duration-300 ${
                     theme === 'dark'
                       ? 'bg-zinc-800/30 border-zinc-700/50 hover:border-zinc-600 hover:bg-zinc-800/50'
@@ -275,7 +283,8 @@ export function WorkflowForm({ form, currentStep }: WorkflowFormProps) {
                           fieldValue,
                           errors[`${section.id}.${index}.${field.id}`],
                           (val) => handleListFieldChange(section.id, index, field.id, val),
-                          `${section.id}-${index}`
+                          `${section.id}-${index}`,
+                          `${section.id}-${index}-${field.id}`
                         );
                       })}
                     </div>
@@ -310,7 +319,9 @@ export function WorkflowForm({ form, currentStep }: WorkflowFormProps) {
               field,
               (values[section.id] || {})[field.id],
               errors[`${section.id}.${field.id}`],
-              (val) => handleFieldChange(section.id, field.id, val)
+              (val) => handleFieldChange(section.id, field.id, val),
+              undefined,
+              `${section.id}-${field.id}`
             )
           )}
         </div>

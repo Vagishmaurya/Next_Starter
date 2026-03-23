@@ -22,7 +22,7 @@ export function useWorkflowForm() {
           if (section.fields) {
             if (section.isList) {
               // List section initialization
-              initialValues[section.id] = [{}];
+              initialValues[section.id] = [{ _id: crypto.randomUUID() }];
               section.fields.forEach((field) => {
                 let val = field.defaultValue;
                 if (val === undefined && field.type === 'select' && field.options?.length) {
@@ -39,6 +39,10 @@ export function useWorkflowForm() {
                 let val = field.defaultValue;
                 if (val === undefined && field.type === 'select' && field.options?.length) {
                   val = field.options[0].value;
+                }
+                // Special Case: Pre-fill releaseTag with template version (ensure 'v' prefix)
+                if (field.id === 'releaseTag' && !val) {
+                  val = tpl.version.startsWith('v') ? tpl.version : `v${tpl.version}`;
                 }
                 if (val !== undefined) {
                   initialValues[section.id][field.id] = val;
@@ -112,7 +116,7 @@ export function useWorkflowForm() {
         return prev;
       } // Logical cap
 
-      const newItem: Record<string, any> = {};
+      const newItem: Record<string, any> = { _id: crypto.randomUUID() };
       templateFields.forEach((f) => {
         let val = f.defaultValue;
         if (val === undefined && f.type === 'select' && f.options?.length) {
@@ -285,6 +289,60 @@ export function useWorkflowForm() {
     return payload;
   };
 
+  /**
+   * Synchronizes project names from Step 1 (project_config) to Step 2 (ec2_projects or kubernetes_projects).
+   * This ensures that names entered in Step 1 are pre-populated in Step 2 while remaining editable.
+   */
+  const syncLinkedProjects = useCallback(() => {
+    setValues((prev) => {
+      // Helper to find field in ANY section found in current state
+      const getVal = (id: string, state: Record<string, any>) => {
+        for (const sid in state) {
+          if (!Array.isArray(state[sid]) && state[sid][id] !== undefined) {
+            return state[sid][id];
+          }
+        }
+        return undefined;
+      };
+
+      const deploymentType = getVal('deploymentType', prev);
+      const sourceProjects = prev.project_config || [];
+
+      if (!sourceProjects.length) {
+        return prev;
+      }
+
+      const targetSectionId = deploymentType === 'ec2' ? 'ec2_projects' : 'kubernetes_projects';
+      const targetProjects = [...(prev[targetSectionId] || [])];
+      let hasChanges = false;
+
+      const syncedProjects = sourceProjects.map((source: any, idx: number) => {
+        const existing = targetProjects[idx] || {};
+        if (existing.name !== source.name) {
+          hasChanges = true;
+          return {
+            ...existing,
+            _id: existing._id || crypto.randomUUID(),
+            name: source.name,
+          };
+        }
+        return { ...existing, _id: existing._id || crypto.randomUUID() };
+      });
+
+      if (!hasChanges && syncedProjects.length === targetProjects.length) {
+        return prev;
+      }
+
+      console.log(
+        `[useWorkflowForm] Synced ${syncedProjects.length} projects to ${targetSectionId}`
+      );
+      return {
+        ...prev,
+        [targetSectionId]: syncedProjects,
+      };
+    });
+  }, []); // Remove values dependency as we use functional setValues
+
   const resetForm = () => {
     setValues({});
     setErrors({});
@@ -303,6 +361,7 @@ export function useWorkflowForm() {
     removeListItem,
     validateStep,
     getFinalPayload,
+    syncLinkedProjects,
     resetForm,
     getFieldValue,
   };

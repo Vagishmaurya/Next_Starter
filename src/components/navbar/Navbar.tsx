@@ -64,7 +64,7 @@ export function Navbar() {
   return (
     <>
       <nav
-        className={`fixed top-0 z-50 w-full transition-all duration-500 ease-in-out ${
+        className={`fixed top-0 z-[100] w-full transition-all duration-500 ease-in-out ${
           scrolled ? 'py-3' : 'py-0'
         }`}
       >

@@ -74,10 +74,20 @@ export function EditWorkflowModal({
         };
 
         if (parsedData.deploymentType === 'ec2') {
-          initialValues.ec2_common = parsedData.ec2CommonFields;
+          initialValues.ec2_common = parsedData.ec2CommonFields || {};
+          if (!initialValues.ec2_common.releaseTag) {
+            const version = templateResponse.data.version;
+            initialValues.ec2_common.releaseTag = version.startsWith('v') ? version : `v${version}`;
+          }
           initialValues.ec2_projects = parsedData.ec2Projects;
         } else {
-          initialValues.kubernetes_common = parsedData.kubernetesCommonFields;
+          initialValues.kubernetes_common = parsedData.kubernetesCommonFields || {};
+          if (!initialValues.kubernetes_common.releaseTag) {
+            const version = templateResponse.data.version;
+            initialValues.kubernetes_common.releaseTag = version.startsWith('v')
+              ? version
+              : `v${version}`;
+          }
           initialValues.kubernetes_projects = parsedData.kubernetesProjects;
         }
 

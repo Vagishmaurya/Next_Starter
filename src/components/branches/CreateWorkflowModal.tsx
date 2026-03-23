@@ -127,6 +127,10 @@ export default function CreateWorkflowModal({
         if (currentStep === totalSteps) {
           await handlePreviewWorkflow();
         } else {
+          // Sync projects if moving from Step 1 to Step 2
+          if (currentStep === 1) {
+            form.syncLinkedProjects();
+          }
           setCurrentStep(currentStep + 1);
         }
       }
