@@ -11,16 +11,7 @@ import { useThemeStore } from '@/store/themeStore';
 export function Navbar() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
   const { theme, toggleTheme } = useThemeStore();
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
-    };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   useEffect(() => {
     setIsOpen(false);
@@ -64,28 +55,16 @@ export function Navbar() {
   return (
     <>
       <nav
-        className={`fixed top-0 z-[100] w-full transition-all duration-500 ease-in-out ${
-          scrolled ? 'py-3' : 'py-0'
+        className={`fixed top-0 z-40 w-full border-b transition-all duration-500 ease-in-out py-0 ${
+          isLanding
+            ? 'bg-transparent border-transparent'
+            : theme === 'dark'
+              ? 'bg-zinc-950 border-zinc-800'
+              : 'bg-white border-zinc-200'
         }`}
       >
-        <div
-          className={`mx-auto px-4 sm:px-6 lg:px-8 transition-all duration-500 ease-in-out ${
-            scrolled ? 'max-w-5xl' : 'max-w-7xl'
-          }`}
-        >
-          <div
-            className={`flex justify-between items-center h-16 px-6 transition-all duration-500 ${
-              scrolled
-                ? theme === 'dark'
-                  ? 'bg-zinc-900/70 border border-white/10 backdrop-blur-2xl rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.4)]'
-                  : 'bg-white/70 border border-black/5 backdrop-blur-2xl rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.1)]'
-                : isLanding
-                  ? 'bg-transparent border-transparent'
-                  : theme === 'dark'
-                    ? 'bg-zinc-950 border-b border-zinc-800'
-                    : 'bg-white border-b border-zinc-200'
-            }`}
-          >
+        <div className="mx-auto px-4 sm:px-6 lg:px-8 transition-all duration-500 ease-in-out max-w-7xl">
+          <div className="flex justify-between items-center h-16 px-6 transition-all duration-500">
             {/* Logo */}
             <div className="flex items-center gap-10">
               <Link href="/" className="flex items-center gap-3 group">
@@ -267,14 +246,6 @@ export function Navbar() {
           </div>
         </div>
       </nav>
-      {/* Spacer - only show on subpages to push content down below the nav */}
-      {!isLanding && (
-        <div
-          className={`h-20 transition-colors duration-500 ${
-            theme === 'dark' ? 'bg-zinc-950' : 'bg-white'
-          }`}
-        />
-      )}
     </>
   );
 }

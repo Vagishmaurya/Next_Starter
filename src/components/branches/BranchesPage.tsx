@@ -372,15 +372,17 @@ export default function BranchesPage() {
             <div className="flex items-center gap-3">
               {/* Branch Selector (Conditional) */}
               {currentView === 'commits' && branches.length > 0 && (
-                <div className="w-[180px]">
+                <div className="w-[200px] min-w-0 flex-shrink-0">
                   <Select value={selectedBranch || ''} onValueChange={handleBranchChange}>
                     <SelectTrigger
                       className={`
-                      h-9 rounded-xl border-none font-bold text-[10px] uppercase tracking-wider
+                      h-9 rounded-xl border-none font-bold text-[10px] uppercase tracking-wider overflow-hidden focus:ring-0
                       ${theme === 'dark' ? 'bg-white/5 text-white hover:bg-white/10' : 'bg-zinc-100 text-zinc-900 hover:bg-zinc-200'}
                     `}
                     >
-                      <SelectValue placeholder="Branch" />
+                      <div className="flex-1 text-left truncate">
+                        <SelectValue placeholder="Branch" />
+                      </div>
                     </SelectTrigger>
                     <SelectContent
                       className={
@@ -391,9 +393,9 @@ export default function BranchesPage() {
                     >
                       {branches.map((branch) => (
                         <SelectItem key={branch.name} value={branch.name}>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 max-w-[160px]">
                             <GitBranch className="h-3 w-3 text-blue-500" />
-                            <span className="font-bold">{branch.name}</span>
+                            <span className="font-bold truncate">{branch.name}</span>
                             {branch.protected && <Shield className="h-2.5 w-2.5 text-yellow-500" />}
                           </div>
                         </SelectItem>
@@ -474,19 +476,19 @@ export default function BranchesPage() {
                     }`}
                   >
                     <tr>
-                      <th className="px-5 py-3 text-left text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                      <th className="px-5 py-3 text-left text-[10px] font-black uppercase tracking-widest text-zinc-500 w-[45%]">
                         Commit
                       </th>
-                      <th className="px-5 py-3 text-left text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                      <th className="px-5 py-3 text-left text-[10px] font-black uppercase tracking-widest text-zinc-500 w-[15%]">
                         Author
                       </th>
-                      <th className="px-5 py-3 text-left text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                      <th className="px-5 py-3 text-left text-[10px] font-black uppercase tracking-widest text-zinc-500 w-[20%]">
                         Date
                       </th>
-                      <th className="px-5 py-3 text-left text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                      <th className="px-5 py-3 text-left text-[10px] font-black uppercase tracking-widest text-zinc-500 w-[10%]">
                         SHA
                       </th>
-                      <th className="px-5 py-3 text-right text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                      <th className="px-5 py-3 text-right text-[10px] font-black uppercase tracking-widest text-zinc-500 w-[10%]">
                         Actions
                       </th>
                     </tr>

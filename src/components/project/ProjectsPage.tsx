@@ -1,7 +1,16 @@
 'use client';
 
 import type { Organization } from '@/lib/api/organizations.service';
-import { GitBranch, Github, Lock, Package, Star, TrendingUp, Unlock } from 'lucide-react';
+import {
+  GitBranch,
+  Github,
+  Lock,
+  Package,
+  Search as SearchIcon,
+  Star,
+  TrendingUp,
+  Unlock,
+} from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -9,6 +18,7 @@ import { AllPackagesModal } from '@/components/project/AllPackagesModal';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -41,6 +51,7 @@ export default function ProjectsPage() {
   const { setShowPackagesModal } = usePackagesStore();
   const { theme } = useThemeStore();
   const [displayOrganizations, setDisplayOrganizations] = useState<Organization[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Initialize organizations from store or fetch from API
   useEffect(() => {
@@ -112,6 +123,10 @@ export default function ProjectsPage() {
     };
     return colors[language || ''] || 'text-zinc-400 bg-zinc-500/10 border-zinc-500/20';
   };
+
+  const filteredRepositories =
+    repositories?.filter((repo) => repo.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    [];
 
   return (
     <div
@@ -227,8 +242,25 @@ export default function ProjectsPage() {
               </Select>
             </div>
 
+            <div className="flex-1 min-w-[300px] relative">
+              <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 z-10" />
+              <Input
+                placeholder="Search repositories..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className={`
+                  h-12 pl-11 rounded-xl border-none font-medium text-sm transition-all
+                  ${
+                    theme === 'dark'
+                      ? 'bg-white/5 text-white placeholder:text-zinc-600 focus:bg-white/10'
+                      : 'bg-zinc-100 text-zinc-900 placeholder:text-zinc-400 focus:bg-zinc-200'
+                  }
+                `}
+              />
+            </div>
+
             <div
-              className={`hidden sm:flex items-center gap-2 px-4 h-12 border-l ${theme === 'dark' ? 'border-white/5' : 'border-zinc-200'}`}
+              className={`hidden md:flex items-center gap-2 px-4 h-12 border-l ${theme === 'dark' ? 'border-white/5' : 'border-zinc-200'}`}
             >
               <TrendingUp className="h-4 w-4 text-blue-500" />
               <span
@@ -271,19 +303,19 @@ export default function ProjectsPage() {
               Choose an organization from the dropdown to start managing your repositories.
             </p>
           </div>
-        ) : repositories && repositories.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {repositories.map((repo, idx) => (
+        ) : filteredRepositories && filteredRepositories.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredRepositories.map((repo, idx) => (
               <Card
                 key={repo.id}
                 onClick={() => handleRepositoryClick(repo.name)}
                 className={`
-                  group relative border-none rounded-[32px] overflow-hidden cursor-pointer transition-all duration-500
-                  animate-in fade-in slide-in-from-bottom-8 fill-mode-both hover:-translate-y-2
+                  group relative border-none rounded-2xl overflow-hidden cursor-pointer transition-all duration-500
+                  animate-in fade-in slide-in-from-bottom-8 fill-mode-both hover:-translate-y-1.5
                   ${
                     theme === 'dark'
                       ? 'bg-zinc-900/40 hover:bg-zinc-900/60 shadow-xl'
-                      : 'bg-white hover:bg-white shadow-2xl shadow-gray-200/40 hover:shadow-gray-200/80'
+                      : 'bg-white hover:bg-white shadow-xl shadow-gray-200/40 hover:shadow-gray-200/60'
                   }
                 `}
                 style={{ animationDelay: `${idx * 50}ms` }}
@@ -291,60 +323,60 @@ export default function ProjectsPage() {
                 {/* Colored Accent Background Glow */}
                 <div
                   className={`
-                  absolute top-0 right-0 w-32 h-32 blur-3xl opacity-0 group-hover:opacity-20 transition-opacity duration-700 -z-10
+                  absolute top-0 right-0 w-24 h-24 blur-3xl opacity-0 group-hover:opacity-20 transition-opacity duration-700 -z-10
                   ${repo.language === 'TypeScript' ? 'bg-blue-500' : 'bg-violet-500'}
                 `}
                 />
 
-                <div className="p-8 h-full flex flex-col gap-6 relative z-10">
+                <div className="p-6 h-full flex flex-col gap-4 relative z-10">
                   <div className="flex items-start justify-between">
-                    <div className="p-3 rounded-2xl bg-gradient-to-tr from-blue-500 to-violet-500 shadow-lg shadow-blue-500/20 group-hover:rotate-6 transition-transform duration-500">
-                      <GitBranch className="h-6 w-6 text-white" />
+                    <div className="p-2.5 rounded-xl bg-gradient-to-tr from-blue-500 to-violet-500 shadow-lg shadow-blue-500/20 group-hover:rotate-6 transition-transform duration-500">
+                      <GitBranch className="h-5 w-5 text-white" />
                     </div>
                     <div className="flex items-center gap-2">
                       {repo.private ? (
                         <div
-                          className={`p-2 rounded-xl border ${theme === 'dark' ? 'bg-zinc-950/50 border-white/5 text-zinc-400' : 'bg-gray-100 border-zinc-200 text-zinc-500'}`}
+                          className={`p-1.5 rounded-lg border ${theme === 'dark' ? 'bg-zinc-950/50 border-white/5 text-zinc-400' : 'bg-gray-100 border-zinc-200 text-zinc-500'}`}
                         >
-                          <Lock className="h-3.5 w-3.5" />
+                          <Lock className="h-3 w-3" />
                         </div>
                       ) : (
                         <div
-                          className={`p-2 rounded-xl border ${theme === 'dark' ? 'bg-zinc-950/50 border-white/5 text-zinc-400' : 'bg-gray-100 border-zinc-200 text-zinc-500'}`}
+                          className={`p-1.5 rounded-lg border ${theme === 'dark' ? 'bg-zinc-950/50 border-white/5 text-zinc-400' : 'bg-gray-100 border-zinc-200 text-zinc-500'}`}
                         >
-                          <Unlock className="h-3.5 w-3.5" />
+                          <Unlock className="h-3 w-3" />
                         </div>
                       )}
                     </div>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <h3
-                      className={`text-xl font-black tracking-tight group-hover:text-blue-500 transition-colors uppercase ${theme === 'dark' ? 'text-white' : 'text-zinc-900'}`}
+                      className={`text-lg font-black tracking-tight group-hover:text-blue-500 transition-colors uppercase truncate ${theme === 'dark' ? 'text-white' : 'text-zinc-900'}`}
                     >
                       {repo.name}
                     </h3>
                     <p
-                      className={`text-sm line-clamp-2 leading-relaxed min-h-[40px] ${theme === 'dark' ? 'text-zinc-500' : 'text-zinc-500'} group-hover:text-zinc-400 transition-colors`}
+                      className={`text-xs line-clamp-2 leading-relaxed min-h-[32px] ${theme === 'dark' ? 'text-zinc-500' : 'text-zinc-500'} group-hover:text-zinc-400 transition-colors`}
                     >
                       {repo.description || 'No description available for this repository.'}
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-4 mt-auto">
+                  <div className="flex items-center gap-3 mt-auto">
                     {repo.language && (
                       <div
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[10px] font-black uppercase tracking-wider ${getLanguageColor(repo.language)}`}
+                        className={`flex items-center gap-1.2 px-2.5 py-1 rounded-lg border text-[9px] font-black uppercase tracking-wider ${getLanguageColor(repo.language)}`}
                       >
-                        <div className="w-1.5 h-1.5 rounded-full bg-current" />
+                        <div className="w-1.2 h-1.2 rounded-full bg-current" />
                         {repo.language}
                       </div>
                     )}
                     {repo.stargazers_count > 0 && (
                       <div
-                        className={`flex items-center gap-1.5 text-[11px] font-bold ${theme === 'dark' ? 'text-zinc-500' : 'text-zinc-400'}`}
+                        className={`flex items-center gap-1.2 text-[10px] font-bold ${theme === 'dark' ? 'text-zinc-500' : 'text-zinc-400'}`}
                       >
-                        <Star className="h-3.5 w-3.5 fill-yellow-500 text-yellow-500" />
+                        <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />
                         {repo.stargazers_count}
                       </div>
                     )}

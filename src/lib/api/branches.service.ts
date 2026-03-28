@@ -153,9 +153,10 @@ export const branchesService = {
   ): Promise<CommitsApiResponse> {
     try {
       const response = await apiClient.get<CommitsApiResponse>(
-        `/auth/repositories/${owner}/${repo}/branches/${branch}/commits`,
+        `/repositories/${owner}/${repo}/commits`,
         {
           params: {
+            branch,
             page,
             per_page: perPage,
           },

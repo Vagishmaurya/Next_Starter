@@ -1,11 +1,14 @@
 'use client';
 
 import type { WorkflowTemplateSummary } from '@/lib/api/actions.service';
-import { Check, Eye, Layout, Loader2, Settings, X } from 'lucide-react';
+import { Check, Copy, Eye, Layout, Loader2, Settings, X } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { WorkflowForm } from '@/components/branches/WorkflowForm';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useWorkflowForm } from '@/hooks/useWorkflowForm';
 import { actionsService } from '@/lib/api/actions.service';
 import { useThemeStore } from '@/store/themeStore';
@@ -35,6 +38,7 @@ export default function CreateWorkflowModal({
     yaml_content: string;
     workflow_name: string;
   } | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const form = useWorkflowForm();
   const { template, initializeFromTemplate, validateStep, getFinalPayload, resetForm } = form;
@@ -43,6 +47,7 @@ export default function CreateWorkflowModal({
   useEffect(() => {
     if (isOpen) {
       loadTemplates();
+      setError(null);
     }
   }, [isOpen]);
 
@@ -65,6 +70,7 @@ export default function CreateWorkflowModal({
   };
 
   const selectTemplate = async (templateId: string) => {
+    setError(null);
     try {
       setLoading(true);
       const response = await actionsService.fetchTemplateById(templateId);
@@ -84,6 +90,7 @@ export default function CreateWorkflowModal({
   };
 
   const handlePreviewWorkflow = async () => {
+    setError(null);
     try {
       setPreviewing(true);
 
@@ -115,16 +122,15 @@ export default function CreateWorkflowModal({
   };
 
   const handleNext = async () => {
-    const totalSteps = template?.schema.steps.length || 0;
-
     if (currentStep === 0) {
       return;
     }
 
-    if (currentStep <= totalSteps) {
+    // 1. Handle Template Steps
+    if (currentStep <= templateStepsCount) {
       const currentStepObj = template?.schema.steps[currentStep - 1];
       if (currentStepObj && validateStep(currentStepObj)) {
-        if (currentStep === totalSteps) {
+        if (currentStep === templateStepsCount) {
           await handlePreviewWorkflow();
         } else {
           // Sync projects if moving from Step 1 to Step 2
@@ -134,15 +140,51 @@ export default function CreateWorkflowModal({
           setCurrentStep(currentStep + 1);
         }
       }
+      return;
+    }
+
+    // 2. Handle Preview Step -> Transition to Infrastructure if EC2
+    if (isPreviewStep && showInfrastructureStep) {
+      setCurrentStep(infrastructureStepIndex);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
 
-    if (currentStep <= (template?.schema.steps.length || 0)) {
+    // Guard: Only allow submit on the actual final step
+    const canSubmit = isSubmitStep || (isPreviewStep && !showInfrastructureStep);
+    if (!canSubmit) {
       handleNext();
       return;
+    }
+
+    // Validation for Infrastructure Step (EC2 & Kubernetes)
+    if (isInfrastructureStep) {
+      const projects =
+        deploymentType === 'ec2'
+          ? form.values.ec2_projects || []
+          : form.values.kubernetes_projects || [];
+      const infraConfig = form.values.infrastructure_config || {};
+
+      for (const project of projects) {
+        for (const env of ['stage', 'prod']) {
+          const configKey = `${project.name}-${env}`;
+          const config = infraConfig[configKey];
+
+          if (
+            !config?.jenkinsNodeName ||
+            !config?.awsAccessKeyId ||
+            !config?.awsSecretAccessKey ||
+            !config?.environments ||
+            (deploymentType === 'kubernetes' && !config?.namespace)
+          ) {
+            setError(`Please fill all fields for ${project.name} (${env})`);
+            return;
+          }
+        }
+      }
     }
 
     try {
@@ -174,6 +216,7 @@ export default function CreateWorkflowModal({
   };
 
   const handleClose = () => {
+    setError(null);
     setCurrentStep(0);
     resetForm();
     setPreviewData(null);
@@ -184,18 +227,31 @@ export default function CreateWorkflowModal({
     return null;
   }
 
+  const deploymentType = form.getFieldValue('deploymentType');
+  const showInfrastructureStep = deploymentType === 'ec2' || deploymentType === 'kubernetes';
+
   const steps = [
     { label: 'Template', icon: Layout },
     ...(template?.schema.steps.map((s: any) => ({ label: s.title, icon: Settings })) || []),
     { label: 'Preview', icon: Eye },
+    ...(showInfrastructureStep ? [{ label: 'Infrastructure', icon: Settings }] : []),
   ];
 
-  const totalSteps = steps.length;
-  const isLastFormStep = template && currentStep === template.schema.steps.length;
-  const isPreviewStep = template && currentStep > template.schema.steps.length;
+  const totalStepsCount = steps.length;
+  const templateStepsCount = template?.schema.steps.length || 0;
+  const previewStepIndex = templateStepsCount + 1;
+  const infrastructureStepIndex = templateStepsCount + 2;
+
+  const isTemplateStep = currentStep > 0 && currentStep <= templateStepsCount;
+  const isPreviewStep = currentStep === previewStepIndex;
+  const isInfrastructureStep = showInfrastructureStep && currentStep === infrastructureStepIndex;
+  const isLastStep = currentStep === totalStepsCount - 1; // Since it's 0-indexed in some places? No, currentStep starts at 1 for forms.
+
+  // The submit button should appear on the very last step
+  const isSubmitStep = currentStep === totalStepsCount - 1;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
       <button
         type="button"
         className="absolute inset-0 bg-black/60 backdrop-blur-sm cursor-default"
@@ -203,7 +259,7 @@ export default function CreateWorkflowModal({
       />
 
       <Card
-        className={`relative w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl ${
+        className={`relative w-full max-w-7xl h-[92vh] overflow-hidden flex flex-col shadow-2xl ${
           theme === 'dark'
             ? 'bg-zinc-900/90 border-zinc-700/50 backdrop-blur-xl text-white'
             : 'bg-white/95 border-gray-200 backdrop-blur-xl text-gray-900'
@@ -278,7 +334,7 @@ export default function CreateWorkflowModal({
                           {item.label}
                         </span>
                       </div>
-                      {index < totalSteps - 1 && (
+                      {index < totalStepsCount - 1 && (
                         <div
                           className={`flex-1 h-0.5 mx-2 mb-4 ${currentStep > index ? 'bg-emerald-500' : 'bg-zinc-800'}`}
                         />
@@ -294,7 +350,18 @@ export default function CreateWorkflowModal({
                 <Loader2 className="h-10 w-10 text-blue-500 animate-spin" />
                 <p className="text-sm text-zinc-500 font-medium">Loading schema...</p>
               </div>
-            ) : currentStep === 0 ? (
+            ) : (
+              error && (
+                <div className="mb-6 animate-in fade-in slide-in-from-top-2">
+                  <div className="px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center gap-3">
+                    <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+                    <p className="text-sm font-medium text-red-500">{error}</p>
+                  </div>
+                </div>
+              )
+            )}
+
+            {currentStep === 0 ? (
               /* Selection Step */
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-4">
                 {templates.map((tpl) => (
@@ -328,10 +395,10 @@ export default function CreateWorkflowModal({
                   </Card>
                 ))}
               </div>
-            ) : currentStep <= (template?.schema.steps.length || 0) ? (
+            ) : currentStep <= templateStepsCount ? (
               /* Dynamic Form Steps */
               <WorkflowForm form={form} currentStep={currentStep} />
-            ) : (
+            ) : isPreviewStep ? (
               /* Preview Step */
               previewData && (
                 <div className="space-y-6 animate-in fade-in zoom-in-95">
@@ -351,7 +418,225 @@ export default function CreateWorkflowModal({
                   </div>
                 </div>
               )
-            )}
+            ) : isInfrastructureStep ? (
+              /* Infrastructure Step (EC2 Only) */
+              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
+                <div className="border-l-4 border-blue-500 pl-4 py-2 bg-blue-500/5 rounded-r-xl">
+                  <h3 className="text-xl font-bold tracking-tight">Infrastructure Configuration</h3>
+                  <p className="text-xs text-zinc-500 mt-1">
+                    Enter infrastructure details for each project and environment.
+                  </p>
+                </div>
+
+                <div className="space-y-12">
+                  {(deploymentType === 'ec2'
+                    ? form.values.ec2_projects
+                    : form.values.kubernetes_projects
+                  )?.map((project: any, pIdx: number, projectArray: any[]) => (
+                    <div key={pIdx} className="space-y-6">
+                      <div className="flex items-center justify-between border-b border-zinc-700/30 pb-2">
+                        <div className="flex items-center gap-2">
+                          <div className="h-4 w-1 bg-blue-600 rounded-full" />
+                          <h4 className="text-xs font-black uppercase tracking-[0.2em] text-zinc-400">
+                            Project: {project.name}
+                          </h4>
+                        </div>
+                        {pIdx > 0 && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              const prevProject = projectArray[pIdx - 1];
+                              if (prevProject) {
+                                ['stage', 'prod'].forEach((env) => {
+                                  const sourceKey = `${prevProject.name}-${env}`;
+                                  const targetKey = `${project.name}-${env}`;
+                                  const sourceData = form.values.infrastructure_config?.[sourceKey];
+                                  if (sourceData) {
+                                    form.handleFieldChange('infrastructure_config', targetKey, {
+                                      ...sourceData,
+                                      projectName: project.name, // Ensure targeted project name is correct
+                                      environment: env,
+                                    });
+                                  }
+                                });
+                              }
+                            }}
+                            className="h-7 px-3 text-[10px] font-bold text-zinc-500 hover:text-blue-500 hover:bg-blue-500/10 gap-1.5 transition-all"
+                          >
+                            <Copy className="h-3.5 w-3.5" />
+                            Copy from {projectArray[pIdx - 1]?.name}
+                          </Button>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {['stage', 'prod'].map((env) => {
+                          const configKey = `${project.name}-${env}`;
+                          return (
+                            <Card
+                              key={env}
+                              className={`p-6 space-y-5 border shadow-sm ${
+                                theme === 'dark'
+                                  ? 'bg-zinc-800/20 border-zinc-800'
+                                  : 'bg-zinc-50 border-zinc-200'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <Badge
+                                  className={`uppercase text-[9px] font-black tracking-widest px-2 py-0.5 ${
+                                    env === 'prod'
+                                      ? 'bg-red-500/10 text-red-500 border-red-500/20'
+                                      : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+                                  } border`}
+                                >
+                                  {env}
+                                </Badge>
+                                {env === 'prod' && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                      const stageKey = `${project.name}-stage`;
+                                      const stageData =
+                                        form.values.infrastructure_config?.[stageKey];
+                                      if (stageData) {
+                                        form.handleFieldChange('infrastructure_config', configKey, {
+                                          ...stageData,
+                                          environment: 'prod',
+                                        });
+                                      }
+                                    }}
+                                    className="h-7 px-2 text-[10px] font-bold text-zinc-500 hover:text-blue-500 hover:bg-blue-500/10 gap-1.5 transition-all"
+                                  >
+                                    <Copy className="h-3 w-3" />
+                                    Copy from Stage
+                                  </Button>
+                                )}
+                              </div>
+
+                              <div className="space-y-4">
+                                {deploymentType === 'kubernetes' && (
+                                  <div className="space-y-1.5">
+                                    <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-tighter">
+                                      Namespace <span className="text-red-500">*</span>
+                                    </Label>
+                                    <Input
+                                      placeholder="e.g. default"
+                                      value={
+                                        form.values.infrastructure_config?.[configKey]?.namespace ||
+                                        ''
+                                      }
+                                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                        form.handleFieldChange('infrastructure_config', configKey, {
+                                          ...(form.values.infrastructure_config?.[configKey] || {}),
+                                          namespace: e.target.value,
+                                          projectName: project.name,
+                                          environment: env,
+                                        })
+                                      }
+                                      className="h-10 text-xs"
+                                    />
+                                  </div>
+                                )}
+                                <div className="space-y-1.5">
+                                  <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-tighter">
+                                    Jenkins Node Name <span className="text-red-500">*</span>
+                                  </Label>
+                                  <Input
+                                    placeholder="e.g. jenkins-slave-01"
+                                    value={
+                                      form.values.infrastructure_config?.[configKey]
+                                        ?.jenkinsNodeName || ''
+                                    }
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                      form.handleFieldChange('infrastructure_config', configKey, {
+                                        ...(form.values.infrastructure_config?.[configKey] || {}),
+                                        jenkinsNodeName: e.target.value,
+                                        projectName: project.name,
+                                        environment: env,
+                                      })
+                                    }
+                                    className="h-10 text-xs"
+                                  />
+                                </div>
+
+                                <div className="space-y-1.5">
+                                  <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-tighter">
+                                    AWS Access Key ID <span className="text-red-500">*</span>
+                                  </Label>
+                                  <Input
+                                    placeholder="AKIA..."
+                                    value={
+                                      form.values.infrastructure_config?.[configKey]
+                                        ?.awsAccessKeyId || ''
+                                    }
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                      form.handleFieldChange('infrastructure_config', configKey, {
+                                        ...(form.values.infrastructure_config?.[configKey] || {}),
+                                        awsAccessKeyId: e.target.value,
+                                        projectName: project.name,
+                                        environment: env,
+                                      })
+                                    }
+                                    className="h-10 text-xs"
+                                  />
+                                </div>
+
+                                <div className="space-y-1.5">
+                                  <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-tighter">
+                                    AWS Secret Access Key <span className="text-red-500">*</span>
+                                  </Label>
+                                  <Input
+                                    type="password"
+                                    placeholder="••••••••"
+                                    value={
+                                      form.values.infrastructure_config?.[configKey]
+                                        ?.awsSecretAccessKey || ''
+                                    }
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                      form.handleFieldChange('infrastructure_config', configKey, {
+                                        ...(form.values.infrastructure_config?.[configKey] || {}),
+                                        awsSecretAccessKey: e.target.value,
+                                        projectName: project.name,
+                                        environment: env,
+                                      })
+                                    }
+                                    className="h-10 text-xs"
+                                  />
+                                </div>
+
+                                <div className="space-y-1.5">
+                                  <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-tighter">
+                                    Environments (envs) <span className="text-red-500">*</span>
+                                  </Label>
+                                  <Input
+                                    placeholder="e.g. key=value, debug=true"
+                                    value={
+                                      form.values.infrastructure_config?.[configKey]
+                                        ?.environments || ''
+                                    }
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                      form.handleFieldChange('infrastructure_config', configKey, {
+                                        ...(form.values.infrastructure_config?.[configKey] || {}),
+                                        environments: e.target.value,
+                                        projectName: project.name,
+                                        environment: env,
+                                      })
+                                    }
+                                    className="h-10 text-xs"
+                                  />
+                                </div>
+                              </div>
+                            </Card>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </div>
         </div>
 
@@ -376,7 +661,11 @@ export default function CreateWorkflowModal({
             </Button>
             {currentStep > 0 && (
               <Button
-                onClick={isPreviewStep ? handleSubmit : handleNext}
+                onClick={
+                  isSubmitStep || (isPreviewStep && !showInfrastructureStep)
+                    ? handleSubmit
+                    : handleNext
+                }
                 disabled={loading || submitting || previewing}
                 className="bg-blue-600 hover:bg-blue-500 text-white min-w-[140px]"
               >
@@ -385,7 +674,11 @@ export default function CreateWorkflowModal({
                 ) : previewing ? (
                   <Loader2 className="h-4 w-4 animate-spin pr-2" />
                 ) : null}
-                {isPreviewStep ? 'Commit Workflow' : isLastFormStep ? 'Preview' : 'Continue'}
+                {isSubmitStep || (isPreviewStep && !showInfrastructureStep)
+                  ? 'Commit Workflow'
+                  : currentStep === templateStepsCount
+                    ? 'Preview'
+                    : 'Continue'}
               </Button>
             )}
           </div>

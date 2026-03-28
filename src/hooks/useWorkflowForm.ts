@@ -230,8 +230,8 @@ export function useWorkflowForm() {
 
     // Second pass: Process other sections with deployment-type filtering
     Object.keys(values).forEach((sectionId) => {
-      // Skip already processed metadata sections
-      if (['base_info', 'deployment_selection'].includes(sectionId)) {
+      // Skip already processed metadata sections or redundant form-only state
+      if (['base_info', 'deployment_selection', 'infrastructure_config'].includes(sectionId)) {
         return;
       }
 
@@ -284,6 +284,11 @@ export function useWorkflowForm() {
       // Add the section to the payload
       payload[targetKey] = processedValue;
     });
+
+    // Third pass: Add Infrastructure Credentials if EC2 or Kubernetes
+    if (['ec2', 'kubernetes'].includes(deploymentType) && values.infrastructure_config) {
+      payload.infrastructureCredentials = Object.values(values.infrastructure_config);
+    }
 
     console.log('[useWorkflowForm] Final Filtered Payload:', payload);
     return payload;
