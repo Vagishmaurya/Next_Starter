@@ -38,28 +38,25 @@ export const useOAuth = () => {
    * Redirects user to OAuth provider login page
    * @param provider - OAuth provider (google, github, microsoft)
    */
-  const initiateOAuth = useCallback(
-    async (provider: OAuthProvider) => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        console.log(`[useOAuth] Initiating OAuth for ${provider}`);
-        const { redirectUrl } = await oauthService.getOAuthRedirectUrl(provider);
+  const initiateOAuth = useCallback(async (provider: OAuthProvider) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      console.log(`[useOAuth] Initiating OAuth for ${provider}`);
+      const { redirectUrl } = await oauthService.getOAuthRedirectUrl(provider);
 
-        // Store state for verification after callback
-        sessionStorage.setItem(`oauth_provider_${provider}`, provider);
+      // Store state for verification after callback
+      sessionStorage.setItem(`oauth_provider_${provider}`, provider);
 
-        // Redirect to OAuth provider
-        window.location.href = redirectUrl;
-      } catch (err) {
-        const message = err instanceof Error ? err.message : `Failed to login with ${provider}`;
-        console.error(`[useOAuth] OAuth initiation failed:`, message);
-        setError(message);
-        setIsLoading(false);
-      }
-    },
-    [],
-  );
+      // Redirect to OAuth provider
+      window.location.href = redirectUrl;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : `Failed to login with ${provider}`;
+      console.error(`[useOAuth] OAuth initiation failed:`, message);
+      setError(message);
+      setIsLoading(false);
+    }
+  }, []);
 
   /**
    * Handles OAuth callback after user authenticates with provider
@@ -83,7 +80,7 @@ export const useOAuth = () => {
         await login(response.user.email, ''); // Password not needed for OAuth
 
         console.log(`[useOAuth] OAuth authentication successful`);
-        router.push('/dashboard');
+        router.push('/projects');
       } catch (err) {
         const message = err instanceof Error ? err.message : 'OAuth callback failed';
         console.error(`[useOAuth] OAuth callback error:`, message);
@@ -91,7 +88,7 @@ export const useOAuth = () => {
         setIsLoading(false);
       }
     },
-    [login, router],
+    [login, router]
   );
 
   /**
@@ -100,52 +97,46 @@ export const useOAuth = () => {
    * @param provider - OAuth provider to link
    * @param code - Authorization code from provider
    */
-  const linkProvider = useCallback(
-    async (provider: OAuthProvider, code: string) => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        console.log(`[useOAuth] Linking provider ${provider}`);
-        const response = await oauthService.linkOAuthProvider(provider, code);
+  const linkProvider = useCallback(async (provider: OAuthProvider, code: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      console.log(`[useOAuth] Linking provider ${provider}`);
+      const response = await oauthService.linkOAuthProvider(provider, code);
 
-        setConnectedProviders(response.user.oauthProviders || []);
-        console.log(`[useOAuth] Provider linked successfully`);
-      } catch (err) {
-        const message = err instanceof Error ? err.message : `Failed to link ${provider}`;
-        console.error(`[useOAuth] Link provider error:`, message);
-        setError(message);
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [],
-  );
+      setConnectedProviders(response.user.oauthProviders || []);
+      console.log(`[useOAuth] Provider linked successfully`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : `Failed to link ${provider}`;
+      console.error(`[useOAuth] Link provider error:`, message);
+      setError(message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   /**
    * Unlinks OAuth provider from account
    * Removes OAuth authentication method
    * @param provider - OAuth provider to unlink
    */
-  const unlinkProvider = useCallback(
-    async (provider: OAuthProvider) => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        console.log(`[useOAuth] Unlinking provider ${provider}`);
-        const response = await oauthService.unlinkOAuthProvider(provider);
+  const unlinkProvider = useCallback(async (provider: OAuthProvider) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      console.log(`[useOAuth] Unlinking provider ${provider}`);
+      const response = await oauthService.unlinkOAuthProvider(provider);
 
-        setConnectedProviders(response.user.oauthProviders || []);
-        console.log(`[useOAuth] Provider unlinked successfully`);
-      } catch (err) {
-        const message = err instanceof Error ? err.message : `Failed to unlink ${provider}`;
-        console.error(`[useOAuth] Unlink provider error:`, message);
-        setError(message);
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [],
-  );
+      setConnectedProviders(response.user.oauthProviders || []);
+      console.log(`[useOAuth] Provider unlinked successfully`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : `Failed to unlink ${provider}`;
+      console.error(`[useOAuth] Unlink provider error:`, message);
+      setError(message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   /**
    * Fetches list of connected OAuth providers for current user
@@ -171,7 +162,7 @@ export const useOAuth = () => {
     (provider: OAuthProvider): boolean => {
       return connectedProviders.includes(provider);
     },
-    [connectedProviders],
+    [connectedProviders]
   );
 
   return {

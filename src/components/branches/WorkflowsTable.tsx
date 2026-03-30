@@ -1,6 +1,7 @@
 'use client';
 
 import type { Workflow } from '@/lib/api/actions.service';
+import axios from 'axios';
 import { Activity, Copy, Download, Edit, ExternalLink } from 'lucide-react';
 import React, { useCallback, useEffect, useImperativeHandle, useState } from 'react';
 import CreateWorkflowModal from '@/components/branches/CreateWorkflowModal';
@@ -18,6 +19,7 @@ import {
 } from '@/components/ui/table';
 import { TableSkeleton } from '@/components/ui/TableSkeleton';
 import { actionsService } from '@/lib/api/actions.service';
+import { useBranchesStore } from '@/store/branchesStore';
 import { useThemeStore } from '@/store/themeStore';
 
 export type WorkflowsTableRef = {
@@ -36,10 +38,10 @@ export const WorkflowsTable = ({
   repository,
 }: WorkflowsTableProps & { ref?: React.RefObject<WorkflowsTableRef | null> }) => {
   const { theme } = useThemeStore();
+  const { workflows, setWorkflows } = useBranchesStore();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingWorkflow, setEditingWorkflow] = useState<Workflow | null>(null);
-  const [workflows, setWorkflows] = useState<Workflow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notification, setNotification] = useState<{
@@ -57,35 +59,62 @@ export const WorkflowsTable = ({
   const hasNextPage = page < totalPages;
   const hasPrevPage = page > 1;
 
-  const fetchWorkflows = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await actionsService.fetchWorkflows(owner, repository);
+  const fetchWorkflows = useCallback(
+    async (signal?: AbortSignal) => {
+      if (!owner || !repository) {
+        console.warn('[WorkflowsTable] Skipping fetch: owner or repository is empty');
+        setLoading(false);
+        return;
+      }
 
-      // Transform the data to add missing fields with defaults
-      const transformedWorkflows = response.data.workflows.map((workflow, index) => ({
-        ...workflow,
-        id: index + 1, // Generate an ID since it's not provided
-        state: 'active' as const, // Default to active since we don't have this info
-        badge_url: workflow.url ? `${workflow.url}/badge.svg` : '',
-        html_url: workflow.url || '',
-        created_at: undefined, // Will be handled by formatDate
-        updated_at: undefined, // Will be handled by formatDate
-      }));
-      setWorkflows(transformedWorkflows);
-      setPage(1); // Reset to first page when data changes
-    } catch (error) {
-      console.error('Error fetching workflows:', error);
-      setError('Failed to fetch workflows. Please try again.');
-      setWorkflows([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [owner, repository]);
+      try {
+        setLoading(true);
+        setError(null);
+        setWorkflows([]); // Explicitly clear before fetch
+        const response = await actionsService.fetchWorkflows(owner, repository, signal);
+
+        // Transform the data to add missing fields with defaults
+        const transformedWorkflows = response.data.workflows.map((workflow, index) => ({
+          ...workflow,
+          id: index + 1, // Generate an ID since it's not provided
+          state: 'active' as const, // Default to active since we don't have this info
+          badge_url: workflow.url ? `${workflow.url}/badge.svg` : '',
+          html_url: workflow.url || '',
+          created_at: undefined, // Will be handled by formatDate
+          updated_at: undefined, // Will be handled by formatDate
+        }));
+        setWorkflows(transformedWorkflows);
+        setPage(1); // Reset to first page when data changes
+      } catch (error) {
+        if (axios.isCancel(error)) {
+          console.log('[WorkflowsTable] Fetch workflows cancelled');
+          return;
+        }
+        setError('Failed to fetch workflows. Please try again.');
+        setWorkflows([]);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [owner, repository, setWorkflows]
+  );
 
   useEffect(() => {
-    fetchWorkflows();
+    const controller = new AbortController();
+
+    const load = async () => {
+      try {
+        await fetchWorkflows(controller.signal);
+      } catch (err) {
+        // Error handling is already inside fetchWorkflows
+      }
+    };
+
+    load();
+
+    return () => {
+      controller.abort();
+    };
   }, [owner, repository, fetchWorkflows]);
 
   useImperativeHandle(ref, () => ({

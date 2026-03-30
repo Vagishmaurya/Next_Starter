@@ -34,20 +34,6 @@ export function Navbar() {
 
   const isLanding = pathname === '/';
 
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  };
-
-  const mockUser = {
-    name: 'Admin User',
-    email: 'admin@calance.com',
-  };
-
   const navLinks = [
     { name: 'Projects', href: '/projects', icon: FolderKanban },
     { name: 'Docs', href: '/docs', icon: FileText },
@@ -65,10 +51,10 @@ export function Navbar() {
         }`}
       >
         <div className="mx-auto px-4 sm:px-6 lg:px-8 transition-all duration-500 ease-in-out max-w-7xl">
-          <div className="flex justify-between items-center h-16 px-6 transition-all duration-500">
+          <div className="flex justify-between items-center h-16 transition-all duration-500">
             {/* Logo */}
             <div className="flex items-center gap-10">
-              <Link href="/" className="flex items-center gap-3 group">
+              <Link href="/" className="flex items-center gap-3 group -ml-2 md:-ml-4">
                 <motion.div
                   className="relative w-8 h-8"
                   whileHover={{ rotate: 360 }}
@@ -185,32 +171,6 @@ export function Navbar() {
                 </Button>
               </motion.div>
 
-              {/* Profile */}
-              <div
-                className={`hidden md:block pl-2 ml-1 ${
-                  theme === 'dark' ? 'border-l border-white/10' : 'border-l border-black/5'
-                }`}
-              >
-                <motion.button
-                  type="button"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className={`flex items-center justify-center p-0.5 rounded-full transition-all duration-300 ring-2 ring-transparent hover:ring-purple-500/30 ${
-                    theme === 'dark' ? 'bg-zinc-800/50' : 'bg-purple-100/50'
-                  }`}
-                >
-                  <div
-                    className={`h-9 w-9 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
-                      theme === 'dark'
-                        ? 'bg-zinc-800 text-zinc-200'
-                        : 'bg-white text-purple-700 shadow-sm'
-                    }`}
-                  >
-                    {getInitials(mockUser.name)}
-                  </div>
-                </motion.button>
-              </div>
-
               {/* Mobile menu button */}
               <motion.button
                 type="button"
@@ -294,41 +254,6 @@ export function Navbar() {
                     </motion.div>
                   );
                 })}
-
-                <div
-                  className={`h-px w-full my-4 ${theme === 'dark' ? 'bg-white/5' : 'bg-black/5'}`}
-                />
-
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.2, duration: 0.3 }}
-                  className="flex items-center gap-4 px-4 py-3"
-                >
-                  <div
-                    className={`h-12 w-12 rounded-full flex items-center justify-center text-sm font-bold ${
-                      theme === 'dark'
-                        ? 'bg-zinc-800 text-zinc-300'
-                        : 'bg-purple-100 text-purple-700'
-                    }`}
-                  >
-                    {getInitials(mockUser.name)}
-                  </div>
-                  <div className="flex flex-col">
-                    <span
-                      className={`text-sm font-semibold ${
-                        theme === 'dark' ? 'text-white' : 'text-zinc-900'
-                      }`}
-                    >
-                      {mockUser.name}
-                    </span>
-                    <span
-                      className={`text-xs ${theme === 'dark' ? 'text-zinc-500' : 'text-zinc-500'}`}
-                    >
-                      {mockUser.email}
-                    </span>
-                  </div>
-                </motion.div>
               </div>
             </motion.div>
           )}

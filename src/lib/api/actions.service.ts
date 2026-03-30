@@ -4,6 +4,7 @@
  * Uses apiClient for automatic JWT token handling
  */
 
+import axios from 'axios';
 import { apiClient } from './client';
 
 /**
@@ -409,16 +410,27 @@ export const actionsService = {
    *
    * @param owner - Repository owner
    * @param repo - Repository name
+   * @param signal - Optional AbortSignal for request cancellation
    * @returns Workflows response data
    * @throws Error if fetch fails
    */
-  async fetchWorkflows(owner: string, repo: string): Promise<WorkflowsApiResponse> {
+  async fetchWorkflows(
+    owner: string,
+    repo: string,
+    signal?: AbortSignal
+  ): Promise<WorkflowsApiResponse> {
     try {
-      const response = await apiClient.get<WorkflowsApiResponse>(`/workflows/${owner}/${repo}`);
+      const response = await apiClient.get<WorkflowsApiResponse>(`/workflows/${owner}/${repo}`, {
+        signal,
+      });
 
       return response.data;
     } catch (error) {
-      console.error('[ActionsService] Error fetching workflows:', error);
+      if (axios.isCancel(error)) {
+        console.log('[ActionsService] Fetch workflows cancelled');
+      } else {
+        console.error('[ActionsService] Error fetching workflows:', error);
+      }
       throw error;
     }
   },
@@ -435,21 +447,25 @@ export const actionsService = {
   async fetchWorkflowRuns(
     owner: string,
     repo: string,
-    perPage: number = 30
+    perPage: number = 30,
+    signal?: AbortSignal
   ): Promise<WorkflowRunsApiResponse> {
     try {
       const response = await apiClient.get<WorkflowRunsApiResponse>(
         `/repositories/${owner}/${repo}/actions/runs`,
         {
-          params: {
-            per_page: perPage,
-          },
+          params: { per_page: perPage },
+          signal,
         }
       );
 
       return response.data;
     } catch (error) {
-      console.error('[ActionsService] Error fetching workflow runs:', error);
+      if (axios.isCancel(error)) {
+        console.log('[ActionsService] Fetch workflow runs cancelled');
+      } else {
+        console.error('[ActionsService] Error fetching workflow runs:', error);
+      }
       throw error;
     }
   },

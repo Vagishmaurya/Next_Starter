@@ -4,6 +4,7 @@
  * Uses apiClient for automatic JWT token handling
  */
 
+import axios from 'axios';
 import { apiClient } from './client';
 
 export type Tag = {
@@ -44,13 +45,17 @@ export const tagsService = {
    * @returns Tags response data
    * @throws Error if fetch fails
    */
-  async fetchTags(owner: string, repo: string): Promise<TagsApiResponse> {
+  async fetchTags(owner: string, repo: string, signal?: AbortSignal): Promise<TagsApiResponse> {
     try {
-      const response = await apiClient.get<TagsApiResponse>(`/repositories/${owner}/${repo}/tags`);
+      const response = await apiClient.get<TagsApiResponse>(`/repositories/${owner}/${repo}/tags`, {
+        signal,
+      });
 
       return response.data;
     } catch (error) {
-      console.error('[TagsService] Error fetching tags:', error);
+      if (!axios.isCancel(error)) {
+        console.error('[TagsService] Error fetching tags:', error);
+      }
       throw error;
     }
   },

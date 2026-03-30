@@ -29,7 +29,7 @@ export default function DocsPage() {
             GitHub workflows, view run details, and handle organization-level packages efficiently.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-            <Link href="/" className="block">
+            <Link href="/projects" className="block">
               <Card
                 className={`p-4 hover:border-purple-500 transition-colors cursor-pointer ${theme === 'dark' ? 'bg-zinc-900/50 border-zinc-800' : 'bg-white border-gray-200'}`}
               >
@@ -40,20 +40,6 @@ export default function DocsPage() {
                 </h3>
                 <p className={`text-sm ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'}`}>
                   Browse your organization's repositories and their workflow status.
-                </p>
-              </Card>
-            </Link>
-            <Link href="/dashboard" className="block">
-              <Card
-                className={`p-4 hover:border-purple-500 transition-colors cursor-pointer ${theme === 'dark' ? 'bg-zinc-900/50 border-zinc-800' : 'bg-white border-gray-200'}`}
-              >
-                <h3
-                  className={`font-semibold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}
-                >
-                  View Dashboard
-                </h3>
-                <p className={`text-sm ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'}`}>
-                  Get a high-level overview of your workflow automation health.
                 </p>
               </Card>
             </Link>

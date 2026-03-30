@@ -302,7 +302,7 @@ export default function CreateWorkflowModal({
                     </p>
                   </div>
                 </div>
-                <motion.button
+                <motion.div
                   whileHover={{ rotate: 90 }}
                   whileTap={{ scale: 0.9 }}
                   transition={{ type: 'spring', stiffness: 400, damping: 15 }}
@@ -315,7 +315,7 @@ export default function CreateWorkflowModal({
                   >
                     <X className="h-5 w-5" />
                   </Button>
-                </motion.button>
+                </motion.div>
               </div>
 
               {/* Content */}

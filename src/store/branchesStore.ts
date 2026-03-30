@@ -1,4 +1,4 @@
-import type { WorkflowRun } from '@/lib/api/actions.service';
+import type { Workflow, WorkflowRun } from '@/lib/api/actions.service';
 import type { Branch, Commit } from '@/lib/api/branches.service';
 import type { Tag } from '@/lib/api/tags.service';
 import { create } from 'zustand';
@@ -11,6 +11,7 @@ type BranchesStore = {
   tags: Tag[];
   prs: import('@/lib/api/branches.service').PullRequest[];
   workflowRuns: WorkflowRun[];
+  workflows: Workflow[];
   selectedBranch: string | null;
   isLoading: boolean;
   error: string | null;
@@ -23,6 +24,7 @@ type BranchesStore = {
   setTags: (tags: Tag[]) => void;
   setPrs: (prs: import('@/lib/api/branches.service').PullRequest[]) => void;
   setWorkflowRuns: (runs: WorkflowRun[]) => void;
+  setWorkflows: (workflows: Workflow[]) => void;
   setSelectedBranch: (branch: string | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
@@ -37,22 +39,37 @@ export const useBranchesStore = create<BranchesStore>((set) => ({
   tags: [],
   prs: [],
   workflowRuns: [],
+  workflows: [],
   selectedBranch: null,
   isLoading: false,
   error: null,
   owner: '',
   repository: '',
-  currentView: 'commits', // Default to commits view
+  currentView: 'workflows', // Default to workflows view
 
   setBranches: (branches) => set({ branches }),
   setCommits: (commits) => set({ commits }),
   setTags: (tags) => set({ tags }),
   setPrs: (prs) => set({ prs }),
   setWorkflowRuns: (runs) => set({ workflowRuns: runs }),
+  setWorkflows: (workflows) => set({ workflows }),
   setSelectedBranch: (branch) => set({ selectedBranch: branch }),
   setLoading: (loading) => set({ isLoading: loading }),
   setError: (error) => set({ error }),
-  setRepository: (owner, repo) => set({ owner, repository: repo }),
+  setRepository: (owner, repo) =>
+    set({
+      owner,
+      repository: repo,
+      // Clear data when repo changes to prevent leakage
+      branches: [],
+      commits: [],
+      tags: [],
+      prs: [],
+      workflowRuns: [],
+      workflows: [],
+      selectedBranch: null,
+      error: null,
+    }),
   setCurrentView: (view) => set({ currentView: view }),
   reset: () =>
     set({
@@ -61,11 +78,12 @@ export const useBranchesStore = create<BranchesStore>((set) => ({
       tags: [],
       prs: [],
       workflowRuns: [],
+      workflows: [],
       selectedBranch: null,
       isLoading: false,
       error: null,
       owner: '',
       repository: '',
-      currentView: 'commits',
+      currentView: 'workflows',
     }),
 }));

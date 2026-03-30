@@ -1,6 +1,7 @@
 'use client';
 
 import type { WorkflowRun } from '@/lib/api/actions.service';
+import axios from 'axios';
 import {
   Activity,
   CheckCircle2,
@@ -52,28 +53,37 @@ export const ActionsTable = ({
   const hasNextPage = page < totalPages;
   const hasPrevPage = page > 1;
 
-  const fetchWorkflowRuns = useCallback(async (owner: string, repo: string, showLoading = true) => {
-    try {
-      if (showLoading) {
-        setIsLoading(true);
+  const fetchWorkflowRuns = useCallback(
+    async (owner: string, repo: string, showLoading = true, signal?: AbortSignal) => {
+      try {
+        if (showLoading) {
+          setIsLoading(true);
+        }
+        setError(null);
+        const response = await actionsService.fetchWorkflowRuns(owner, repo, 100, signal); // Fetch more data for client-side pagination
+        const runs = response.data.runs || [];
+        setWorkflowRuns(runs);
+        setPage(1); // Reset to first page when data changes
+      } catch (err) {
+        if (axios.isCancel(err)) {
+          console.log('[ActionsTable] Fetch workflow runs cancelled');
+          return;
+        }
+        setError(err instanceof Error ? err.message : 'Failed to fetch workflow runs');
+      } finally {
+        if (showLoading) {
+          setIsLoading(false);
+        }
       }
-      setError(null);
-      const response = await actionsService.fetchWorkflowRuns(owner, repo, 100); // Fetch more data for client-side pagination
-      const runs = response.data.runs || [];
-      setWorkflowRuns(runs);
-      setPage(1); // Reset to first page when data changes
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch workflow runs');
-    } finally {
-      if (showLoading) {
-        setIsLoading(false);
-      }
-    }
-  }, []);
+    },
+    []
+  );
 
   useEffect(() => {
     if (owner && repository) {
-      fetchWorkflowRuns(owner, repository);
+      const controller = new AbortController();
+      fetchWorkflowRuns(owner, repository, true, controller.signal);
+      return () => controller.abort();
     }
   }, [owner, repository, fetchWorkflowRuns]);
 
@@ -154,12 +164,6 @@ export const ActionsTable = ({
 
   const handleViewDetail = (runId: number) => {
     router.push(`/workflow-run-detail?owner=${owner}&repo=${repository}&runId=${runId}`);
-  };
-
-  const handleRefresh = () => {
-    if (owner && repository) {
-      fetchWorkflowRuns(owner, repository);
-    }
   };
 
   return (

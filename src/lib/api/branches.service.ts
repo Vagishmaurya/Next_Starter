@@ -4,6 +4,7 @@
  * Uses apiClient for automatic JWT token handling
  */
 
+import axios from 'axios';
 import { apiClient } from './client';
 
 export type Commit = {
@@ -120,15 +121,22 @@ export const branchesService = {
    * @returns Branches response data
    * @throws Error if fetch fails
    */
-  async fetchBranches(owner: string, repo: string): Promise<BranchesApiResponse> {
+  async fetchBranches(
+    owner: string,
+    repo: string,
+    signal?: AbortSignal
+  ): Promise<BranchesApiResponse> {
     try {
       const response = await apiClient.get<BranchesApiResponse>(
-        `/auth/repositories/${owner}/${repo}/branches`
+        `/auth/repositories/${owner}/${repo}/branches`,
+        { signal }
       );
 
       return response.data;
     } catch (error) {
-      console.error('[BranchesService] Error fetching branches:', error);
+      if (!axios.isCancel(error)) {
+        console.error('[BranchesService] Error fetching branches:', error);
+      }
       throw error;
     }
   },
@@ -149,7 +157,8 @@ export const branchesService = {
     repo: string,
     branch: string,
     page: number = 1,
-    perPage: number = 30
+    perPage: number = 30,
+    signal?: AbortSignal
   ): Promise<CommitsApiResponse> {
     try {
       const response = await apiClient.get<CommitsApiResponse>(
@@ -160,12 +169,15 @@ export const branchesService = {
             page,
             per_page: perPage,
           },
+          signal,
         }
       );
 
       return response.data;
     } catch (error) {
-      console.error('[BranchesService] Error fetching commits:', error);
+      if (!axios.isCancel(error)) {
+        console.error('[BranchesService] Error fetching commits:', error);
+      }
       throw error;
     }
   },
@@ -177,6 +189,9 @@ export const branchesService = {
    * @param repo - Repository name
    * @param commitSha - Commit SHA to tag
    * @param tagData - Tag creation data
+   * @param tagData.tag_name - The name of the tag
+   * @param tagData.tag_message - The message for the tag
+   * @param tagData.tag_type - The type of the tag
    * @returns Tag creation response
    * @throws Error if tag creation fails
    */
@@ -214,13 +229,17 @@ export const branchesService = {
    * @returns PRs response data
    * @throws Error if fetch fails
    */
-  async fetchPRs(owner: string, repo: string): Promise<PRsApiResponse> {
+  async fetchPRs(owner: string, repo: string, signal?: AbortSignal): Promise<PRsApiResponse> {
     try {
-      const response = await apiClient.get<PRsApiResponse>(`/workflows/${owner}/${repo}/prs`);
+      const response = await apiClient.get<PRsApiResponse>(`/workflows/${owner}/${repo}/prs`, {
+        signal,
+      });
 
       return response.data;
     } catch (error) {
-      console.error('[BranchesService] Error fetching PRs:', error);
+      if (!axios.isCancel(error)) {
+        console.error('[BranchesService] Error fetching PRs:', error);
+      }
       throw error;
     }
   },

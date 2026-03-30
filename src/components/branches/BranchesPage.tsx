@@ -2,6 +2,7 @@
 
 import type { ActionsTableRef } from '@/components/branches/ActionsTable';
 import type { WorkflowsTableRef } from '@/components/branches/WorkflowsTable';
+import axios from 'axios';
 import {
   Activity,
   ArrowLeft,
@@ -90,6 +91,11 @@ export default function BranchesPage() {
   const tagsPerPage = 10;
   const [isTagModalOpen, setIsTagModalOpen] = useState(false);
   const [selectedCommitSha, setSelectedCommitSha] = useState<string>('');
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const workflowsTableRef = React.useRef<WorkflowsTableRef>(null);
   const actionsTableRef = React.useRef<ActionsTableRef>(null);
@@ -103,11 +109,11 @@ export default function BranchesPage() {
   const tagsHasPrevPage = tagsPage > 1;
 
   const fetchBranches = useCallback(
-    async (owner: string, repo: string) => {
+    async (owner: string, repo: string, signal?: AbortSignal) => {
       try {
         setLoading(true);
         setError(null);
-        const response = await branchesService.fetchBranches(owner, repo);
+        const response = await branchesService.fetchBranches(owner, repo, signal);
         const branches = response.data.branches || [];
         setBranches(branches);
         // Auto-select 'main' branch if it exists
@@ -118,7 +124,9 @@ export default function BranchesPage() {
           setSelectedBranch(null);
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch branches');
+        if (!axios.isCancel(err)) {
+          setError(err instanceof Error ? err.message : 'Failed to fetch branches');
+        }
       } finally {
         setLoading(false);
       }
@@ -127,14 +135,23 @@ export default function BranchesPage() {
   );
 
   const fetchCommits = useCallback(
-    async (owner: string, repo: string, branch: string, page: number) => {
+    async (owner: string, repo: string, branch: string, page: number, signal?: AbortSignal) => {
       try {
         setLoading(true);
         setError(null);
-        const response = await branchesService.fetchCommits(owner, repo, branch, page, perPage);
+        const response = await branchesService.fetchCommits(
+          owner,
+          repo,
+          branch,
+          page,
+          perPage,
+          signal
+        );
         setCommits(response.data.commits);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch commits');
+        if (!axios.isCancel(err)) {
+          setError(err instanceof Error ? err.message : 'Failed to fetch commits');
+        }
       } finally {
         setLoading(false);
       }
@@ -143,15 +160,17 @@ export default function BranchesPage() {
   );
 
   const fetchTags = useCallback(
-    async (owner: string, repo: string) => {
+    async (owner: string, repo: string, signal?: AbortSignal) => {
       try {
         setLoading(true);
         setError(null);
-        const response = await tagsService.fetchTags(owner, repo);
+        const response = await tagsService.fetchTags(owner, repo, signal);
         setTags(response.data.tags || []);
         setTagsPage(1); // Reset to first page when data changes
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch tags');
+        if (!axios.isCancel(err)) {
+          setError(err instanceof Error ? err.message : 'Failed to fetch tags');
+        }
       } finally {
         setLoading(false);
       }
@@ -160,14 +179,16 @@ export default function BranchesPage() {
   );
 
   const fetchPRs = useCallback(
-    async (owner: string, repo: string) => {
+    async (owner: string, repo: string, signal?: AbortSignal) => {
       try {
         setLoading(true);
         setError(null);
-        const response = await branchesService.fetchPRs(owner, repo);
+        const response = await branchesService.fetchPRs(owner, repo, signal);
         setPrs(response.data.prs || []);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch PRs');
+        if (!axios.isCancel(err)) {
+          setError(err instanceof Error ? err.message : 'Failed to fetch PRs');
+        }
       } finally {
         setLoading(false);
       }
@@ -180,34 +201,32 @@ export default function BranchesPage() {
     const repoParam = searchParams.get('repo');
 
     if (ownerParam && repoParam) {
+      const controller = new AbortController();
+
       // Check if we're navigating to a different repository
       if (owner !== ownerParam || repository !== repoParam) {
-        // Reset state when navigating to a new repository
-        setSelectedBranch(null);
-        setCommits([]);
-        setTags([]);
-        setBranches([]);
-        setPrs([]);
-        setCurrentView('commits');
+        setRepository(ownerParam, repoParam);
+        setCurrentView('workflows');
       }
-      setRepository(ownerParam, repoParam);
-      fetchBranches(ownerParam, repoParam);
-      // Fetch tags by default when page loads
-      fetchTags(ownerParam, repoParam);
+
+      const load = async () => {
+        try {
+          await Promise.all([
+            fetchBranches(ownerParam, repoParam, controller.signal),
+            fetchTags(ownerParam, repoParam, controller.signal),
+          ]);
+        } catch {
+          // Error is handled by setBranches([]) and UI state
+        }
+      };
+
+      load();
+
+      return () => {
+        controller.abort();
+      };
     }
-  }, [
-    searchParams,
-    owner,
-    repository,
-    setSelectedBranch,
-    setCommits,
-    setTags,
-    setBranches,
-    setRepository,
-    setCurrentView,
-    fetchBranches,
-    fetchTags,
-  ]);
+  }, [searchParams, owner, repository, setRepository, setCurrentView, fetchBranches, fetchTags]);
 
   useEffect(() => {
     // Only fetch commits if a branch is explicitly selected (not empty or null)
@@ -224,7 +243,9 @@ export default function BranchesPage() {
       repository === repoParam &&
       currentView === 'commits'
     ) {
-      fetchCommits(owner, repository, selectedBranch, page);
+      const controller = new AbortController();
+      fetchCommits(owner, repository, selectedBranch, page, controller.signal);
+      return () => controller.abort();
     }
   }, [selectedBranch, page, owner, repository, searchParams, currentView, fetchCommits]);
 
@@ -261,6 +282,7 @@ export default function BranchesPage() {
   return (
     <PageTransition>
       <div
+        key={`${owner}-${repository}`}
         className={`min-h-screen relative overflow-hidden transition-colors duration-500 ${
           theme === 'dark' ? 'bg-zinc-950 text-white' : 'bg-gray-50 text-zinc-900'
         }`}
@@ -386,7 +408,7 @@ export default function BranchesPage() {
 
               <div className="flex items-center gap-3">
                 {/* Branch Selector (Conditional) */}
-                {currentView === 'commits' && branches.length > 0 && (
+                {mounted && currentView === 'commits' && branches.length > 0 && (
                   <div className="w-[200px] min-w-0 flex-shrink-0">
                     <Select value={selectedBranch || ''} onValueChange={handleBranchChange}>
                       <SelectTrigger
@@ -806,16 +828,26 @@ export default function BranchesPage() {
 
             {/* Actions View */}
             {currentView === 'actions' && (
-              <ActionsTable ref={actionsTableRef} owner={owner} repository={repository} />
+              <ActionsTable
+                key={`actions-${owner}-${repository}`}
+                ref={actionsTableRef}
+                owner={owner}
+                repository={repository}
+              />
             )}
 
             {/* Workflows View */}
             {currentView === 'workflows' && (
-              <WorkflowsTable ref={workflowsTableRef} owner={owner} repository={repository} />
+              <WorkflowsTable
+                key={`workflows-${owner}-${repository}`}
+                ref={workflowsTableRef}
+                owner={owner}
+                repository={repository}
+              />
             )}
 
-            {/* No Branches State */}
-            {!isLoading && branches.length === 0 && (
+            {/* No Branches State - Only show in commits view */}
+            {!isLoading && currentView === 'commits' && branches.length === 0 && (
               <div className="text-center py-12">
                 <GitBranch
                   className={`h-12 w-12 mx-auto mb-4 ${theme === 'dark' ? 'text-zinc-600' : 'text-gray-400'}`}
