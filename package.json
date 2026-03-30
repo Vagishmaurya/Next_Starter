@@ -69,6 +69,7 @@
     "eslint-plugin-solid": "latest",
     "eslint-plugin-svelte": "latest",
     "eslint-plugin-vuejs-accessibility": "latest",
+    "framer-motion": "^12.38.0",
     "happy-dom": "latest",
     "immer": "latest",
     "jiti": "latest",

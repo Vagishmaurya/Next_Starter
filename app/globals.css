@@ -262,3 +262,125 @@ h3 {
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(0, 0, 0, 0.06);
 }
+
+/* ===== PREMIUM GRADIENT UTILITIES ===== */
+
+/* Animated gradient text shimmer */
+@keyframes gradientTextShimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.gradient-text-shimmer {
+  background-size: 200% 200%;
+  animation: gradientTextShimmer 4s ease infinite;
+}
+
+/* Gradient glow effect */
+@keyframes gradientGlow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 20px rgba(99, 102, 241, 0.15),
+      0 0 40px rgba(139, 92, 246, 0.08);
+  }
+
+  50% {
+    box-shadow:
+      0 0 30px rgba(99, 102, 241, 0.25),
+      0 0 60px rgba(139, 92, 246, 0.15);
+  }
+}
+
+.gradient-glow {
+  animation: gradientGlow 3s ease-in-out infinite;
+}
+
+/* Skeleton shimmer sweep */
+@keyframes shimmerSweep {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.04) 40%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.04) 60%,
+    transparent 100%
+  );
+  animation: shimmerSweep 2s ease-in-out infinite;
+}
+
+/* ===== CUSTOM SCROLLBAR ===== */
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(139, 92, 246, 0.3), rgba(99, 102, 241, 0.3));
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(139, 92, 246, 0.5), rgba(99, 102, 241, 0.5));
+}
+
+/* ===== SELECTION HIGHLIGHT ===== */
+
+::selection {
+  background: rgba(139, 92, 246, 0.3);
+  color: inherit;
+}
+
+::-moz-selection {
+  background: rgba(139, 92, 246, 0.3);
+  color: inherit;
+}
+
+/* ===== FOCUS RING ANIMATION ===== */
+
+@keyframes focusRingExpand {
+  from {
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4);
+  }
+
+  to {
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+  }
+}
+
+.focus-ring-animated:focus-visible {
+  outline: none;
+  animation: focusRingExpand 0.3s ease forwards;
+}

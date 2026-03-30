@@ -215,180 +215,190 @@ export function CreateTagModal({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent
-        className={theme === 'dark' ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-gray-300'}
-      >
-        <DialogHeader>
-          <DialogTitle
-            className={`flex items-center gap-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[500px] p-0 border-none bg-transparent shadow-none">
+        <div className="relative w-full p-[1px] rounded-2xl bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 shadow-2xl isolate">
+          <div
+            className={`relative h-full w-full rounded-2xl p-6 flex flex-col gap-4 ${theme === 'dark' ? 'bg-zinc-950 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]' : 'bg-white text-gray-900 border border-transparent shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]'}`}
           >
-            <Tag className="h-5 w-5" />
-            Create Tag
-          </DialogTitle>
-        </DialogHeader>
+            <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4 border-b border-white/5">
+              <DialogTitle className="text-xl font-bold flex items-center gap-2">
+                <Tag className="h-5 w-5 text-blue-500" />
+                Create Tag
+              </DialogTitle>
+            </DialogHeader>
 
-        <form onSubmit={handleSubmit}>
-          <div className="space-y-4 py-4">
-            {/* Branch and Commit Info */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label className={theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'}>
-                  Branch
-                </Label>
-                <code
-                  className={`block mt-1 text-xs font-mono px-3 py-2 rounded ${
-                    theme === 'dark' ? 'bg-zinc-800 text-zinc-300' : 'bg-gray-100 text-gray-700'
-                  }`}
-                >
-                  {selectedBranch || 'Unknown'}
-                </code>
+            <form onSubmit={handleSubmit}>
+              <div className="space-y-4 py-4">
+                {/* Branch and Commit Info */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className={theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'}>
+                      Branch
+                    </Label>
+                    <code
+                      className={`block mt-1 text-xs font-mono px-3 py-2 rounded ${
+                        theme === 'dark' ? 'bg-zinc-800 text-zinc-300' : 'bg-gray-100 text-gray-700'
+                      }`}
+                    >
+                      {selectedBranch || 'Unknown'}
+                    </code>
+                  </div>
+                  <div>
+                    <Label className={theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'}>
+                      Commit SHA
+                    </Label>
+                    <code
+                      className={`block mt-1 text-xs font-mono px-3 py-2 rounded ${
+                        theme === 'dark' ? 'bg-zinc-800 text-zinc-300' : 'bg-gray-100 text-gray-700'
+                      }`}
+                    >
+                      {commitSha.substring(0, 7)}
+                    </code>
+                  </div>
+                </div>
+
+                {/* Tag Name */}
+                <div>
+                  <Label
+                    htmlFor="tagName"
+                    className={theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'}
+                  >
+                    Tag Name <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="tagName"
+                    value={tagName}
+                    onChange={(e) => setTagName(e.target.value)}
+                    placeholder={
+                      selectedBranch === 'main' || selectedBranch === 'master'
+                        ? 'v1.2.3'
+                        : 'v1.2.3-rc1'
+                    }
+                    disabled={isSubmitting}
+                    className={
+                      theme === 'dark'
+                        ? 'bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500'
+                        : 'bg-white border-gray-300 text-gray-900'
+                    }
+                  />
+                  <p
+                    className={`text-xs mt-1 ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}
+                  >
+                    {selectedBranch === 'main' || selectedBranch === 'master'
+                      ? 'Format: v1.2.3 (main branch releases)'
+                      : 'Format: v1.2.3-rc1 (feature branch releases)'}
+                  </p>
+                </div>
+
+                {/* Tag Type */}
+                <div>
+                  <Label
+                    htmlFor="tagType"
+                    className={theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'}
+                  >
+                    Tag Type <span className="text-red-500">*</span>
+                  </Label>
+                  <Select
+                    value={tagType}
+                    onValueChange={(value) => setTagType(value as 'annotated' | 'lightweight')}
+                    disabled={isSubmitting}
+                  >
+                    <SelectTrigger
+                      id="tagType"
+                      className={
+                        theme === 'dark'
+                          ? 'bg-zinc-800 border-zinc-700 text-white'
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent
+                      className={
+                        theme === 'dark'
+                          ? 'bg-zinc-900 border-zinc-800'
+                          : 'bg-white border-gray-300'
+                      }
+                    >
+                      <SelectItem value="annotated">Annotated</SelectItem>
+                      <SelectItem value="lightweight">Lightweight</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p
+                    className={`text-xs mt-1 ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}
+                  >
+                    {tagType === 'annotated'
+                      ? 'Annotated tags include a message and author information'
+                      : 'Lightweight tags are simple pointers to a commit'}
+                  </p>
+                </div>
+
+                {/* Tag Message */}
+                <div>
+                  <Label
+                    htmlFor="tagMessage"
+                    className={theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'}
+                  >
+                    Tag Message
+                    {tagType === 'annotated' && <span className="text-red-500"> *</span>}
+                  </Label>
+                  <Textarea
+                    id="tagMessage"
+                    value={tagMessage}
+                    onChange={(e) => setTagMessage(e.target.value)}
+                    placeholder="Release version 1.0.0"
+                    disabled={isSubmitting}
+                    rows={4}
+                    className={
+                      theme === 'dark'
+                        ? 'bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500'
+                        : 'bg-white border-gray-300 text-gray-900'
+                    }
+                  />
+                </div>
+
+                {/* Error Message */}
+                {error && (
+                  <div
+                    className={`p-3 rounded text-sm ${
+                      theme === 'dark' ? 'bg-red-500/10 text-red-400' : 'bg-red-50 text-red-600'
+                    }`}
+                  >
+                    {error}
+                  </div>
+                )}
               </div>
-              <div>
-                <Label className={theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'}>
-                  Commit SHA
-                </Label>
-                <code
-                  className={`block mt-1 text-xs font-mono px-3 py-2 rounded ${
-                    theme === 'dark' ? 'bg-zinc-800 text-zinc-300' : 'bg-gray-100 text-gray-700'
-                  }`}
-                >
-                  {commitSha.substring(0, 7)}
-                </code>
-              </div>
-            </div>
 
-            {/* Tag Name */}
-            <div>
-              <Label
-                htmlFor="tagName"
-                className={theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'}
-              >
-                Tag Name <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="tagName"
-                value={tagName}
-                onChange={(e) => setTagName(e.target.value)}
-                placeholder={
-                  selectedBranch === 'main' || selectedBranch === 'master' ? 'v1.2.3' : 'v1.2.3-rc1'
-                }
-                disabled={isSubmitting}
-                className={
-                  theme === 'dark'
-                    ? 'bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500'
-                    : 'bg-white border-gray-300 text-gray-900'
-                }
-              />
-              <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}>
-                {selectedBranch === 'main' || selectedBranch === 'master'
-                  ? 'Format: v1.2.3 (main branch releases)'
-                  : 'Format: v1.2.3-rc1 (feature branch releases)'}
-              </p>
-            </div>
-
-            {/* Tag Type */}
-            <div>
-              <Label
-                htmlFor="tagType"
-                className={theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'}
-              >
-                Tag Type <span className="text-red-500">*</span>
-              </Label>
-              <Select
-                value={tagType}
-                onValueChange={(value) => setTagType(value as 'annotated' | 'lightweight')}
-                disabled={isSubmitting}
-              >
-                <SelectTrigger
-                  id="tagType"
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleClose}
+                  disabled={isSubmitting}
                   className={
                     theme === 'dark'
-                      ? 'bg-zinc-800 border-zinc-700 text-white'
-                      : 'bg-white border-gray-300 text-gray-900'
+                      ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800'
+                      : 'border-gray-300 text-gray-700 hover:bg-gray-100'
                   }
                 >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
                   className={
-                    theme === 'dark' ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-gray-300'
+                    theme === 'dark'
+                      ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                      : 'bg-blue-600 hover:bg-blue-700 text-white'
                   }
                 >
-                  <SelectItem value="annotated">Annotated</SelectItem>
-                  <SelectItem value="lightweight">Lightweight</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}`}>
-                {tagType === 'annotated'
-                  ? 'Annotated tags include a message and author information'
-                  : 'Lightweight tags are simple pointers to a commit'}
-              </p>
-            </div>
-
-            {/* Tag Message */}
-            <div>
-              <Label
-                htmlFor="tagMessage"
-                className={theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'}
-              >
-                Tag Message
-                {tagType === 'annotated' && <span className="text-red-500"> *</span>}
-              </Label>
-              <Textarea
-                id="tagMessage"
-                value={tagMessage}
-                onChange={(e) => setTagMessage(e.target.value)}
-                placeholder="Release version 1.0.0"
-                disabled={isSubmitting}
-                rows={4}
-                className={
-                  theme === 'dark'
-                    ? 'bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500'
-                    : 'bg-white border-gray-300 text-gray-900'
-                }
-              />
-            </div>
-
-            {/* Error Message */}
-            {error && (
-              <div
-                className={`p-3 rounded text-sm ${
-                  theme === 'dark' ? 'bg-red-500/10 text-red-400' : 'bg-red-50 text-red-600'
-                }`}
-              >
-                {error}
-              </div>
-            )}
+                  {isSubmitting ? 'Creating...' : 'Create Tag'}
+                </Button>
+              </DialogFooter>
+            </form>
           </div>
-
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              disabled={isSubmitting}
-              className={
-                theme === 'dark'
-                  ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800'
-                  : 'border-gray-300 text-gray-700 hover:bg-gray-100'
-              }
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className={
-                theme === 'dark'
-                  ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                  : 'bg-blue-600 hover:bg-blue-700 text-white'
-              }
-            >
-              {isSubmitting ? 'Creating...' : 'Create Tag'}
-            </Button>
-          </DialogFooter>
-        </form>
+        </div>
       </DialogContent>
     </Dialog>
   );

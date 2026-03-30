@@ -135,220 +135,218 @@ export function OrganizationPackagesModal({ organization }: OrganizationPackages
 
   return (
     <Dialog open={showOrgPackagesModal} onOpenChange={setShowOrgPackagesModal}>
-      <DialogContent
-        className={`max-w-4xl max-h-[80vh] overflow-hidden ${
-          theme === 'dark' ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-gray-300'
-        }`}
-      >
-        <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-          <DialogTitle
-            className={`text-xl font-bold flex items-center gap-2 ${
-              theme === 'dark' ? 'text-white' : 'text-gray-900'
-            }`}
+      <DialogContent className="max-w-4xl max-h-[80vh] p-0 border-none bg-transparent shadow-none">
+        <div className="relative w-full h-full p-[1px] md:rounded-2xl bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 shadow-2xl isolate flex flex-col overflow-hidden">
+          <div
+            className={`relative h-full w-full md:rounded-2xl p-6 flex flex-col gap-4 overflow-hidden ${theme === 'dark' ? 'bg-zinc-950 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]' : 'bg-white text-gray-900 border border-transparent shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]'}`}
           >
-            <Building2 className="h-5 w-5" />
-            {currentOrg}'s Packages
-            {orgPackages.length > 0 && (
-              <span
-                className={`text-sm font-normal ${
-                  theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'
-                }`}
-              >
-                ({orgPackages.length} {currentPackageType} packages)
-              </span>
-            )}
-          </DialogTitle>
-        </DialogHeader>
+            <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4 border-b border-white/5">
+              <DialogTitle className="text-xl font-bold flex items-center gap-2">
+                <Building2 className="h-5 w-5 text-blue-500" />
+                {currentOrg}'s Packages
+                {orgPackages.length > 0 && (
+                  <span
+                    className={`text-sm font-normal ${
+                      theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'
+                    }`}
+                  >
+                    ({orgPackages.length} {currentPackageType} packages)
+                  </span>
+                )}
+              </DialogTitle>
+            </DialogHeader>
 
-        {/* Package Type Filter */}
-        <div className="mb-4">
-          <label
-            htmlFor="package-type-select"
-            className={`block text-sm font-medium mb-2 ${
-              theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'
-            }`}
-          >
-            Package Type
-          </label>
-          <Select value={currentPackageType} onValueChange={setCurrentPackageType}>
-            <SelectTrigger id="package-type-select" className="w-48">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {packageTypeOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  <div className="flex items-center gap-2">
-                    <option.icon className="h-4 w-4" />
-                    {option.label}
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="overflow-y-auto max-h-[calc(80vh-180px)] pr-2">
-          {orgPackagesLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="flex items-center gap-2">
-                <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                <span className={theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'}>
-                  Loading {currentPackageType} packages...
-                </span>
-              </div>
-            </div>
-          ) : orgPackagesError ? (
-            <div
-              className={`text-center py-8 px-4 rounded-lg ${
-                theme === 'dark'
-                  ? 'bg-red-500/10 border border-red-500/20 text-red-400'
-                  : 'bg-red-50 border border-red-200 text-red-600'
-              }`}
-            >
-              <p className="mb-4">{orgPackagesError}</p>
-              <Button
-                onClick={fetchOrgPackages}
-                variant="outline"
-                size="sm"
-                className={
-                  theme === 'dark'
-                    ? 'border-red-500/50 text-red-400'
-                    : 'border-red-300 text-red-600'
-                }
-              >
-                Retry
-              </Button>
-            </div>
-          ) : orgPackages.length === 0 ? (
-            <div
-              className={`text-center py-12 px-4 rounded-lg ${
-                theme === 'dark'
-                  ? 'bg-zinc-800/50 border border-zinc-700'
-                  : 'bg-gray-50 border border-gray-200'
-              }`}
-            >
-              <Container
-                className={`h-12 w-12 mx-auto mb-4 ${
-                  theme === 'dark' ? 'text-zinc-600' : 'text-gray-400'
-                }`}
-              />
-              <h3
-                className={`text-lg font-medium mb-2 ${
+            {/* Package Type Filter */}
+            <div className="mb-4">
+              <label
+                htmlFor="package-type-select"
+                className={`block text-sm font-medium mb-2 ${
                   theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'
                 }`}
               >
-                No {currentPackageType} packages found
-              </h3>
-              <p className={theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}>
-                {currentOrg} doesn't have any {currentPackageType} packages yet.
-              </p>
+                Package Type
+              </label>
+              <Select value={currentPackageType} onValueChange={setCurrentPackageType}>
+                <SelectTrigger id="package-type-select" className="w-48">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {packageTypeOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      <div className="flex items-center gap-2">
+                        <option.icon className="h-4 w-4" />
+                        {option.label}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          ) : (
-            <div className="space-y-3">
-              {orgPackages.map((pkg: Package) => (
-                <Card
-                  key={pkg.id}
-                  className={`p-4 transition-all duration-200 hover:shadow-lg ${
+
+            <div className="overflow-y-auto max-h-[calc(80vh-180px)] pr-2">
+              {orgPackagesLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="flex items-center gap-2">
+                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                    <span className={theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'}>
+                      Loading {currentPackageType} packages...
+                    </span>
+                  </div>
+                </div>
+              ) : orgPackagesError ? (
+                <div
+                  className={`text-center py-8 px-4 rounded-lg ${
                     theme === 'dark'
-                      ? 'bg-zinc-800/50 border-zinc-700/50 hover:border-zinc-600'
-                      : 'bg-white border-gray-200 hover:border-gray-300'
+                      ? 'bg-red-500/10 border border-red-500/20 text-red-400'
+                      : 'bg-red-50 border border-red-200 text-red-600'
                   }`}
                 >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h3
-                          className={`text-lg font-semibold truncate ${
-                            theme === 'dark' ? 'text-white' : 'text-gray-900'
-                          }`}
-                        >
-                          {pkg.name}
-                        </h3>
-                        <Badge className={`text-xs ${getPackageTypeColor(pkg.package_type)}`}>
-                          {pkg.package_type}
-                        </Badge>
-                        {pkg.visibility === 'private' && (
-                          <Lock
-                            className={`h-4 w-4 ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-500'}`}
-                          />
-                        )}
-                      </div>
+                  <p className="mb-4">{orgPackagesError}</p>
+                  <Button
+                    onClick={fetchOrgPackages}
+                    variant="outline"
+                    size="sm"
+                    className={
+                      theme === 'dark'
+                        ? 'border-red-500/50 text-red-400'
+                        : 'border-red-300 text-red-600'
+                    }
+                  >
+                    Retry
+                  </Button>
+                </div>
+              ) : orgPackages.length === 0 ? (
+                <div
+                  className={`text-center py-12 px-4 rounded-lg ${
+                    theme === 'dark'
+                      ? 'bg-zinc-800/50 border border-zinc-700'
+                      : 'bg-gray-50 border border-gray-200'
+                  }`}
+                >
+                  <Container
+                    className={`h-12 w-12 mx-auto mb-4 ${
+                      theme === 'dark' ? 'text-zinc-600' : 'text-gray-400'
+                    }`}
+                  />
+                  <h3
+                    className={`text-lg font-medium mb-2 ${
+                      theme === 'dark' ? 'text-zinc-300' : 'text-gray-700'
+                    }`}
+                  >
+                    No {currentPackageType} packages found
+                  </h3>
+                  <p className={theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'}>
+                    {currentOrg} doesn't have any {currentPackageType} packages yet.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {orgPackages.map((pkg: Package) => (
+                    <Card
+                      key={pkg.id}
+                      className={`p-4 transition-all duration-200 hover:shadow-lg ${
+                        theme === 'dark'
+                          ? 'bg-zinc-800/50 border-zinc-700/50 hover:border-zinc-600'
+                          : 'bg-white border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h3
+                              className={`text-lg font-semibold truncate ${
+                                theme === 'dark' ? 'text-white' : 'text-gray-900'
+                              }`}
+                            >
+                              {pkg.name}
+                            </h3>
+                            <Badge className={`text-xs ${getPackageTypeColor(pkg.package_type)}`}>
+                              {pkg.package_type}
+                            </Badge>
+                            {pkg.visibility === 'private' && (
+                              <Lock
+                                className={`h-4 w-4 ${theme === 'dark' ? 'text-zinc-400' : 'text-gray-500'}`}
+                              />
+                            )}
+                          </div>
 
-                      {pkg.description && (
-                        <p
-                          className={`text-sm mb-3 line-clamp-2 ${
-                            theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'
-                          }`}
-                        >
-                          {pkg.description}
-                        </p>
-                      )}
+                          {pkg.description && (
+                            <p
+                              className={`text-sm mb-3 line-clamp-2 ${
+                                theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'
+                              }`}
+                            >
+                              {pkg.description}
+                            </p>
+                          )}
 
-                      <div className="flex items-center gap-4 text-xs">
-                        <div
-                          className={`flex items-center gap-1 ${
-                            theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'
-                          }`}
-                        >
-                          <Download className="h-3 w-3" />
-                          <span>{pkg.version_count} versions</span>
+                          <div className="flex items-center gap-4 text-xs">
+                            <div
+                              className={`flex items-center gap-1 ${
+                                theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'
+                              }`}
+                            >
+                              <Download className="h-3 w-3" />
+                              <span>{pkg.version_count} versions</span>
+                            </div>
+
+                            <div
+                              className={`flex items-center gap-1 ${
+                                theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'
+                              }`}
+                            >
+                              <CalendarDays className="h-3 w-3" />
+                              <span>
+                                Updated{' '}
+                                {formatDistanceToNow(new Date(pkg.updated_at), { addSuffix: true })}
+                              </span>
+                            </div>
+
+                            {pkg.repository && (
+                              <div
+                                className={`flex items-center gap-1 ${
+                                  theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'
+                                }`}
+                              >
+                                <Box className="h-3 w-3" />
+                                <span>{pkg.repository.full_name}</span>
+                              </div>
+                            )}
+
+                            <div
+                              className={`flex items-center gap-1 ${
+                                theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'
+                              }`}
+                            >
+                              <Building2 className="h-3 w-3" />
+                              <span>{pkg.owner.login}</span>
+                            </div>
+                          </div>
                         </div>
 
-                        <div
-                          className={`flex items-center gap-1 ${
-                            theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'
-                          }`}
-                        >
-                          <CalendarDays className="h-3 w-3" />
-                          <span>
-                            Updated{' '}
-                            {formatDistanceToNow(new Date(pkg.updated_at), { addSuffix: true })}
-                          </span>
-                        </div>
-
-                        {pkg.repository && (
-                          <div
-                            className={`flex items-center gap-1 ${
-                              theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'
+                        <div className="flex items-center gap-2">
+                          <Button
+                            asChild
+                            variant="ghost"
+                            size="sm"
+                            className={`${
+                              theme === 'dark'
+                                ? 'text-zinc-400 hover:text-white hover:bg-zinc-700'
+                                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
                             }`}
                           >
-                            <Box className="h-3 w-3" />
-                            <span>{pkg.repository.full_name}</span>
-                          </div>
-                        )}
-
-                        <div
-                          className={`flex items-center gap-1 ${
-                            theme === 'dark' ? 'text-zinc-500' : 'text-gray-500'
-                          }`}
-                        >
-                          <Building2 className="h-3 w-3" />
-                          <span>{pkg.owner.login}</span>
+                            <Link href={pkg.html_url} target="_blank" rel="noopener noreferrer">
+                              <ExternalLink className="h-4 w-4" />
+                            </Link>
+                          </Button>
                         </div>
                       </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <Button
-                        asChild
-                        variant="ghost"
-                        size="sm"
-                        className={`${
-                          theme === 'dark'
-                            ? 'text-zinc-400 hover:text-white hover:bg-zinc-700'
-                            : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
-                        }`}
-                      >
-                        <Link href={pkg.html_url} target="_blank" rel="noopener noreferrer">
-                          <ExternalLink className="h-4 w-4" />
-                        </Link>
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-              ))}
+                    </Card>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
       </DialogContent>
     </Dialog>

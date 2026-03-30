@@ -1,7 +1,7 @@
 'use client';
 
 import type { WorkflowFile } from '@/lib/api/actions.service';
-import { Loader2, Save, X } from 'lucide-react';
+import { Loader2, Save, Settings, X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -159,114 +159,115 @@ export function EditWorkflowModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent
-        className={`max-w-7xl max-h-[95vh] overflow-hidden flex flex-col ${
-          theme === 'dark' ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-gray-300'
-        }`}
-      >
-        <DialogHeader className="flex-shrink-0">
-          <DialogTitle
-            className={`text-xl font-bold flex items-center gap-2 ${
-              theme === 'dark' ? 'text-white' : 'text-gray-900'
-            }`}
+      <DialogContent className="max-w-4xl max-h-[90vh] p-0 border-none bg-transparent shadow-none">
+        <div className="relative w-full h-full p-[1px] md:rounded-2xl bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 shadow-2xl isolate flex flex-col overflow-hidden">
+          <div
+            className={`relative h-full w-full md:rounded-2xl p-6 flex flex-col gap-4 overflow-hidden ${theme === 'dark' ? 'bg-zinc-950 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]' : 'bg-white text-gray-900 border border-transparent shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]'}`}
           >
-            Edit Workflow: {workflowName}
-          </DialogTitle>
-        </DialogHeader>
+            <DialogHeader className="flex-shrink-0 border-b pb-4 border-white/5">
+              <DialogTitle className="text-xl font-bold flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  <Settings className="h-5 w-5 text-blue-500" />
+                  Edit Workflow: {workflowName}
+                </span>
+              </DialogTitle>
+            </DialogHeader>
 
-        {loading ? (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="flex items-center gap-2">
-              <Loader2 className="h-5 w-5 animate-spin" />
-              <span className={theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'}>
-                Loading workflow...
-              </span>
-            </div>
-          </div>
-        ) : error ? (
-          <div className="flex-1 p-6">
+            {loading ? (
+              <div className="flex-1 flex items-center justify-center">
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <span className={theme === 'dark' ? 'text-zinc-400' : 'text-gray-600'}>
+                    Loading workflow...
+                  </span>
+                </div>
+              </div>
+            ) : error ? (
+              <div className="flex-1 p-6">
+                <div
+                  className={`text-center py-8 px-4 rounded-lg ${
+                    theme === 'dark'
+                      ? 'bg-red-500/10 border border-red-500/20 text-red-400'
+                      : 'bg-red-50 border border-red-200 text-red-600'
+                  }`}
+                >
+                  <p className="mb-4">{error}</p>
+                  <Button
+                    onClick={fetchWorkflowFile}
+                    variant="outline"
+                    size="sm"
+                    className={
+                      theme === 'dark'
+                        ? 'border-red-500/50 text-red-400'
+                        : 'border-red-300 text-red-600'
+                    }
+                  >
+                    Retry
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex-1 overflow-y-auto px-1 py-4">
+                {/* Render Step 1 (Basic Info) */}
+                <div className="mb-8">
+                  <h3
+                    className={`text-lg font-semibold mb-4 px-1 border-b pb-2 ${theme === 'dark' ? 'text-zinc-200 border-zinc-700' : 'text-gray-800 border-gray-200'}`}
+                  >
+                    General Settings & Projects
+                  </h3>
+                  <WorkflowForm form={form} currentStep={1} />
+                </div>
+
+                {/* Render Step 2 (Deployment Config) */}
+                <div>
+                  <h3
+                    className={`text-lg font-semibold mb-4 px-1 border-b pb-2 ${theme === 'dark' ? 'text-zinc-200 border-zinc-700' : 'text-gray-800 border-gray-200'}`}
+                  >
+                    Deployment Configuration
+                  </h3>
+                  <WorkflowForm form={form} currentStep={2} />
+                </div>
+              </div>
+            )}
+
+            {/* Footer Actions */}
             <div
-              className={`text-center py-8 px-4 rounded-lg ${
-                theme === 'dark'
-                  ? 'bg-red-500/10 border border-red-500/20 text-red-400'
-                  : 'bg-red-50 border border-red-200 text-red-600'
+              className={`flex-shrink-0 flex items-center justify-end gap-3 pt-4 border-t ${
+                theme === 'dark' ? 'border-zinc-700' : 'border-gray-200'
               }`}
             >
-              <p className="mb-4">{error}</p>
               <Button
-                onClick={fetchWorkflowFile}
+                onClick={handleClose}
                 variant="outline"
-                size="sm"
+                disabled={saving}
                 className={
                   theme === 'dark'
-                    ? 'border-red-500/50 text-red-400'
-                    : 'border-red-300 text-red-600'
+                    ? 'border-zinc-600 text-zinc-300 hover:bg-zinc-700'
+                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
                 }
               >
-                Retry
+                <X className="h-4 w-4 mr-2" />
+                Cancel
+              </Button>
+
+              <Button
+                onClick={handleSave}
+                disabled={loading || saving || !!error}
+                className={`${
+                  theme === 'dark'
+                    ? 'bg-green-600 hover:bg-green-700 text-white'
+                    : 'bg-green-600 hover:bg-green-700 text-white'
+                }`}
+              >
+                {saving ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4 mr-2" />
+                )}
+                {saving ? 'Saving...' : 'Save Changes'}
               </Button>
             </div>
           </div>
-        ) : (
-          <div className="flex-1 overflow-y-auto px-1 py-4">
-            {/* Render Step 1 (Basic Info) */}
-            <div className="mb-8">
-              <h3
-                className={`text-lg font-semibold mb-4 px-1 border-b pb-2 ${theme === 'dark' ? 'text-zinc-200 border-zinc-700' : 'text-gray-800 border-gray-200'}`}
-              >
-                General Settings & Projects
-              </h3>
-              <WorkflowForm form={form} currentStep={1} />
-            </div>
-
-            {/* Render Step 2 (Deployment Config) */}
-            <div>
-              <h3
-                className={`text-lg font-semibold mb-4 px-1 border-b pb-2 ${theme === 'dark' ? 'text-zinc-200 border-zinc-700' : 'text-gray-800 border-gray-200'}`}
-              >
-                Deployment Configuration
-              </h3>
-              <WorkflowForm form={form} currentStep={2} />
-            </div>
-          </div>
-        )}
-
-        {/* Footer Actions */}
-        <div
-          className={`flex-shrink-0 flex items-center justify-end gap-3 pt-4 border-t ${
-            theme === 'dark' ? 'border-zinc-700' : 'border-gray-200'
-          }`}
-        >
-          <Button
-            onClick={handleClose}
-            variant="outline"
-            disabled={saving}
-            className={
-              theme === 'dark'
-                ? 'border-zinc-600 text-zinc-300 hover:bg-zinc-700'
-                : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-            }
-          >
-            <X className="h-4 w-4 mr-2" />
-            Cancel
-          </Button>
-
-          <Button
-            onClick={handleSave}
-            disabled={loading || saving || !!error}
-            className={`${
-              theme === 'dark'
-                ? 'bg-green-600 hover:bg-green-700 text-white'
-                : 'bg-green-600 hover:bg-green-700 text-white'
-            }`}
-          >
-            {saving ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <Save className="h-4 w-4 mr-2" />
-            )}
-            {saving ? 'Saving...' : 'Save Changes'}
-          </Button>
         </div>
       </DialogContent>
     </Dialog>

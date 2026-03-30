@@ -27,7 +27,7 @@ export function TableSkeleton({ rows = 5, columns = 4, className = '' }: TableSk
               {Array.from({ length: columns }).map((_, i) => (
                 <th key={i} className="px-4 py-3">
                   <div
-                    className={`h-4 w-24 rounded animate-pulse ${
+                    className={`h-4 w-24 rounded shimmer ${
                       theme === 'dark' ? 'bg-zinc-800' : 'bg-gray-200'
                     }`}
                   />
@@ -46,7 +46,7 @@ export function TableSkeleton({ rows = 5, columns = 4, className = '' }: TableSk
                 {Array.from({ length: columns }).map((_, colIndex) => (
                   <td key={colIndex} className="px-4 py-3">
                     <div
-                      className={`h-4 rounded animate-pulse ${
+                      className={`h-4 rounded shimmer ${
                         theme === 'dark' ? 'bg-zinc-800' : 'bg-gray-200'
                       }`}
                       style={{ width: `${Math.random() * 40 + 60}%` }}
