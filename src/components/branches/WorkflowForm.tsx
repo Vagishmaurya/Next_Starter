@@ -170,13 +170,13 @@ export function WorkflowForm({ form, currentStep }: WorkflowFormProps) {
 
     if (!section.fields && section.conditionalSections) {
       return (
-        <div key={section.id} className="space-y-8 animate-in fade-in">
+        <div key={section.id} className="space-y-6 animate-in fade-in">
           {section.conditionalSections.map((cond, condIdx) => {
             if (getFieldValue(cond.when.field) === cond.when.equals) {
               return (
                 <div
                   key={`${section.id}-cond-${condIdx}`}
-                  className="space-y-8 animate-in slide-in-from-top-2 duration-300"
+                  className="space-y-6 animate-in slide-in-from-top-2 duration-300"
                 >
                   {cond.sections?.map(renderSection)}
                 </div>
@@ -195,8 +195,8 @@ export function WorkflowForm({ form, currentStep }: WorkflowFormProps) {
     if (section.isList) {
       const list = values[section.id] || [];
       return (
-        <div key={section.id} className="space-y-6 pt-4">
-          <div className="flex items-center justify-between border-b pb-4 border-zinc-700/30">
+        <div key={section.id} className="space-y-4 pt-2">
+          <div className="flex items-center justify-between border-b pb-2 border-zinc-700/30">
             <div>
               <Label
                 className={`text-lg font-bold tracking-tight ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}
@@ -246,7 +246,7 @@ export function WorkflowForm({ form, currentStep }: WorkflowFormProps) {
               return (
                 <Card
                   key={item._id || index}
-                  className={`relative group p-8 rounded-2xl border transition-all duration-300 ${
+                  className={`relative group p-6 rounded-2xl border transition-all duration-300 ${
                     theme === 'dark'
                       ? 'bg-zinc-800/30 border-zinc-700/50 hover:border-zinc-600 hover:bg-zinc-800/50'
                       : 'bg-white border-gray-200 hover:border-gray-300 hover:shadow-md'
@@ -298,7 +298,7 @@ export function WorkflowForm({ form, currentStep }: WorkflowFormProps) {
     }
 
     return (
-      <div key={section.id} className="space-y-8 animate-in fade-in">
+      <div key={section.id} className="space-y-6 animate-in fade-in">
         {section.title && (
           <div className="border-b pb-2 border-zinc-700/30">
             <h3
@@ -313,7 +313,7 @@ export function WorkflowForm({ form, currentStep }: WorkflowFormProps) {
             )}
           </div>
         )}
-        <div className={isGrid ? 'grid grid-cols-1 md:grid-cols-2 gap-6' : 'space-y-6'}>
+        <div className={isGrid ? 'grid grid-cols-1 md:grid-cols-2 gap-4' : 'space-y-4'}>
           {section.fields?.map((field) =>
             renderField(
               field,
@@ -330,7 +330,7 @@ export function WorkflowForm({ form, currentStep }: WorkflowFormProps) {
   };
 
   return (
-    <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-8">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-4">
       <div className="border-l-4 border-blue-500 pl-4 py-2 bg-blue-500/5 rounded-r-xl">
         <h3 className="text-xl font-bold tracking-tight">{step.title}</h3>
       </div>
@@ -341,7 +341,7 @@ export function WorkflowForm({ form, currentStep }: WorkflowFormProps) {
           return (
             <div
               key={`step-cond-${condIdx}`}
-              className="space-y-12 mt-12 border-t border-zinc-700/30 pt-12 animate-in fade-in slide-in-from-top-4 duration-500"
+              className="space-y-8 mt-8 border-t border-zinc-700/30 pt-8 animate-in fade-in slide-in-from-top-4 duration-500"
             >
               {cond.sections?.map(renderSection)}
             </div>

@@ -4,7 +4,6 @@ import type { WorkflowTemplateSummary } from '@/lib/api/actions.service';
 import { Check, Copy, Eye, Layout, Loader2, Settings, X } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { WorkflowForm } from '@/components/branches/WorkflowForm';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -14,6 +13,8 @@ import { AnimatePresence, ModalContent, ModalOverlay, motion } from '@/component
 import { useWorkflowForm } from '@/hooks/useWorkflowForm';
 import { actionsService } from '@/lib/api/actions.service';
 import { useThemeStore } from '@/store/themeStore';
+import { KubernetesInfrastructureSection } from './KubernetesInfrastructureSection';
+import { WorkflowForm } from './WorkflowForm';
 
 type CreateWorkflowModalProps = {
   isOpen: boolean;
@@ -267,9 +268,9 @@ export default function CreateWorkflowModal({
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
           <ModalOverlay onClick={handleClose} />
 
-          <ModalContent className="w-full max-w-5xl relative p-[1px] md:rounded-2xl bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 shadow-2xl isolate">
+          <ModalContent className="w-full max-w-7xl relative p-[1px] md:rounded-2xl bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 shadow-2xl isolate">
             <Card
-              className={`relative w-full h-[90vh] md:h-[85vh] md:rounded-2xl overflow-hidden flex flex-col ${
+              className={`relative w-full h-[95vh] md:h-[92vh] md:rounded-2xl overflow-hidden flex flex-col ${
                 theme === 'dark'
                   ? 'bg-zinc-900 border-none text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]'
                   : 'bg-white/95 border-none backdrop-blur-xl text-gray-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]'
@@ -277,11 +278,11 @@ export default function CreateWorkflowModal({
             >
               {/* Header */}
               <div
-                className={`flex items-center justify-between p-6 border-b ${theme === 'dark' ? 'border-zinc-700' : 'border-gray-200'}`}
+                className={`flex items-center justify-between px-6 py-3 border-b ${theme === 'dark' ? 'border-zinc-700' : 'border-gray-200'}`}
               >
                 <div className="flex items-center gap-3">
                   <div
-                    className={`p-2 rounded-lg ${theme === 'dark' ? 'bg-blue-500/10' : 'bg-blue-50'}`}
+                    className={`p-1.5 rounded-lg ${theme === 'dark' ? 'bg-blue-500/10' : 'bg-blue-50'}`}
                   >
                     <Settings
                       className={`h-5 w-5 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}
@@ -289,12 +290,12 @@ export default function CreateWorkflowModal({
                   </div>
                   <div>
                     <h2
-                      className={`text-xl font-bold tracking-tight ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}
+                      className={`text-lg font-bold tracking-tight ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}
                     >
                       Create Workflow
                     </h2>
                     <p
-                      className={`text-xs ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-400'}`}
+                      className={`text-[11px] ${theme === 'dark' ? 'text-zinc-500' : 'text-gray-400'}`}
                     >
                       {template
                         ? `${template.name} v${template.version}`
@@ -320,17 +321,17 @@ export default function CreateWorkflowModal({
 
               {/* Content */}
               <div className="flex-1 overflow-y-auto custom-scrollbar">
-                <div className="p-8">
+                <div className="p-4 sm:p-6">
                   {/* Step Indicator */}
                   {template && (
-                    <div className="relative mb-12 overflow-x-auto pb-4">
+                    <div className="relative mb-5 overflow-x-auto pb-2">
                       <div className="flex items-center justify-between min-w-[600px] mx-auto relative z-10 px-4">
                         {steps.map((item, index) => (
                           <React.Fragment key={index}>
                             <div className="flex flex-col items-center group">
                               <div
                                 className={`
-                            relative flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300 border-2
+                            relative flex items-center justify-center w-8 h-8 rounded-xl transition-all duration-300 border-2
                             ${
                               currentStep === index
                                 ? 'bg-blue-600 border-blue-600 shadow-lg shadow-blue-500/30 text-white'
@@ -343,20 +344,20 @@ export default function CreateWorkflowModal({
                           `}
                               >
                                 {currentStep > index ? (
-                                  <Check className="h-5 w-5" />
+                                  <Check className="h-4 w-4" />
                                 ) : (
-                                  <item.icon className="h-4 w-4" />
+                                  <item.icon className="h-3.5 w-3.5" />
                                 )}
                               </div>
                               <span
-                                className={`mt-2 text-[10px] font-bold uppercase tracking-tighter ${currentStep === index ? 'text-blue-500' : 'text-zinc-500'}`}
+                                className={`mt-1.5 text-[9px] font-bold uppercase tracking-tight ${currentStep === index ? 'text-blue-500' : 'text-zinc-500'}`}
                               >
                                 {item.label}
                               </span>
                             </div>
                             {index < totalStepsCount - 1 && (
                               <div
-                                className={`flex-1 h-0.5 mx-2 mb-4 transition-all duration-500 ${currentStep > index ? 'bg-emerald-500' : theme === 'dark' ? 'bg-zinc-800' : 'bg-gray-200'}`}
+                                className={`flex-1 h-0.5 mx-2 mb-3 transition-all duration-500 ${currentStep > index ? 'bg-emerald-500' : theme === 'dark' ? 'bg-zinc-800' : 'bg-gray-200'}`}
                               />
                             )}
                           </React.Fragment>
@@ -440,7 +441,7 @@ export default function CreateWorkflowModal({
                     )
                   ) : isInfrastructureStep ? (
                     /* Infrastructure Step (EC2 Only) */
-                    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
+                    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
                       <div className="border-l-4 border-blue-500 pl-4 py-2 bg-blue-500/5 rounded-r-xl">
                         <h3 className="text-xl font-bold tracking-tight">
                           Infrastructure Configuration
@@ -450,12 +451,12 @@ export default function CreateWorkflowModal({
                         </p>
                       </div>
 
-                      <div className="space-y-12">
+                      <div className="space-y-8">
                         {(deploymentType === 'ec2'
                           ? form.values.ec2_projects
                           : form.values.kubernetes_projects
                         )?.map((project: any, pIdx: number, projectArray: any[]) => (
-                          <div key={pIdx} className="space-y-6">
+                          <div key={pIdx} className="space-y-4">
                             <div className="flex items-center justify-between border-b border-zinc-700/30 pb-2">
                               <div className="flex items-center gap-2">
                                 <div className="h-4 w-1 bg-blue-600 rounded-full" />
@@ -503,7 +504,7 @@ export default function CreateWorkflowModal({
                                 return (
                                   <Card
                                     key={env}
-                                    className={`p-6 space-y-5 border shadow-sm ${
+                                    className={`p-4 space-y-4 border shadow-sm ${
                                       theme === 'dark'
                                         ? 'bg-zinc-800/20 border-zinc-800'
                                         : 'bg-zinc-50 border-zinc-200'
@@ -547,149 +548,181 @@ export default function CreateWorkflowModal({
                                     </div>
 
                                     <div className="space-y-4">
-                                      {deploymentType === 'kubernetes' && (
-                                        <div className="space-y-1.5">
-                                          <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-tighter">
-                                            Namespace <span className="text-red-500">*</span>
-                                          </Label>
-                                          <Input
-                                            placeholder="e.g. default"
-                                            value={
-                                              form.values.infrastructure_config?.[configKey]
-                                                ?.namespace || ''
-                                            }
-                                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                                              form.handleFieldChange(
-                                                'infrastructure_config',
-                                                configKey,
-                                                {
-                                                  ...(form.values.infrastructure_config?.[
-                                                    configKey
-                                                  ] || {}),
-                                                  namespace: e.target.value,
-                                                  projectName: project.name,
-                                                  environment: env,
-                                                }
-                                              )
-                                            }
-                                            className="h-10 text-xs"
-                                          />
+                                      {deploymentType === 'kubernetes' ? (
+                                        <KubernetesInfrastructureSection
+                                          configKey={configKey}
+                                          values={
+                                            form.values.infrastructure_config?.[configKey] || {}
+                                          }
+                                          onChange={(path: string, value: any) => {
+                                            const currentConfig =
+                                              form.values.infrastructure_config?.[configKey] || {};
+
+                                            // Simple deep setter for the K8s schema structure
+                                            const updatePath = (
+                                              obj: any,
+                                              pathParts: string[],
+                                              val: any
+                                            ): any => {
+                                              const [head, ...tail] = pathParts;
+                                              if (tail.length === 0) {
+                                                return { ...obj, [head]: val };
+                                              }
+
+                                              const isNumeric = !Number.isNaN(Number(head));
+                                              if (isNumeric) {
+                                                const newArr = Array.isArray(obj) ? [...obj] : [];
+                                                newArr[Number(head)] = updatePath(
+                                                  newArr[Number(head)] || {},
+                                                  tail,
+                                                  val
+                                                );
+                                                return newArr;
+                                              }
+
+                                              return {
+                                                ...obj,
+                                                [head]: updatePath(obj[head] || {}, tail, val),
+                                              };
+                                            };
+
+                                            const updatedConfig = updatePath(
+                                              currentConfig,
+                                              path.split('.'),
+                                              value
+                                            );
+
+                                            // Always ensure projectName and environment are set
+                                            updatedConfig.projectName = project.name;
+                                            updatedConfig.environment = env;
+
+                                            form.handleFieldChange(
+                                              'infrastructure_config',
+                                              configKey,
+                                              updatedConfig
+                                            );
+                                          }}
+                                        />
+                                      ) : (
+                                        <div className="space-y-4">
+                                          <div className="space-y-1.5">
+                                            <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-tighter">
+                                              Jenkins Node Name{' '}
+                                              <span className="text-red-500">*</span>
+                                            </Label>
+                                            <Input
+                                              placeholder="e.g. jenkins-slave-01"
+                                              value={
+                                                form.values.infrastructure_config?.[configKey]
+                                                  ?.jenkinsNodeName || ''
+                                              }
+                                              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                                form.handleFieldChange(
+                                                  'infrastructure_config',
+                                                  configKey,
+                                                  {
+                                                    ...(form.values.infrastructure_config?.[
+                                                      configKey
+                                                    ] || {}),
+                                                    jenkinsNodeName: e.target.value,
+                                                    projectName: project.name,
+                                                    environment: env,
+                                                  }
+                                                )
+                                              }
+                                              className="h-10 text-xs"
+                                            />
+                                          </div>
+
+                                          <div className="space-y-1.5">
+                                            <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-tighter">
+                                              AWS Access Key ID{' '}
+                                              <span className="text-red-500">*</span>
+                                            </Label>
+                                            <Input
+                                              placeholder="AKIA..."
+                                              value={
+                                                form.values.infrastructure_config?.[configKey]
+                                                  ?.awsAccessKeyId || ''
+                                              }
+                                              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                                form.handleFieldChange(
+                                                  'infrastructure_config',
+                                                  configKey,
+                                                  {
+                                                    ...(form.values.infrastructure_config?.[
+                                                      configKey
+                                                    ] || {}),
+                                                    awsAccessKeyId: e.target.value,
+                                                    projectName: project.name,
+                                                    environment: env,
+                                                  }
+                                                )
+                                              }
+                                              className="h-10 text-xs"
+                                            />
+                                          </div>
+
+                                          <div className="space-y-1.5">
+                                            <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-tighter">
+                                              AWS Secret Access Key{' '}
+                                              <span className="text-red-500">*</span>
+                                            </Label>
+                                            <Input
+                                              type="password"
+                                              placeholder="••••••••"
+                                              value={
+                                                form.values.infrastructure_config?.[configKey]
+                                                  ?.awsSecretAccessKey || ''
+                                              }
+                                              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                                form.handleFieldChange(
+                                                  'infrastructure_config',
+                                                  configKey,
+                                                  {
+                                                    ...(form.values.infrastructure_config?.[
+                                                      configKey
+                                                    ] || {}),
+                                                    awsSecretAccessKey: e.target.value,
+                                                    projectName: project.name,
+                                                    environment: env,
+                                                  }
+                                                )
+                                              }
+                                              className="h-10 text-xs"
+                                            />
+                                          </div>
+
+                                          <div className="space-y-1.5">
+                                            <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-tighter">
+                                              Environments (envs){' '}
+                                              <span className="text-red-500">*</span>
+                                            </Label>
+                                            <Input
+                                              placeholder="e.g. key=value, debug=true"
+                                              value={
+                                                form.values.infrastructure_config?.[configKey]
+                                                  ?.environments || ''
+                                              }
+                                              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                                form.handleFieldChange(
+                                                  'infrastructure_config',
+                                                  configKey,
+                                                  {
+                                                    ...(form.values.infrastructure_config?.[
+                                                      configKey
+                                                    ] || {}),
+                                                    environments: e.target.value,
+                                                    projectName: project.name,
+                                                    environment: env,
+                                                  }
+                                                )
+                                              }
+                                              className="h-10 text-xs"
+                                            />
+                                          </div>
                                         </div>
                                       )}
-                                      <div className="space-y-1.5">
-                                        <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-tighter">
-                                          Jenkins Node Name <span className="text-red-500">*</span>
-                                        </Label>
-                                        <Input
-                                          placeholder="e.g. jenkins-slave-01"
-                                          value={
-                                            form.values.infrastructure_config?.[configKey]
-                                              ?.jenkinsNodeName || ''
-                                          }
-                                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                                            form.handleFieldChange(
-                                              'infrastructure_config',
-                                              configKey,
-                                              {
-                                                ...(form.values.infrastructure_config?.[
-                                                  configKey
-                                                ] || {}),
-                                                jenkinsNodeName: e.target.value,
-                                                projectName: project.name,
-                                                environment: env,
-                                              }
-                                            )
-                                          }
-                                          className="h-10 text-xs"
-                                        />
-                                      </div>
-
-                                      <div className="space-y-1.5">
-                                        <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-tighter">
-                                          AWS Access Key ID <span className="text-red-500">*</span>
-                                        </Label>
-                                        <Input
-                                          placeholder="AKIA..."
-                                          value={
-                                            form.values.infrastructure_config?.[configKey]
-                                              ?.awsAccessKeyId || ''
-                                          }
-                                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                                            form.handleFieldChange(
-                                              'infrastructure_config',
-                                              configKey,
-                                              {
-                                                ...(form.values.infrastructure_config?.[
-                                                  configKey
-                                                ] || {}),
-                                                awsAccessKeyId: e.target.value,
-                                                projectName: project.name,
-                                                environment: env,
-                                              }
-                                            )
-                                          }
-                                          className="h-10 text-xs"
-                                        />
-                                      </div>
-
-                                      <div className="space-y-1.5">
-                                        <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-tighter">
-                                          AWS Secret Access Key{' '}
-                                          <span className="text-red-500">*</span>
-                                        </Label>
-                                        <Input
-                                          type="password"
-                                          placeholder="••••••••"
-                                          value={
-                                            form.values.infrastructure_config?.[configKey]
-                                              ?.awsSecretAccessKey || ''
-                                          }
-                                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                                            form.handleFieldChange(
-                                              'infrastructure_config',
-                                              configKey,
-                                              {
-                                                ...(form.values.infrastructure_config?.[
-                                                  configKey
-                                                ] || {}),
-                                                awsSecretAccessKey: e.target.value,
-                                                projectName: project.name,
-                                                environment: env,
-                                              }
-                                            )
-                                          }
-                                          className="h-10 text-xs"
-                                        />
-                                      </div>
-
-                                      <div className="space-y-1.5">
-                                        <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-tighter">
-                                          Environments (envs){' '}
-                                          <span className="text-red-500">*</span>
-                                        </Label>
-                                        <Input
-                                          placeholder="e.g. key=value, debug=true"
-                                          value={
-                                            form.values.infrastructure_config?.[configKey]
-                                              ?.environments || ''
-                                          }
-                                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                                            form.handleFieldChange(
-                                              'infrastructure_config',
-                                              configKey,
-                                              {
-                                                ...(form.values.infrastructure_config?.[
-                                                  configKey
-                                                ] || {}),
-                                                environments: e.target.value,
-                                                projectName: project.name,
-                                                environment: env,
-                                              }
-                                            )
-                                          }
-                                          className="h-10 text-xs"
-                                        />
-                                      </div>
                                     </div>
                                   </Card>
                                 );
@@ -705,7 +738,7 @@ export default function CreateWorkflowModal({
 
               {/* Footer */}
               <div
-                className={`p-6 border-t flex items-center justify-between ${theme === 'dark' ? 'border-zinc-700 bg-zinc-900/50' : 'border-gray-100 bg-gray-50/50'}`}
+                className={`px-6 py-3 border-t flex items-center justify-between ${theme === 'dark' ? 'border-zinc-700 bg-zinc-900/50' : 'border-gray-100 bg-gray-50/50'}`}
               >
                 <div className="flex gap-2">
                   {currentStep > 0 && (

@@ -33,14 +33,14 @@ type ActionsTableProps = {
 };
 
 export const ActionsTable = ({
-  ref,
   owner,
   repository,
+  ref,
 }: ActionsTableProps & { ref?: React.RefObject<ActionsTableRef | null> }) => {
   const router = useRouter();
   const { theme } = useThemeStore();
   const [workflowRuns, setWorkflowRuns] = useState<WorkflowRun[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const perPage = 15;
@@ -55,12 +55,15 @@ export const ActionsTable = ({
 
   const fetchWorkflowRuns = useCallback(
     async (owner: string, repo: string, showLoading = true, signal?: AbortSignal) => {
+      if (!owner || !repo) {
+        return;
+      }
       try {
         if (showLoading) {
           setIsLoading(true);
         }
         setError(null);
-        const response = await actionsService.fetchWorkflowRuns(owner, repo, 100, signal); // Fetch more data for client-side pagination
+        const response = await actionsService.fetchWorkflowRuns(owner, repo, 100, signal);
         const runs = response.data.runs || [];
         setWorkflowRuns(runs);
         setPage(1); // Reset to first page when data changes
@@ -71,7 +74,7 @@ export const ActionsTable = ({
         }
         setError(err instanceof Error ? err.message : 'Failed to fetch workflow runs');
       } finally {
-        if (showLoading) {
+        if (showLoading && !signal?.aborted) {
           setIsLoading(false);
         }
       }

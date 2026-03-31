@@ -206,7 +206,7 @@ export default function BranchesPage() {
       // Check if we're navigating to a different repository
       if (owner !== ownerParam || repository !== repoParam) {
         setRepository(ownerParam, repoParam);
-        setCurrentView('workflows');
+        setCurrentView('commits');
       }
 
       const load = async () => {

@@ -1,4 +1,3 @@
-import type { Workflow, WorkflowRun } from '@/lib/api/actions.service';
 import type { Branch, Commit } from '@/lib/api/branches.service';
 import type { Tag } from '@/lib/api/tags.service';
 import { create } from 'zustand';
@@ -10,8 +9,6 @@ type BranchesStore = {
   commits: Commit[];
   tags: Tag[];
   prs: import('@/lib/api/branches.service').PullRequest[];
-  workflowRuns: WorkflowRun[];
-  workflows: Workflow[];
   selectedBranch: string | null;
   isLoading: boolean;
   error: string | null;
@@ -23,8 +20,6 @@ type BranchesStore = {
   setCommits: (commits: Commit[]) => void;
   setTags: (tags: Tag[]) => void;
   setPrs: (prs: import('@/lib/api/branches.service').PullRequest[]) => void;
-  setWorkflowRuns: (runs: WorkflowRun[]) => void;
-  setWorkflows: (workflows: Workflow[]) => void;
   setSelectedBranch: (branch: string | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
@@ -38,21 +33,17 @@ export const useBranchesStore = create<BranchesStore>((set) => ({
   commits: [],
   tags: [],
   prs: [],
-  workflowRuns: [],
-  workflows: [],
   selectedBranch: null,
   isLoading: false,
   error: null,
   owner: '',
   repository: '',
-  currentView: 'workflows', // Default to workflows view
+  currentView: 'commits', // Default to commits view
 
   setBranches: (branches) => set({ branches }),
   setCommits: (commits) => set({ commits }),
   setTags: (tags) => set({ tags }),
   setPrs: (prs) => set({ prs }),
-  setWorkflowRuns: (runs) => set({ workflowRuns: runs }),
-  setWorkflows: (workflows) => set({ workflows }),
   setSelectedBranch: (branch) => set({ selectedBranch: branch }),
   setLoading: (loading) => set({ isLoading: loading }),
   setError: (error) => set({ error }),
@@ -65,8 +56,6 @@ export const useBranchesStore = create<BranchesStore>((set) => ({
       commits: [],
       tags: [],
       prs: [],
-      workflowRuns: [],
-      workflows: [],
       selectedBranch: null,
       error: null,
     }),
@@ -77,13 +66,11 @@ export const useBranchesStore = create<BranchesStore>((set) => ({
       commits: [],
       tags: [],
       prs: [],
-      workflowRuns: [],
-      workflows: [],
       selectedBranch: null,
       isLoading: false,
       error: null,
       owner: '',
       repository: '',
-      currentView: 'workflows',
+      currentView: 'commits',
     }),
 }));

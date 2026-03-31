@@ -19,7 +19,6 @@ import {
 } from '@/components/ui/table';
 import { TableSkeleton } from '@/components/ui/TableSkeleton';
 import { actionsService } from '@/lib/api/actions.service';
-import { useBranchesStore } from '@/store/branchesStore';
 import { useThemeStore } from '@/store/themeStore';
 
 export type WorkflowsTableRef = {
@@ -33,12 +32,12 @@ type WorkflowsTableProps = {
 };
 
 export const WorkflowsTable = ({
-  ref,
   owner,
   repository,
+  ref,
 }: WorkflowsTableProps & { ref?: React.RefObject<WorkflowsTableRef | null> }) => {
   const { theme } = useThemeStore();
-  const { workflows, setWorkflows } = useBranchesStore();
+  const [workflows, setWorkflows] = useState<Workflow[]>([]);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingWorkflow, setEditingWorkflow] = useState<Workflow | null>(null);
@@ -63,7 +62,6 @@ export const WorkflowsTable = ({
     async (signal?: AbortSignal) => {
       if (!owner || !repository) {
         console.warn('[WorkflowsTable] Skipping fetch: owner or repository is empty');
-        setLoading(false);
         return;
       }
 
@@ -93,7 +91,9 @@ export const WorkflowsTable = ({
         setError('Failed to fetch workflows. Please try again.');
         setWorkflows([]);
       } finally {
-        setLoading(false);
+        if (!signal?.aborted) {
+          setLoading(false);
+        }
       }
     },
     [owner, repository, setWorkflows]
@@ -545,5 +545,4 @@ export const WorkflowsTable = ({
     </div>
   );
 };
-
 WorkflowsTable.displayName = 'WorkflowsTable';
